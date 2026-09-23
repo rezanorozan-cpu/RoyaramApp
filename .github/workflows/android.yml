@@ -1,0 +1,257 @@
+name: Royaram Android Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Create project structure
+        shell: bash
+        run: |
+          mkdir -p app/src/main/java/com/royaram/app
+          mkdir -p app/src/main/res/values
+
+          cat > settings.gradle.kts <<'EOF'
+          pluginManagement {
+              repositories {
+                  google()
+                  mavenCentral()
+                  gradlePluginPortal()
+              }
+          }
+
+          dependencyResolutionManagement {
+              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+          }
+
+          rootProject.name = "RoyaramApp"
+          include(":app")
+          EOF
+
+          cat > build.gradle.kts <<'EOF'
+          plugins {
+              id("com.android.application") version "8.7.3" apply false
+              id("org.jetbrains.kotlin.android") version "2.0.21" apply false
+              id("org.jetbrains.kotlin.plugin.compose") version "2.0.21" apply false
+          }
+          EOF
+
+          cat > gradle.properties <<'EOF'
+          org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
+          android.useAndroidX=true
+          kotlin.code.style=official
+          EOF
+
+          cat > app/build.gradle.kts <<'EOF'
+          plugins {
+              id("com.android.application")
+              id("org.jetbrains.kotlin.android")
+              id("org.jetbrains.kotlin.plugin.compose")
+          }
+
+          android {
+              namespace = "com.royaram.app"
+              compileSdk = 35
+
+              defaultConfig {
+                  applicationId = "com.royaram.app"
+                  minSdk = 26
+                  targetSdk = 35
+                  versionCode = 1
+                  versionName = "0.1.0"
+              }
+
+              compileOptions {
+                  sourceCompatibility = JavaVersion.VERSION_17
+                  targetCompatibility = JavaVersion.VERSION_17
+              }
+
+              kotlinOptions {
+                  jvmTarget = "17"
+              }
+
+              buildFeatures {
+                  compose = true
+              }
+          }
+
+          dependencies {
+              val composeBom = platform("androidx.compose:compose-bom:2024.10.01")
+
+              implementation(composeBom)
+              implementation("androidx.activity:activity-compose:1.9.3")
+              implementation("androidx.compose.ui:ui")
+              implementation("androidx.compose.ui:ui-tooling-preview")
+              implementation("androidx.compose.material3:material3")
+              implementation("androidx.compose.material:material-icons-extended")
+
+              debugImplementation("androidx.compose.ui:ui-tooling")
+          }
+          EOF
+
+          cat > app/src/main/AndroidManifest.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+              <application
+                  android:theme="@style/Theme.Royaram"
+                  android:label="@string/app_name"
+                  android:allowBackup="true"
+                  android:supportsRtl="true">
+
+                  <activity
+                      android:name=".MainActivity"
+                      android:exported="true">
+
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:name="android.intent.category.LAUNCHER" />
+                      </intent-filter>
+
+                  </activity>
+              </application>
+
+          </manifest>
+          EOF
+
+          cat > app/src/main/res/values/strings.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <string name="app_name">رویارام</string>
+          </resources>
+          EOF
+
+          cat > app/src/main/res/values/themes.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <resources>
+              <style name="Theme.Royaram" parent="android:style/Theme.Material.Light.NoActionBar" />
+          </resources>
+          EOF
+
+          cat > app/src/main/java/com/royaram/app/MainActivity.kt <<'EOF'
+          package com.royaram.app
+
+          import android.os.Bundle
+          import androidx.activity.ComponentActivity
+          import androidx.activity.compose.setContent
+          import androidx.compose.foundation.background
+          import androidx.compose.foundation.layout.*
+          import androidx.compose.foundation.shape.RoundedCornerShape
+          import androidx.compose.material.icons.Icons
+          import androidx.compose.material.icons.rounded.Favorite
+          import androidx.compose.material3.*
+          import androidx.compose.runtime.Composable
+          import androidx.compose.ui.Alignment
+          import androidx.compose.ui.Modifier
+          import androidx.compose.ui.graphics.Brush
+          import androidx.compose.ui.graphics.Color
+          import androidx.compose.ui.text.font.FontWeight
+          import androidx.compose.ui.unit.dp
+          import androidx.compose.ui.unit.sp
+
+          class MainActivity : ComponentActivity() {
+              override fun onCreate(savedInstanceState: Bundle?) {
+                  super.onCreate(savedInstanceState)
+
+                  setContent {
+                      RoyaramScreen()
+                  }
+              }
+          }
+
+          @Composable
+          private fun RoyaramScreen() {
+              MaterialTheme {
+                  Box(
+                      modifier = Modifier
+                          .fillMaxSize()
+                          .background(
+                              Brush.verticalGradient(
+                                  listOf(
+                                      Color(0xFFFFF3F6),
+                                      Color.White
+                                  )
+                              )
+                          )
+                          .padding(24.dp),
+                      contentAlignment = Alignment.Center
+                  ) {
+                      Card(
+                          modifier = Modifier.fillMaxWidth(),
+                          shape = RoundedCornerShape(32.dp),
+                          elevation = CardDefaults.cardElevation(8.dp)
+                      ) {
+                          Column(
+                              modifier = Modifier.padding(32.dp),
+                              horizontalAlignment = Alignment.CenterHorizontally
+                          ) {
+                              Icon(
+                                  imageVector = Icons.Rounded.Favorite,
+                                  contentDescription = null,
+                                  tint = Color(0xFFE85D75),
+                                  modifier = Modifier.size(64.dp)
+                              )
+
+                              Spacer(Modifier.height(20.dp))
+
+                              Text(
+                                  text = "رویارام",
+                                  fontSize = 36.sp,
+                                  fontWeight = FontWeight.Bold
+                              )
+
+                              Spacer(Modifier.height(8.dp))
+
+                              Text(
+                                  text = "قصه‌ی رامین و رویا",
+                                  fontSize = 18.sp
+                              )
+
+                              Spacer(Modifier.height(12.dp))
+
+                              Text(
+                                  text = "قصه‌ی من و تو، برای همیشه ❤️",
+                                  color = Color(0xFF795C64)
+                              )
+                          }
+                      }
+                  }
+              }
+          }
+          EOF
+
+      - name: Build debug APK
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.9"
+
+      - name: Assemble APK
+        run: gradle assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Royaram-debug
+          path: app/build/outputs/apk/debug/app-debug.apk
