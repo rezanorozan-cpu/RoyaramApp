@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -33,7 +34,6 @@ import androidx.compose.material.icons.rounded.SentimentSatisfiedAlt
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -84,15 +84,12 @@ private fun RoyaramApp() {
     }
 
     if (showMemories) {
-
         MemoriesScreen(
             onBack = {
                 showMemories = false
             }
         )
-
     } else {
-
         RoyaramHome(
             onMemoriesClick = {
                 showMemories = true
@@ -106,10 +103,7 @@ private fun RoyaramHome(
     onMemoriesClick: () -> Unit
 ) {
 
-    val startDate = remember {
-        LocalDate.of(2026, 6, 10)
-    }
-
+    val startDate = LocalDate.of(2026, 6, 10)
     val today = LocalDate.now()
 
     val relationshipDays = ChronoUnit.DAYS.between(
@@ -255,7 +249,7 @@ private fun RoyaramHome(
                             modifier = Modifier.size(24.dp)
                         )
 
-                        Spacer(modifier = Modifier.size(8.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
 
                         Text(
                             text = "رامین ❤️ رویا",
@@ -273,4 +267,304 @@ private fun RoyaramHome(
                         color = Color(0xFF795C64)
                     )
 
-                    Spacer(modifier = Modifier.height(
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Text(
+                        text = "$relationshipDays روز کنار هم ❤️",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFE85D75)
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Text(
+                        text = "شروع قصه: ۲۰ خرداد ۱۴۰۵",
+                        fontSize = 13.sp,
+                        color = Color(0xFF795C64)
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
+            }
+
+            Spacer(modifier = Modifier.height(18.dp))
+
+            Text(
+                text = "دنیای دونفره‌ی ما",
+                fontSize = 21.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF402A30)
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+
+                items(items) { item ->
+
+                    HomeCard(
+                        item = item,
+                        onClick = {
+                            if (item.title == "خاطرات ما") {
+                                onMemoriesClick()
+                            }
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun HomeCard(
+    item: HomeItem,
+    onClick: () -> Unit
+) {
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(150.dp)
+            .clickable {
+                onClick()
+            },
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White.copy(alpha = 0.94f)
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 4.dp
+        )
+    ) {
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(18.dp),
+            verticalArrangement = Arrangement.Center
+        ) {
+
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .background(
+                        Color(0xFFFFE1E9),
+                        CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+
+                Icon(
+                    imageVector = item.icon,
+                    contentDescription = null,
+                    tint = Color(0xFFE85D75),
+                    modifier = Modifier.size(25.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Text(
+                text = item.title,
+                fontSize = 17.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF402A30)
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Text(
+                text = item.subtitle,
+                fontSize = 12.sp,
+                color = Color(0xFF795C64)
+            )
+        }
+    }
+}
+
+@Composable
+private fun MemoriesScreen(
+    onBack: () -> Unit
+) {
+
+    val memories = listOf(
+        Memory(
+            title = "شروع قصه‌ی ما ❤️",
+            date = "۲۰ خرداد ۱۴۰۵",
+            description = "روزی که قصه‌ی من و تو شروع شد؛ روزی که قرار بود فقط یک تاریخ باشد، اما تبدیل شد به یکی از قشنگ‌ترین روزهای زندگی‌مون."
+        ),
+        Memory(
+            title = "یک خاطره‌ی دونفره ❤️",
+            date = "خاطره‌ی ما",
+            description = "کنار هم، بدون اینکه دنیا عجله‌ای برای رفتن داشته باشد. بعضی لحظه‌ها فقط باید زندگی شوند و در قلب بمانند."
+        )
+    )
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    listOf(
+                        Color(0xFFFFE8EF),
+                        Color(0xFFFFF5F8),
+                        Color.White
+                    )
+                )
+            )
+    ) {
+
+        Column(
+            modifier = Modifier.fillMaxSize()
+        ) {
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        start = 16.dp,
+                        top = 26.dp,
+                        end = 20.dp,
+                        bottom = 12.dp
+                    ),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(Color.White)
+                        .clickable {
+                            onBack()
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+
+                    Icon(
+                        imageVector = Icons.Rounded.ArrowBack,
+                        contentDescription = "بازگشت",
+                        tint = Color(0xFFE85D75),
+                        modifier = Modifier.size(26.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(14.dp))
+
+                Column {
+
+                    Text(
+                        text = "خاطرات ما ❤️",
+                        fontSize = 26.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF402A30)
+                    )
+
+                    Text(
+                        text = "لحظه‌هایی که نمی‌خوایم فراموش کنیم",
+                        fontSize = 13.sp,
+                        color = Color(0xFF795C64)
+                    )
+                }
+            }
+
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                    start = 18.dp,
+                    end = 18.dp,
+                    top = 8.dp,
+                    bottom = 30.dp
+                ),
+                verticalArrangement = Arrangement.spacedBy(18.dp)
+            ) {
+
+                items(memories.size) { index ->
+
+                    MemoryCard(
+                        memory = memories[index]
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MemoryCard(
+    memory: Memory
+) {
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 5.dp
+        )
+    ) {
+
+        Column(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+
+            Image(
+                painter = painterResource(
+                    id = R.drawable.couple_main
+                ),
+                contentDescription = memory.title,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(240.dp)
+                    .clip(
+                        RoundedCornerShape(
+                            topStart = 28.dp,
+                            topEnd = 28.dp
+                        )
+                    ),
+                contentScale = ContentScale.Crop
+            )
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(18.dp)
+            ) {
+
+                Text(
+                    text = memory.title,
+                    fontSize = 21.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF402A30)
+                )
+
+                Spacer(modifier = Modifier.height(7.dp))
+
+                Text(
+                    text = memory.date,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color(0xFFE85D75)
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Text(
+                    text = memory.description,
+                    fontSize = 14.sp,
+                    lineHeight = 24.sp,
+                    color = Color(0xFF6F5960)
+                )
+            }
+        }
+    }
+}
