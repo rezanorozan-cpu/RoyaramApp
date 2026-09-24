@@ -3,6 +3,7 @@ package com.royaram.app
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -22,7 +24,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
-import androidx.compose.material.icons.rounded.Headphones
 import androidx.compose.material.icons.rounded.Mail
 import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.PhotoLibrary
@@ -35,9 +36,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -56,7 +59,7 @@ class MainActivity : ComponentActivity() {
 data class HomeItem(
     val title: String,
     val subtitle: String,
-    val icon: ImageVector
+    val icon: androidx.compose.ui.graphics.vector.ImageVector
 )
 
 @Composable
@@ -117,6 +120,7 @@ private fun RoyaramHome() {
             ) {
 
                 Column {
+
                     Text(
                         text = "رویارام ❤️",
                         fontSize = 30.sp,
@@ -142,6 +146,7 @@ private fun RoyaramHome() {
                         ),
                     contentAlignment = Alignment.Center
                 ) {
+
                     Icon(
                         imageVector = Icons.Rounded.Favorite,
                         contentDescription = null,
@@ -151,27 +156,42 @@ private fun RoyaramHome() {
                 }
             }
 
-            Spacer(modifier = Modifier.height(22.dp))
+            Spacer(modifier = Modifier.height(18.dp))
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(28.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = Color.White.copy(alpha = 0.92f)
+                    containerColor = Color.White
                 ),
                 elevation = CardDefaults.cardElevation(
-                    defaultElevation = 5.dp
+                    defaultElevation = 6.dp
                 )
             ) {
 
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(22.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                        .padding(12.dp)
                 ) {
 
+                    Image(
+                        painter = painterResource(
+                            id = com.royaram.app.R.drawable.couple_main
+                        ),
+                        contentDescription = "رامین و رویا",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(260.dp)
+                            .clip(RoundedCornerShape(22.dp)),
+                        contentScale = ContentScale.Crop
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
                     Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
 
@@ -182,7 +202,7 @@ private fun RoyaramHome() {
                             modifier = Modifier.size(24.dp)
                         )
 
-                        Spacer(modifier = Modifier.size(10.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
 
                         Text(
                             text = "رامین ❤️ رویا",
@@ -192,13 +212,16 @@ private fun RoyaramHome() {
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
                         text = "هر روز یک خاطره‌ی تازه",
-                        fontSize = 15.sp,
-                        color = Color(0xFF795C64)
+                        fontSize = 14.sp,
+                        color = Color(0xFF795C64),
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
                     )
+
+                    Spacer(modifier = Modifier.height(12.dp))
                 }
             }
 
@@ -221,7 +244,6 @@ private fun RoyaramHome() {
             ) {
 
                 items(items) { item ->
-
                     HomeCard(item)
                 }
             }
