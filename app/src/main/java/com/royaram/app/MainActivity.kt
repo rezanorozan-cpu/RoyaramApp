@@ -330,13 +330,20 @@ private fun RoyaramHome(
 
                 items(items) { item ->
 
-                    HomeCard(
+                    (
                         item = item,
                         onClick = {
-                            if (item.title == "خاطرات ما") {
-                                onMemoriesClick()
-                            }
-                        }
+                            when (item.title) {
+
+        "خاطرات ما" -> {
+            onMemoriesClick()
+        }
+
+        "چت دونفره" -> {
+            context.startActivity(
+                Intent(
+                    context,
+                    ChatActivity::class.java
                     )
                 }
             }
