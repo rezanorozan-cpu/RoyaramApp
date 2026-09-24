@@ -121,6 +121,8 @@ private fun RoyaramHome(
     onMemoriesClick: () -> Unit
 ) {
 
+    val context = LocalContext.current
+
     val startDate = LocalDate.of(2026, 6, 10)
     val today = LocalDate.now()
 
@@ -129,33 +131,34 @@ private fun RoyaramHome(
         today
     )
 
-   val items = listOf(
-    HomeItem(
-        "خاطرات ما",
-        "لحظه‌های قشنگمون",
-        Icons.Rounded.PhotoLibrary
-    ),
-    HomeItem(
-        "نامه‌های عاشقانه",
-        "حرف‌هایی از قلبمون",
-        Icons.Rounded.Mail
-    ),
-    HomeItem(
-        "آهنگ ما",
-        "صدای خاطره‌هامون",
-        Icons.Rounded.MusicNote
-    ),
-    HomeItem(
-        "وقتی دلمون گرفت",
-        "اینجا همیشه کنار همیم",
-        Icons.Rounded.SentimentSatisfiedAlt
-    ),
-    HomeItem(
-        "چت دونفره",
-        "حرف‌های من و تو 💬❤️",
-        Icons.Rounded.Favorite
+    val items = listOf(
+        HomeItem(
+            "خاطرات ما",
+            "لحظه‌های قشنگمون",
+            Icons.Rounded.PhotoLibrary
+        ),
+        HomeItem(
+            "نامه‌های عاشقانه",
+            "حرف‌هایی از قلبمون",
+            Icons.Rounded.Mail
+        ),
+        HomeItem(
+            "آهنگ ما",
+            "صدای خاطره‌هامون",
+            Icons.Rounded.MusicNote
+        ),
+        HomeItem(
+            "وقتی دلمون گرفت",
+            "اینجا همیشه کنار همیم",
+            Icons.Rounded.SentimentSatisfiedAlt
+        ),
+        HomeItem(
+            "چت دونفره",
+            "حرف‌های من و تو 💬❤️",
+            Icons.Rounded.Favorite
+        )
     )
-) 
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -330,20 +333,27 @@ private fun RoyaramHome(
 
                 items(items) { item ->
 
-                    (
+                    HomeCard(
                         item = item,
                         onClick = {
+
                             when (item.title) {
 
-        "خاطرات ما" -> {
-            onMemoriesClick()
-        }
+                                "خاطرات ما" -> {
+                                    onMemoriesClick()
+                                }
 
-        "چت دونفره" -> {
-            context.startActivity(
-                Intent(
-                    context,
-                    ChatActivity::class.java
+                                "چت دونفره" -> {
+
+                                    context.startActivity(
+                                        Intent(
+                                            context,
+                                            ChatActivity::class.java
+                                        )
+                                    )
+                                }
+                            }
+                        }
                     )
                 }
             }
