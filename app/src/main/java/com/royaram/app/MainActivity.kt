@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,13 +16,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.Mail
@@ -34,7 +36,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -54,7 +59,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            RoyaramHome()
+            RoyaramApp()
         }
     }
 }
@@ -65,8 +70,41 @@ data class HomeItem(
     val icon: androidx.compose.ui.graphics.vector.ImageVector
 )
 
+data class Memory(
+    val title: String,
+    val date: String,
+    val description: String
+)
+
 @Composable
-private fun RoyaramHome() {
+private fun RoyaramApp() {
+
+    var showMemories by remember {
+        mutableStateOf(false)
+    }
+
+    if (showMemories) {
+
+        MemoriesScreen(
+            onBack = {
+                showMemories = false
+            }
+        )
+
+    } else {
+
+        RoyaramHome(
+            onMemoriesClick = {
+                showMemories = true
+            }
+        )
+    }
+}
+
+@Composable
+private fun RoyaramHome(
+    onMemoriesClick: () -> Unit
+) {
 
     val startDate = remember {
         LocalDate.of(2026, 6, 10)
@@ -192,7 +230,7 @@ private fun RoyaramHome() {
 
                     Image(
                         painter = painterResource(
-                            id = com.royaram.app.R.drawable.couple_main
+                            id = R.drawable.couple_main
                         ),
                         contentDescription = "رامین و رویا",
                         modifier = Modifier
@@ -217,7 +255,7 @@ private fun RoyaramHome() {
                             modifier = Modifier.size(24.dp)
                         )
 
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.size(8.dp))
 
                         Text(
                             text = "رامین ❤️ رویا",
@@ -235,110 +273,4 @@ private fun RoyaramHome() {
                         color = Color(0xFF795C64)
                     )
 
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    Text(
-                        text = "$relationshipDays روز کنار هم ❤️",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color(0xFFE85D75)
-                    )
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    Text(
-                        text = "شروع قصه: ۲۰ خرداد ۱۴۰۵",
-                        fontSize = 13.sp,
-                        color = Color(0xFF795C64)
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-                }
-            }
-
-            Spacer(modifier = Modifier.height(18.dp))
-
-            Text(
-                text = "دنیای دونفره‌ی ما",
-                fontSize = 21.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF402A30)
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-
-                items(items) { item ->
-                    HomeCard(item)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun HomeCard(item: HomeItem) {
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(150.dp),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White.copy(alpha = 0.94f)
-        ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 4.dp
-        )
-    ) {
-
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(18.dp),
-            verticalArrangement = Arrangement.Center
-        ) {
-
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .background(
-                        Color(0xFFFFE1E9),
-                        CircleShape
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-
-                Icon(
-                    imageVector = item.icon,
-                    contentDescription = null,
-                    tint = Color(0xFFE85D75),
-                    modifier = Modifier.size(25.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Text(
-                text = item.title,
-                fontSize = 17.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF402A30)
-            )
-
-            Spacer(modifier = Modifier.height(4.dp))
-
-            Text(
-                text = item.subtitle,
-                fontSize = 12.sp,
-                color = Color(0xFF795C64)
-            )
-        }
-    }
-}
+                    Spacer(modifier = Modifier.height(
