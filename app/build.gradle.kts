@@ -1,4 +1,5 @@
 plugins {
+id("com.google.gms.google-services")
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
@@ -30,7 +31,9 @@ android {
     }
 }
 
-dependencies {
+dependencies {implementation(platform("com.google.firebase:firebase-bom:34.0.0"))
+implementation("com.google.firebase:firebase-auth")
+implementation("com.google.firebase:firebase-firestore")
  implementation("io.coil-kt:coil-compose:2.7.0")  
 val composeBom = platform("androidx.compose:compose-bom:2024.10.01")
 
