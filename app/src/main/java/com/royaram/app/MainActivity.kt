@@ -156,9 +156,6 @@ private fun RoyaramHome(
         Icons.Rounded.Favorite
     )
 ) 
-        )
-    )
-
     Box(
         modifier = Modifier
             .fillMaxSize()
