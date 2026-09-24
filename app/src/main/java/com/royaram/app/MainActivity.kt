@@ -129,26 +129,33 @@ private fun RoyaramHome(
         today
     )
 
-    val items = listOf(
-        HomeItem(
-            "خاطرات ما",
-            "لحظه‌های قشنگمون",
-            Icons.Rounded.PhotoLibrary
-        ),
-        HomeItem(
-            "نامه‌های عاشقانه",
-            "حرف‌هایی از قلبمون",
-            Icons.Rounded.Mail
-        ),
-        HomeItem(
-            "آهنگ ما",
-            "صدای خاطره‌هامون",
-            Icons.Rounded.MusicNote
-        ),
-        HomeItem(
-            "وقتی دلمون گرفت",
-            "اینجا همیشه کنار همیم",
-            Icons.Rounded.SentimentSatisfiedAlt
+   val items = listOf(
+    HomeItem(
+        "خاطرات ما",
+        "لحظه‌های قشنگمون",
+        Icons.Rounded.PhotoLibrary
+    ),
+    HomeItem(
+        "نامه‌های عاشقانه",
+        "حرف‌هایی از قلبمون",
+        Icons.Rounded.Mail
+    ),
+    HomeItem(
+        "آهنگ ما",
+        "صدای خاطره‌هامون",
+        Icons.Rounded.MusicNote
+    ),
+    HomeItem(
+        "وقتی دلمون گرفت",
+        "اینجا همیشه کنار همیم",
+        Icons.Rounded.SentimentSatisfiedAlt
+    ),
+    HomeItem(
+        "چت دونفره",
+        "حرف‌های من و تو 💬❤️",
+        Icons.Rounded.Favorite
+    )
+) 
         )
     )
 
