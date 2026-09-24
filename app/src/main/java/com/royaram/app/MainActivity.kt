@@ -35,8 +35,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import java.time.LocalDate
-import java.time.temporal.ChronoUnit
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -47,6 +45,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import java.time.LocalDate
+import java.time.temporal.ChronoUnit
 
 class MainActivity : ComponentActivity() {
 
@@ -67,16 +67,18 @@ data class HomeItem(
 
 @Composable
 private fun RoyaramHome() {
-val startDate = remember {
-    LocalDate.of(2026, 6, 10)
-}
 
-val today = LocalDate.now()
+    val startDate = remember {
+        LocalDate.of(2026, 6, 10)
+    }
 
-val relationshipDays = ChronoUnit.DAYS.between(
-    startDate,
-    today
-)
+    val today = LocalDate.now()
+
+    val relationshipDays = ChronoUnit.DAYS.between(
+        startDate,
+        today
+    )
+
     val items = listOf(
         HomeItem(
             "خاطرات ما",
@@ -184,7 +186,8 @@ val relationshipDays = ChronoUnit.DAYS.between(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(12.dp)
+                        .padding(12.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
 
                     Image(
@@ -228,25 +231,25 @@ val relationshipDays = ChronoUnit.DAYS.between(
 
                     Text(
                         text = "هر روز یک خاطره‌ی تازه",
-                        Spacer(modifier = Modifier.height(10.dp))
-
-Text(
-    text = "$relationshipDays روز کنار هم ❤️",
-    fontSize = 20.sp,
-    fontWeight = FontWeight.Bold,
-    color = Color(0xFFE85D75)
-)
-
-Spacer(modifier = Modifier.height(4.dp))
-
-Text(
-    text = "شروع قصه: ۲۰ خرداد ۱۴۰۵",
-    fontSize = 13.sp,
-    color = Color(0xFF795C64)
-)
                         fontSize = 14.sp,
-                        color = Color(0xFF795C64),
-                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                        color = Color(0xFF795C64)
+                    )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Text(
+                        text = "$relationshipDays روز کنار هم ❤️",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFE85D75)
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Text(
+                        text = "شروع قصه: ۲۰ خرداد ۱۴۰۵",
+                        fontSize = 13.sp,
+                        color = Color(0xFF795C64)
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))
