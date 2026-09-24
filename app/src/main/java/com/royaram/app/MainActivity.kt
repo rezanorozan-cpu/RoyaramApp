@@ -67,7 +67,16 @@ data class HomeItem(
 
 @Composable
 private fun RoyaramHome() {
+val startDate = remember {
+    LocalDate.of(2026, 6, 10)
+}
 
+val today = LocalDate.now()
+
+val relationshipDays = ChronoUnit.DAYS.between(
+    startDate,
+    today
+)
     val items = listOf(
         HomeItem(
             "خاطرات ما",
@@ -219,6 +228,22 @@ private fun RoyaramHome() {
 
                     Text(
                         text = "هر روز یک خاطره‌ی تازه",
+                        Spacer(modifier = Modifier.height(10.dp))
+
+Text(
+    text = "$relationshipDays روز کنار هم ❤️",
+    fontSize = 20.sp,
+    fontWeight = FontWeight.Bold,
+    color = Color(0xFFE85D75)
+)
+
+Spacer(modifier = Modifier.height(4.dp))
+
+Text(
+    text = "شروع قصه: ۲۰ خرداد ۱۴۰۵",
+    fontSize = 13.sp,
+    color = Color(0xFF795C64)
+)
                         fontSize = 14.sp,
                         color = Color(0xFF795C64),
                         modifier = Modifier.align(Alignment.CenterHorizontally)
