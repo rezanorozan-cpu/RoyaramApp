@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "855832393887",
+    "project_id": "ghararemon-ecc70",
+    "storage_bucket": "ghararemon-ecc70.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:855832393887:android:4471af64b4bbda77484aaa",
+        "android_client_info": {
+          "package_name": "com.gharar.emon"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDPrKtLl4ciQ7UbL3ivYbVGx3sBf-C39cw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
