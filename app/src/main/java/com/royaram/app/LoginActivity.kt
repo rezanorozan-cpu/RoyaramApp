@@ -2,36 +2,59 @@ package com.royaram.app
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Patterns
 import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Fingerprint
+import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.FavoriteBorder
+import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.Visibility
+import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
@@ -49,13 +72,19 @@ class LoginActivity : FragmentActivity() {
 
         if (auth.currentUser != null) {
             showBiometricPrompt()
-            return
+        } else {
+            showLoginScreen()
         }
+    }
 
+    private fun showLoginScreen() {
         setContent {
             LoginScreen(
                 onLogin = { email, password ->
                     login(email, password)
+                },
+                onForgotPassword = { email ->
+                    resetPassword(email)
                 },
                 onBiometricLogin = {
                     showBiometricPrompt()
@@ -68,12 +97,19 @@ class LoginActivity : FragmentActivity() {
         email: String,
         password: String
     ) {
-        if (email.isBlank() || password.isBlank()) {
-            Toast.makeText(
-                this,
-                "ایمیل و رمز عبور را وارد کن ❤️",
-                Toast.LENGTH_SHORT
-            ).show()
+
+        if (email.isBlank()) {
+            showLoginScreenWithError("ایمیل رو وارد کن ❤️")
+            return
+        }
+
+        if (!Patterns.EMAIL_ADDRESS.matcher(email.trim()).matches()) {
+            showLoginScreenWithError("فرمت ایمیل درست نیست")
+            return
+        }
+
+        if (password.isBlank()) {
+            showLoginScreenWithError("رمز عبور رو وارد کن 🔐")
             return
         }
 
@@ -85,12 +121,63 @@ class LoginActivity : FragmentActivity() {
             if (task.isSuccessful) {
                 openHome()
             } else {
-                Toast.makeText(
-                    this,
-                    "ایمیل یا رمز عبور اشتباه است",
-                    Toast.LENGTH_SHORT
-                ).show()
+                showLoginScreenWithError(
+                    "ایمیل یا رمز عبور اشتباه است"
+                )
             }
+        }
+    }
+
+    private fun resetPassword(email: String) {
+
+        if (email.isBlank()) {
+            showLoginScreenWithError(
+                "اول ایمیلت رو وارد کن 📧"
+            )
+            return
+        }
+
+        if (!Patterns.EMAIL_ADDRESS.matcher(email.trim()).matches()) {
+            showLoginScreenWithError(
+                "فرمت ایمیل درست نیست"
+            )
+            return
+        }
+
+        auth.sendPasswordResetEmail(
+            email.trim()
+        ).addOnCompleteListener { task ->
+
+            if (task.isSuccessful) {
+
+                showLoginScreenWithError(
+                    "لینک تغییر رمز به ایمیلت ارسال شد 📧❤️"
+                )
+
+            } else {
+
+                showLoginScreenWithError(
+                    "ارسال لینک بازیابی انجام نشد"
+                )
+            }
+        }
+    }
+
+    private fun showLoginScreenWithError(message: String) {
+
+        setContent {
+            LoginScreen(
+                initialError = message,
+                onLogin = { email, password ->
+                    login(email, password)
+                },
+                onForgotPassword = { email ->
+                    resetPassword(email)
+                },
+                onBiometricLogin = {
+                    showBiometricPrompt()
+                }
+            )
         }
     }
 
@@ -104,20 +191,23 @@ class LoginActivity : FragmentActivity() {
 
         if (result != BiometricManager.BIOMETRIC_SUCCESS) {
 
-            Toast.makeText(
-                this,
-                "بیومتریک روی این گوشی آماده نیست 🔐",
-                Toast.LENGTH_LONG
-            ).show()
-
             if (auth.currentUser == null) {
-                showLoginScreen()
+                showLoginScreenWithError(
+                    "بیومتریک روی این گوشی آماده نیست"
+                )
+            } else {
+                Toast.makeText(
+                    this,
+                    "بیومتریک در دسترس نیست 🔐",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
 
             return
         }
 
-        val executor = ContextCompat.getMainExecutor(this)
+        val executor =
+            ContextCompat.getMainExecutor(this)
 
         val biometricPrompt = BiometricPrompt(
             this,
@@ -132,7 +222,9 @@ class LoginActivity : FragmentActivity() {
                     if (auth.currentUser != null) {
                         openHome()
                     } else {
-                        showLoginScreen()
+                        showLoginScreenWithError(
+                            "ابتدا با ایمیل و رمز وارد شو ❤️"
+                        )
                     }
                 }
 
@@ -146,13 +238,9 @@ class LoginActivity : FragmentActivity() {
                     )
 
                     if (auth.currentUser == null) {
-                        showLoginScreen()
-                    } else {
-                        Toast.makeText(
-                            this@LoginActivity,
-                            "برای ورود، اثر انگشت را تأیید کن 🔐",
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        showLoginScreenWithError(
+                            "ورود با اثر انگشت لغو شد"
+                        )
                     }
                 }
             }
@@ -160,40 +248,37 @@ class LoginActivity : FragmentActivity() {
 
         val promptInfo =
             BiometricPrompt.PromptInfo.Builder()
-                .setTitle("رویارام ❤️")
-                .setSubtitle("برای ورود، هویت خودت را تأیید کن")
-                .setNegativeButtonText("خروج")
+                .setTitle("ورود به رویارام ❤️")
+                .setSubtitle(
+                    "برای ورود، هویت خودت را تأیید کن"
+                )
+                .setNegativeButtonText("استفاده از رمز عبور")
                 .build()
 
         biometricPrompt.authenticate(promptInfo)
     }
 
-    private fun showLoginScreen() {
-        setContent {
-            LoginScreen(
-                onLogin = { email, password ->
-                    login(email, password)
-                },
-                onBiometricLogin = {
-                    showBiometricPrompt()
-                }
-            )
-        }
-    }
-
     private fun openHome() {
+
         startActivity(
-            Intent(this, MainActivity::class.java)
+            Intent(
+                this,
+                MainActivity::class.java
+            )
         )
+
         finish()
     }
 }
 
 @Composable
 private fun LoginScreen(
+    initialError: String? = null,
     onLogin: (String, String) -> Unit,
+    onForgotPassword: (String) -> Unit,
     onBiometricLogin: () -> Unit
 ) {
+
     var email by remember {
         mutableStateOf("")
     }
@@ -202,121 +287,44 @@ private fun LoginScreen(
         mutableStateOf("")
     }
 
-    LaunchedEffect(Unit) {
-        // صفحه ورود آماده است
+    var passwordVisible by remember {
+        mutableStateOf(false)
     }
 
-    Column(
+    var isLoading by remember {
+        mutableStateOf(false)
+    }
+
+    var errorMessage by remember {
+        mutableStateOf(initialError)
+    }
+
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .background(
                 Brush.verticalGradient(
                     listOf(
-                        Color(0xFFFFE8EF),
-                        Color(0xFFFFF5F8),
+                        Color(0xFFFFDCE6),
+                        Color(0xFFFFEEF3),
                         Color.White
                     )
                 )
             )
-            .padding(24.dp),
-
-        horizontalAlignment = Alignment.CenterHorizontally,
-
-        verticalArrangement = Arrangement.Center
     ) {
 
-        Text(
-            text = "رویارام ❤️",
-            fontSize = 32.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color(0xFF402A30)
-        )
-
-        Spacer(
-            Modifier.height(8.dp)
-        )
-
-        Text(
-            text = "ورود به دنیای دونفره‌ی ما",
-            fontSize = 15.sp,
-            color = Color(0xFF795C64)
-        )
-
-        Spacer(
-            Modifier.height(30.dp)
-        )
-
-        OutlinedTextField(
-            value = email,
-            onValueChange = {
-                email = it
-            },
-            modifier = Modifier.fillMaxWidth(),
-            label = {
-                Text("ایمیل")
-            },
-            singleLine = true
-        )
-
-        Spacer(
-            Modifier.height(12.dp)
-        )
-
-        OutlinedTextField(
-            value = password,
-            onValueChange = {
-                password = it
-            },
-            modifier = Modifier.fillMaxWidth(),
-            label = {
-                Text("رمز عبور")
-            },
-            visualTransformation =
-                PasswordVisualTransformation(),
-            singleLine = true
-        )
-
-        Spacer(
-            Modifier.height(20.dp)
-        )
-
-        Button(
-            onClick = {
-                onLogin(email, password)
-            },
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(55.dp),
-            shape = RoundedCornerShape(18.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFFE85D75)
-            )
-        ) {
-            Text(
-                "ورود با رمز عبور ❤️",
-                fontSize = 17.sp,
-                fontWeight = FontWeight.Bold
-            )
-        }
+                .fillMaxSize()
+                .verticalScroll(
+                    rememberScrollState()
+                )
+                .imePadding()
+                .navigationBarsPadding()
+                .padding(
+                    horizontal = 22.dp,
+                    vertical = 30.dp
+                ),
 
-        Spacer(
-            Modifier.height(12.dp)
-        )
-
-        OutlinedButton(
-            onClick = {
-                onBiometricLogin()
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(55.dp),
-            shape = RoundedCornerShape(18.dp)
-        ) {
-            Text(
-                "ورود با اثر انگشت 🔐",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold
-            )
-        }
-    }
-}
+            horizontalAlignment =
+                Alignment.CenterHoriz
