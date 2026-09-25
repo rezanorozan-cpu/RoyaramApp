@@ -26,9 +26,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Fingerprint
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
+import androidx.compose.material.icons.rounded.Fingerprint
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.Visibility
 import androidx.compose.material.icons.rounded.VisibilityOff
@@ -149,13 +149,10 @@ class LoginActivity : FragmentActivity() {
         ).addOnCompleteListener { task ->
 
             if (task.isSuccessful) {
-
                 showLoginScreenWithError(
                     "لینک تغییر رمز به ایمیلت ارسال شد 📧❤️"
                 )
-
             } else {
-
                 showLoginScreenWithError(
                     "ارسال لینک بازیابی انجام نشد"
                 )
@@ -163,8 +160,9 @@ class LoginActivity : FragmentActivity() {
         }
     }
 
-    private fun showLoginScreenWithError(message: String) {
-
+    private fun showLoginScreenWithError(
+        message: String
+    ) {
         setContent {
             LoginScreen(
                 initialError = message,
@@ -183,11 +181,13 @@ class LoginActivity : FragmentActivity() {
 
     private fun showBiometricPrompt() {
 
-        val biometricManager = BiometricManager.from(this)
+        val biometricManager =
+            BiometricManager.from(this)
 
-        val result = biometricManager.canAuthenticate(
-            BiometricManager.Authenticators.BIOMETRIC_STRONG
-        )
+        val result =
+            biometricManager.canAuthenticate(
+                BiometricManager.Authenticators.BIOMETRIC_STRONG
+            )
 
         if (result != BiometricManager.BIOMETRIC_SUCCESS) {
 
@@ -209,42 +209,44 @@ class LoginActivity : FragmentActivity() {
         val executor =
             ContextCompat.getMainExecutor(this)
 
-        val biometricPrompt = BiometricPrompt(
-            this,
-            executor,
-            object : BiometricPrompt.AuthenticationCallback() {
+        val biometricPrompt =
+            BiometricPrompt(
+                this,
+                executor,
+                object :
+                    BiometricPrompt.AuthenticationCallback() {
 
-                override fun onAuthenticationSucceeded(
-                    result: BiometricPrompt.AuthenticationResult
-                ) {
-                    super.onAuthenticationSucceeded(result)
+                    override fun onAuthenticationSucceeded(
+                        result: BiometricPrompt.AuthenticationResult
+                    ) {
+                        super.onAuthenticationSucceeded(result)
 
-                    if (auth.currentUser != null) {
-                        openHome()
-                    } else {
-                        showLoginScreenWithError(
-                            "ابتدا با ایمیل و رمز وارد شو ❤️"
+                        if (auth.currentUser != null) {
+                            openHome()
+                        } else {
+                            showLoginScreenWithError(
+                                "ابتدا با ایمیل و رمز وارد شو ❤️"
+                            )
+                        }
+                    }
+
+                    override fun onAuthenticationError(
+                        errorCode: Int,
+                        errString: CharSequence
+                    ) {
+                        super.onAuthenticationError(
+                            errorCode,
+                            errString
                         )
+
+                        if (auth.currentUser == null) {
+                            showLoginScreenWithError(
+                                "ورود با اثر انگشت لغو شد"
+                            )
+                        }
                     }
                 }
-
-                override fun onAuthenticationError(
-                    errorCode: Int,
-                    errString: CharSequence
-                ) {
-                    super.onAuthenticationError(
-                        errorCode,
-                        errString
-                    )
-
-                    if (auth.currentUser == null) {
-                        showLoginScreenWithError(
-                            "ورود با اثر انگشت لغو شد"
-                        )
-                    }
-                }
-            }
-        )
+            )
 
         val promptInfo =
             BiometricPrompt.PromptInfo.Builder()
@@ -252,7 +254,9 @@ class LoginActivity : FragmentActivity() {
                 .setSubtitle(
                     "برای ورود، هویت خودت را تأیید کن"
                 )
-                .setNegativeButtonText("استفاده از رمز عبور")
+                .setNegativeButtonText(
+                    "استفاده از رمز عبور"
+                )
                 .build()
 
         biometricPrompt.authenticate(promptInfo)
@@ -291,13 +295,11 @@ private fun LoginScreen(
         mutableStateOf(false)
     }
 
-    var isLoading by remember {
-        mutableStateOf(false)
-    }
-
     var errorMessage by remember {
         mutableStateOf(initialError)
     }
+
+    val scrollState = rememberScrollState()
 
     Box(
         modifier = Modifier
@@ -316,15 +318,328 @@ private fun LoginScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(
-                    rememberScrollState()
-                )
+                .verticalScroll(scrollState)
                 .imePadding()
                 .navigationBarsPadding()
                 .padding(
                     horizontal = 22.dp,
                     vertical = 30.dp
                 ),
-
             horizontalAlignment =
-                Alignment.CenterHoriz
+                Alignment.CenterHorizontally
+        ) {
+
+            Spacer(
+                Modifier.height(20.dp)
+            )
+
+            Box(
+                modifier = Modifier
+                    .size(82.dp)
+                    .clip(CircleShape)
+                    .background(
+                        Color.White.copy(alpha = 0.92f)
+                    ),
+                contentAlignment =
+                    Alignment.Center
+            ) {
+
+                Icon(
+                    Icons.Rounded.Favorite,
+                    contentDescription = null,
+                    tint = Color(0xFFE85D75),
+                    modifier = Modifier.size(42.dp)
+                )
+            }
+
+            Spacer(
+                Modifier.height(18.dp)
+            )
+
+            Text(
+                text = "رویارام",
+                fontSize = 34.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF402A30)
+            )
+
+            Spacer(
+                Modifier.height(6.dp)
+            )
+
+            Text(
+                text = "قصه‌ی من و تو، برای همیشه ❤️",
+                fontSize = 14.sp,
+                color = Color(0xFF795C64)
+            )
+
+            Spacer(
+                Modifier.height(28.dp)
+            )
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(
+                        RoundedCornerShape(30.dp)
+                    )
+                    .background(
+                        Color.White.copy(alpha = 0.96f)
+                    )
+                    .padding(20.dp)
+            ) {
+
+                Row(
+                    verticalAlignment =
+                        Alignment.CenterVertically
+                ) {
+
+                    Box(
+                        modifier = Modifier
+                            .size(42.dp)
+                            .clip(CircleShape)
+                            .background(
+                                Color(0xFFFFE1E9)
+                            ),
+                        contentAlignment =
+                            Alignment.Center
+                    ) {
+
+                        Icon(
+                            Icons.Rounded.Lock,
+                            contentDescription = null,
+                            tint = Color(0xFFE85D75),
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+
+                    Spacer(
+                        Modifier.width(12.dp)
+                    )
+
+                    Column {
+
+                        Text(
+                            "ورود به حساب",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF402A30)
+                        )
+
+                        Text(
+                            "دنیای دونفره‌مون منتظرته",
+                            fontSize = 12.sp,
+                            color = Color(0xFF92777F)
+                        )
+                    }
+                }
+
+                Spacer(
+                    Modifier.height(22.dp)
+                )
+
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = {
+                        email = it
+                        errorMessage = null
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = {
+                        Text("ایمیل")
+                    },
+                    placeholder = {
+                        Text("example@gmail.com")
+                    },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Email
+                    )
+                )
+
+                Spacer(
+                    Modifier.height(13.dp)
+                )
+
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = {
+                        password = it
+                        errorMessage = null
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = {
+                        Text("رمز عبور")
+                    },
+                    singleLine = true,
+                    visualTransformation =
+                        if (passwordVisible) {
+                            VisualTransformation.None
+                        } else {
+                            PasswordVisualTransformation()
+                        },
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Password
+                    ),
+                    trailingIcon = {
+
+                        IconButton(
+                            onClick = {
+                                passwordVisible =
+                                    !passwordVisible
+                            }
+                        ) {
+
+                            Icon(
+                                imageVector =
+                                    if (passwordVisible) {
+                                        Icons.Rounded.VisibilityOff
+                                    } else {
+                                        Icons.Rounded.Visibility
+                                    },
+                                contentDescription =
+                                    null,
+                                tint =
+                                    Color(0xFFE85D75)
+                            )
+                        }
+                    }
+                )
+
+                Spacer(
+                    Modifier.height(8.dp)
+                )
+
+                Text(
+                    text = "رمزم رو فراموش کردم؟",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 5.dp),
+                    textAlign = androidx.compose.ui.text.style.TextAlign.End,
+                    color = Color(0xFFE85D75),
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+
+                if (errorMessage != null) {
+
+                    Spacer(
+                        Modifier.height(12.dp)
+                    )
+
+                    Text(
+                        text = errorMessage!!,
+                        modifier =
+                            Modifier.fillMaxWidth(),
+                        color = Color(0xFFC23B52),
+                        fontSize = 13.sp,
+                        fontWeight =
+                            FontWeight.Medium
+                    )
+                }
+
+                Spacer(
+                    Modifier.height(18.dp)
+                )
+
+                Button(
+                    onClick = {
+                        onLogin(
+                            email,
+                            password
+                        )
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    shape =
+                        RoundedCornerShape(18.dp),
+                    colors =
+                        ButtonDefaults.buttonColors(
+                            containerColor =
+                                Color(0xFFE85D75)
+                        )
+                ) {
+
+                    Text(
+                        "ورود به رویارام ❤️",
+                        fontSize = 16.sp,
+                        fontWeight =
+                            FontWeight.Bold
+                    )
+                }
+
+                Spacer(
+                    Modifier.height(12.dp)
+                )
+
+                OutlinedButton(
+                    onClick =
+                        onBiometricLogin,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(54.dp),
+                    shape =
+                        RoundedCornerShape(18.dp)
+                ) {
+
+                    Icon(
+                        Icons.Rounded.Fingerprint,
+                        contentDescription = null,
+                        tint =
+                            Color(0xFFE85D75),
+                        modifier =
+                            Modifier.size(25.dp)
+                    )
+
+                    Spacer(
+                        Modifier.width(8.dp)
+                    )
+
+                    Text(
+                        "ورود با اثر انگشت",
+                        fontSize = 15.sp,
+                        fontWeight =
+                            FontWeight.Bold,
+                        color =
+                            Color(0xFF402A30)
+                    )
+                }
+            }
+
+            Spacer(
+                Modifier.height(22.dp)
+            )
+
+            Row(
+                verticalAlignment =
+                    Alignment.CenterVertically
+            ) {
+
+                Icon(
+                    Icons.Rounded.FavoriteBorder,
+                    contentDescription = null,
+                    tint =
+                        Color(0xFFE85D75),
+                    modifier =
+                        Modifier.size(17.dp)
+                )
+
+                Spacer(
+                    Modifier.width(6.dp)
+                )
+
+                Text(
+                    "خصوصی و فقط برای ما ❤️",
+                    fontSize = 12.sp,
+                    color =
+                        Color(0xFF92777F)
+                )
+            }
+
+            Spacer(
+                Modifier.height(20.dp)
+            )
+        }
+    }
+}
