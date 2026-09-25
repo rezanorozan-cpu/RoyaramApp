@@ -70,11 +70,11 @@ class LoginActivity : FragmentActivity() {
 
         auth = FirebaseAuth.getInstance()
 
-        if (auth.currentUser != null) {
-            showBiometricPrompt()
-        } else {
-            showLoginScreen()
-        }
+        showLoginScreen()
+
+if (auth.currentUser != null) {
+    showBiometricPrompt()
+}
     }
 
     private fun showLoginScreen() {
@@ -239,11 +239,9 @@ class LoginActivity : FragmentActivity() {
                             errString
                         )
 
-                        if (auth.currentUser == null) {
-                            showLoginScreenWithError(
-                                "ورود با اثر انگشت لغو شد"
-                            )
-                        }
+                        showLoginScreenWithError(
+    "ورود با اثر انگشت لغو شد"
+)
                     }
                 }
             )
