@@ -3,7 +3,6 @@ package com.royaram.app
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
-import androidx.fragment.app.FragmentActivity
 import androidx.activity.compose.setContent
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
@@ -22,6 +21,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -34,6 +34,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.FragmentActivity
 import com.google.firebase.auth.FirebaseAuth
 
 class LoginActivity : FragmentActivity() {
@@ -44,6 +46,11 @@ class LoginActivity : FragmentActivity() {
         super.onCreate(savedInstanceState)
 
         auth = FirebaseAuth.getInstance()
+
+        if (auth.currentUser != null) {
+            showBiometricPrompt()
+            return
+        }
 
         setContent {
             LoginScreen(
@@ -57,8 +64,10 @@ class LoginActivity : FragmentActivity() {
         }
     }
 
-    private fun login(email: String, password: String) {
-
+    private fun login(
+        email: String,
+        password: String
+    ) {
         if (email.isBlank() || password.isBlank()) {
             Toast.makeText(
                 this,
@@ -74,17 +83,8 @@ class LoginActivity : FragmentActivity() {
         ).addOnCompleteListener { task ->
 
             if (task.isSuccessful) {
-
-                Toast.makeText(
-                    this,
-                    "ورود موفق بود ❤️",
-                    Toast.LENGTH_SHORT
-                ).show()
-
                 openHome()
-
             } else {
-
                 Toast.makeText(
                     this,
                     "ایمیل یا رمز عبور اشتباه است",
@@ -98,23 +98,26 @@ class LoginActivity : FragmentActivity() {
 
         val biometricManager = BiometricManager.from(this)
 
-        val canAuthenticate =
-            biometricManager.canAuthenticate(
-                BiometricManager.Authenticators.BIOMETRIC_STRONG
-            )
+        val result = biometricManager.canAuthenticate(
+            BiometricManager.Authenticators.BIOMETRIC_STRONG
+        )
 
-        if (canAuthenticate != BiometricManager.BIOMETRIC_SUCCESS) {
+        if (result != BiometricManager.BIOMETRIC_SUCCESS) {
 
             Toast.makeText(
                 this,
-                "اثر انگشت روی این گوشی آماده نیست 🔐",
-                Toast.LENGTH_SHORT
+                "بیومتریک روی این گوشی آماده نیست 🔐",
+                Toast.LENGTH_LONG
             ).show()
+
+            if (auth.currentUser == null) {
+                showLoginScreen()
+            }
 
             return
         }
 
-        val executor = androidx.core.content.ContextCompat.getMainExecutor(this)
+        val executor = ContextCompat.getMainExecutor(this)
 
         val biometricPrompt = BiometricPrompt(
             this,
@@ -129,11 +132,7 @@ class LoginActivity : FragmentActivity() {
                     if (auth.currentUser != null) {
                         openHome()
                     } else {
-                        Toast.makeText(
-                            this@LoginActivity,
-                            "ابتدا یک‌بار با ایمیل و رمز وارد شو ❤️",
-                            Toast.LENGTH_LONG
-                        ).show()
+                        showLoginScreen()
                     }
                 }
 
@@ -141,24 +140,45 @@ class LoginActivity : FragmentActivity() {
                     errorCode: Int,
                     errString: CharSequence
                 ) {
-                    super.onAuthenticationError(errorCode, errString)
+                    super.onAuthenticationError(
+                        errorCode,
+                        errString
+                    )
 
-                    Toast.makeText(
-                        this@LoginActivity,
-                        "ورود با اثر انگشت لغو شد",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    if (auth.currentUser == null) {
+                        showLoginScreen()
+                    } else {
+                        Toast.makeText(
+                            this@LoginActivity,
+                            "برای ورود، اثر انگشت را تأیید کن 🔐",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
                 }
             }
         )
 
-        val promptInfo = BiometricPrompt.PromptInfo.Builder()
-            .setTitle("ورود به رویارام ❤️")
-            .setSubtitle("اثر انگشت خودت را تأیید کن")
-            .setNegativeButtonText("استفاده از رمز عبور")
-            .build()
+        val promptInfo =
+            BiometricPrompt.PromptInfo.Builder()
+                .setTitle("رویارام ❤️")
+                .setSubtitle("برای ورود، هویت خودت را تأیید کن")
+                .setNegativeButtonText("خروج")
+                .build()
 
         biometricPrompt.authenticate(promptInfo)
+    }
+
+    private fun showLoginScreen() {
+        setContent {
+            LoginScreen(
+                onLogin = { email, password ->
+                    login(email, password)
+                },
+                onBiometricLogin = {
+                    showBiometricPrompt()
+                }
+            )
+        }
     }
 
     private fun openHome() {
@@ -174,13 +194,16 @@ private fun LoginScreen(
     onLogin: (String, String) -> Unit,
     onBiometricLogin: () -> Unit
 ) {
-
     var email by remember {
         mutableStateOf("")
     }
 
     var password by remember {
         mutableStateOf("")
+    }
+
+    LaunchedEffect(Unit) {
+        // صفحه ورود آماده است
     }
 
     Column(
