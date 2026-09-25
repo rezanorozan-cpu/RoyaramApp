@@ -8,6 +8,7 @@ import androidx.activity.compose.setContent
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -509,15 +510,18 @@ private fun LoginScreen(
                 )
 
                 Text(
-                    text = "رمزم رو فراموش کردم؟",
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 5.dp),
-                    textAlign = androidx.compose.ui.text.style.TextAlign.End,
-                    color = Color(0xFFE85D75),
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
+    text = "رمزم رو فراموش کردم؟",
+    modifier = Modifier
+        .fillMaxWidth()
+        .clickable {
+            onForgotPassword(email)
+        }
+        .padding(vertical = 8.dp),
+    textAlign = androidx.compose.ui.text.style.TextAlign.End,
+    color = Color(0xFFE85D75),
+    fontSize = 13.sp,
+    fontWeight = FontWeight.SemiBold
+)
 
                 if (errorMessage != null) {
 
