@@ -1,9 +1,12 @@
 package com.royaram.app
 
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.biometric.BiometricManager
+import androidx.biometric.BiometricPrompt
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -15,8 +18,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,15 +49,16 @@ class LoginActivity : ComponentActivity() {
             LoginScreen(
                 onLogin = { email, password ->
                     login(email, password)
+                },
+                onBiometricLogin = {
+                    showBiometricPrompt()
                 }
             )
         }
     }
 
-    private fun login(
-        email: String,
-        password: String
-    ) {
+    private fun login(email: String, password: String) {
+
         if (email.isBlank() || password.isBlank()) {
             Toast.makeText(
                 this,
@@ -75,23 +81,98 @@ class LoginActivity : ComponentActivity() {
                     Toast.LENGTH_SHORT
                 ).show()
 
-                finish()
+                openHome()
 
             } else {
 
                 Toast.makeText(
                     this,
-                    "ورود ناموفق بود",
+                    "ایمیل یا رمز عبور اشتباه است",
                     Toast.LENGTH_SHORT
                 ).show()
             }
         }
     }
+
+    private fun showBiometricPrompt() {
+
+        val biometricManager = BiometricManager.from(this)
+
+        val canAuthenticate =
+            biometricManager.canAuthenticate(
+                BiometricManager.Authenticators.BIOMETRIC_STRONG
+            )
+
+        if (canAuthenticate != BiometricManager.BIOMETRIC_SUCCESS) {
+
+            Toast.makeText(
+                this,
+                "اثر انگشت روی این گوشی آماده نیست 🔐",
+                Toast.LENGTH_SHORT
+            ).show()
+
+            return
+        }
+
+        val executor = androidx.core.content.ContextCompat.getMainExecutor(this)
+
+        val biometricPrompt = BiometricPrompt(
+            this,
+            executor,
+            object : BiometricPrompt.AuthenticationCallback() {
+
+                override fun onAuthenticationSucceeded(
+                    result: BiometricPrompt.AuthenticationResult
+                ) {
+                    super.onAuthenticationSucceeded(result)
+
+                    if (auth.currentUser != null) {
+                        openHome()
+                    } else {
+                        Toast.makeText(
+                            this@LoginActivity,
+                            "ابتدا یک‌بار با ایمیل و رمز وارد شو ❤️",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                }
+
+                override fun onAuthenticationError(
+                    errorCode: Int,
+                    errString: CharSequence
+                ) {
+                    super.onAuthenticationError(errorCode, errString)
+
+                    Toast.makeText(
+                        this@LoginActivity,
+                        "ورود با اثر انگشت لغو شد",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+        )
+
+        val promptInfo = BiometricPrompt.PromptInfo.Builder()
+            .setTitle("ورود به رویارام ❤️")
+            .setSubtitle("اثر انگشت خودت را تأیید کن")
+            .setNegativeButtonText("استفاده از رمز عبور")
+            .build()
+
+        biometricPrompt.authenticate(promptInfo)
+    }
+
+    private fun openHome() {
+        startActivity(
+            Intent(this, MainActivity::class.java)
+        )
+        finish()
+    }
 }
 
-@androidx.compose.runtime.Composable
+@Composable
 private fun LoginScreen(
-    onLogin: (String, String) -> Unit
+    onLogin: (String, String) -> Unit,
+    onBiometricLogin: () -> Unit
 ) {
 
     var email by remember {
@@ -115,7 +196,9 @@ private fun LoginScreen(
                 )
             )
             .padding(24.dp),
+
         horizontalAlignment = Alignment.CenterHorizontally,
+
         verticalArrangement = Arrangement.Center
     ) {
 
@@ -127,7 +210,7 @@ private fun LoginScreen(
         )
 
         Spacer(
-            modifier = Modifier.height(8.dp)
+            Modifier.height(8.dp)
         )
 
         Text(
@@ -137,7 +220,7 @@ private fun LoginScreen(
         )
 
         Spacer(
-            modifier = Modifier.height(30.dp)
+            Modifier.height(30.dp)
         )
 
         OutlinedTextField(
@@ -153,7 +236,7 @@ private fun LoginScreen(
         )
 
         Spacer(
-            modifier = Modifier.height(12.dp)
+            Modifier.height(12.dp)
         )
 
         OutlinedTextField(
@@ -165,12 +248,13 @@ private fun LoginScreen(
             label = {
                 Text("رمز عبور")
             },
-            visualTransformation = PasswordVisualTransformation(),
+            visualTransformation =
+                PasswordVisualTransformation(),
             singleLine = true
         )
 
         Spacer(
-            modifier = Modifier.height(20.dp)
+            Modifier.height(20.dp)
         )
 
         Button(
@@ -185,10 +269,29 @@ private fun LoginScreen(
                 containerColor = Color(0xFFE85D75)
             )
         ) {
-
             Text(
-                text = "ورود ❤️",
+                "ورود با رمز عبور ❤️",
                 fontSize = 17.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        Spacer(
+            Modifier.height(12.dp)
+        )
+
+        OutlinedButton(
+            onClick = {
+                onBiometricLogin()
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(55.dp),
+            shape = RoundedCornerShape(18.dp)
+        ) {
+            Text(
+                "ورود با اثر انگشت 🔐",
+                fontSize = 16.sp,
                 fontWeight = FontWeight.Bold
             )
         }
