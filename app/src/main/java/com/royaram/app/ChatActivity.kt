@@ -1,8 +1,12 @@
 package com.royaram.app
 
+import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -13,6 +17,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -25,6 +30,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.AttachFile
+import androidx.compose.material.icons.rounded.EmojiEmotions
 import androidx.compose.material.icons.rounded.Favorite
 import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.Send
@@ -45,6 +52,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -52,7 +60,6 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.Locale
 
 data class ChatMessage(
@@ -70,7 +77,9 @@ class ChatActivity : ComponentActivity() {
 
         setContent {
             FirebaseChatScreen(
-                onBack = { finish() }
+                onBack = {
+                    finish()
+                }
             )
         }
     }
@@ -80,8 +89,15 @@ class ChatActivity : ComponentActivity() {
 private fun FirebaseChatScreen(
     onBack: () -> Unit
 ) {
-    val auth = remember { FirebaseAuth.getInstance() }
-    val firestore = remember { FirebaseFirestore.getInstance() }
+    val context = LocalContext.current
+
+    val auth = remember {
+        FirebaseAuth.getInstance()
+    }
+
+    val firestore = remember {
+        FirebaseFirestore.getInstance()
+    }
 
     val currentUser = auth.currentUser
 
@@ -97,56 +113,99 @@ private fun FirebaseChatScreen(
         mutableStateOf(false)
     }
 
+    var showStickers by remember {
+        mutableStateOf(false)
+    }
+
     val listState = rememberLazyListState()
 
-    /*
-     * دریافت زنده پیام‌ها از Firestore
-     */
+    val imagePicker =
+        rememberLauncherForActivityResult(
+            ActivityResultContracts.OpenDocument()
+        ) { uri ->
+
+            if (uri != null) {
+
+                Toast.makeText(
+                    context,
+                    "انتخاب عکس انجام شد ❤️ ارسال عکس را در مرحله بعد وصل می‌کنیم.",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
+
     DisposableEffect(currentUser?.uid) {
 
         if (currentUser == null) {
+
+            Toast.makeText(
+                context,
+                "ابتدا وارد حساب کاربری شوید.",
+                Toast.LENGTH_LONG
+            ).show()
+
             onDispose { }
+
         } else {
 
             val listener = firestore
                 .collection("chatRooms")
                 .document("ramin_roya")
                 .collection("messages")
-                .orderBy("createdAt", Query.Direction.ASCENDING)
+                .orderBy(
+                    "createdAt",
+                    Query.Direction.ASCENDING
+                )
                 .addSnapshotListener { snapshot, error ->
 
                     if (error != null) {
+
+                        Toast.makeText(
+                            context,
+                            "خطای دریافت پیام: ${error.message}",
+                            Toast.LENGTH_LONG
+                        ).show()
+
                         return@addSnapshotListener
                     }
 
                     if (snapshot != null) {
 
-                        val newMessages = snapshot.documents.mapNotNull { document ->
+                        val newMessages =
+                            snapshot.documents.mapNotNull { document ->
 
-                            val text = document.getString("text")
-                                ?: return@mapNotNull null
+                                val text =
+                                    document.getString("text")
+                                        ?: return@mapNotNull null
 
-                            val senderId = document.getString("senderId")
-                                ?: return@mapNotNull null
+                                val senderId =
+                                    document.getString("senderId")
+                                        ?: return@mapNotNull null
 
-                            val createdAt = document.getTimestamp("createdAt")
+                                val createdAt =
+                                    document.getTimestamp("createdAt")
 
-                            val time = if (createdAt != null) {
-                                SimpleDateFormat(
-                                    "HH:mm",
-                                    Locale.getDefault()
-                                ).format(createdAt.toDate())
-                            } else {
-                                "..."
+                                val time =
+                                    if (createdAt != null) {
+
+                                        SimpleDateFormat(
+                                            "HH:mm",
+                                            Locale.getDefault()
+                                        ).format(
+                                            createdAt.toDate()
+                                        )
+
+                                    } else {
+                                        "..."
+                                    }
+
+                                ChatMessage(
+                                    id = document.id,
+                                    text = text,
+                                    senderId = senderId,
+                                    time = time
+                                )
                             }
-
-                            ChatMessage(
-                                id = document.id,
-                                text = text,
-                                senderId = senderId,
-                                time = time
-                            )
-                        }
 
                         messages.clear()
                         messages.addAll(newMessages)
@@ -159,13 +218,13 @@ private fun FirebaseChatScreen(
         }
     }
 
-    /*
-     * رفتن خودکار به آخرین پیام
-     */
     LaunchedEffect(messages.size) {
 
         if (messages.isNotEmpty()) {
-            listState.animateScrollToItem(messages.lastIndex)
+
+            listState.animateScrollToItem(
+                messages.lastIndex
+            )
         }
     }
 
@@ -196,17 +255,21 @@ private fun FirebaseChatScreen(
 
             state = listState,
 
-            verticalArrangement = Arrangement.spacedBy(7.dp),
+            verticalArrangement =
+                Arrangement.spacedBy(7.dp),
 
-            contentPadding = PaddingValues(
-                top = 14.dp,
-                bottom = 14.dp
-            )
+            contentPadding =
+                PaddingValues(
+                    top = 14.dp,
+                    bottom = 14.dp
+                )
         ) {
 
             items(
                 items = messages,
-                key = { it.id }
+                key = {
+                    it.id
+                }
             ) { message ->
 
                 ChatBubble(
@@ -214,6 +277,19 @@ private fun FirebaseChatScreen(
                     myUid = currentUser?.uid
                 )
             }
+        }
+
+        if (showStickers) {
+
+            StickerPanel(
+                onStickerSelected = { sticker ->
+
+                    messageText =
+                        messageText + sticker
+
+                    showStickers = false
+                }
+            )
         }
 
         MessageInput(
@@ -225,23 +301,50 @@ private fun FirebaseChatScreen(
 
             isSending = isSending,
 
+            onAttachmentClick = {
+
+                imagePicker.launch(
+                    arrayOf("image/*")
+                )
+            },
+
+            onStickerClick = {
+
+                showStickers =
+                    !showStickers
+            },
+
             onSend = {
 
-                val text = messageText.trim()
+                val text =
+                    messageText.trim()
 
-                if (
-                    text.isNotEmpty() &&
-                    currentUser != null &&
-                    !isSending
-                ) {
+                if (text.isEmpty()) {
+
+                    Toast.makeText(
+                        context,
+                        "اول یک پیام بنویس ❤️",
+                        Toast.LENGTH_SHORT
+                    ).show()
+
+                } else if (currentUser == null) {
+
+                    Toast.makeText(
+                        context,
+                        "حساب کاربری وارد نشده است.",
+                        Toast.LENGTH_LONG
+                    ).show()
+
+                } else if (!isSending) {
 
                     isSending = true
 
-                    val messageData = hashMapOf(
-                        "text" to text,
-                        "senderId" to currentUser.uid,
-                        "createdAt" to com.google.firebase.firestore.FieldValue.serverTimestamp()
-                    )
+                    val messageData =
+                        hashMapOf(
+                            "text" to text,
+                            "senderId" to currentUser.uid,
+                            "createdAt" to com.google.firebase.firestore.FieldValue.serverTimestamp()
+                        )
 
                     firestore
                         .collection("chatRooms")
@@ -251,12 +354,20 @@ private fun FirebaseChatScreen(
                         .addOnSuccessListener {
 
                             messageText = ""
+
                             isSending = false
 
+                            showStickers = false
                         }
-                        .addOnFailureListener {
+                        .addOnFailureListener { error ->
 
                             isSending = false
+
+                            Toast.makeText(
+                                context,
+                                "ارسال نشد:\n${error.message}",
+                                Toast.LENGTH_LONG
+                            ).show()
                         }
                 }
             }
@@ -271,11 +382,17 @@ private fun ChatHeader(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color.White.copy(alpha = 0.96f))
-            .padding(horizontal = 10.dp, vertical = 10.dp)
+            .background(
+                Color.White.copy(alpha = 0.96f)
+            )
+            .padding(
+                horizontal = 10.dp,
+                vertical = 10.dp
+            )
             .navigationBarsPadding(),
 
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment =
+            Alignment.CenterVertically
     ) {
 
         IconButton(
@@ -293,9 +410,12 @@ private fun ChatHeader(
             modifier = Modifier
                 .size(50.dp)
                 .clip(CircleShape)
-                .background(Color(0xFFFFE1E9)),
+                .background(
+                    Color(0xFFFFE1E9)
+                ),
 
-            contentAlignment = Alignment.Center
+            contentAlignment =
+                Alignment.Center
         ) {
 
             Icon(
@@ -336,7 +456,8 @@ private fun ChatBubble(
     myUid: String?
 ) {
 
-    val isMine = message.senderId == myUid
+    val isMine =
+        message.senderId == myUid
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -394,7 +515,6 @@ private fun ChatBubble(
 
                 Text(
                     text = message.text,
-
                     fontSize = 15.sp,
 
                     color =
@@ -407,7 +527,8 @@ private fun ChatBubble(
             }
 
             Row(
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment =
+                    Alignment.CenterVertically
             ) {
 
                 Text(
@@ -429,9 +550,11 @@ private fun ChatBubble(
                             Icons.Rounded.FavoriteBorder
                         },
 
-                    contentDescription = null,
+                    contentDescription =
+                        "پسندیدن",
 
-                    tint = Color(0xFFE85D75),
+                    tint =
+                        Color(0xFFE85D75),
 
                     modifier = Modifier
                         .size(15.dp)
@@ -443,65 +566,206 @@ private fun ChatBubble(
 }
 
 @Composable
+private fun StickerPanel(
+    onStickerSelected: (String) -> Unit
+) {
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                Color.White
+            )
+            .padding(
+                horizontal = 12.dp,
+                vertical = 10.dp
+            )
+    ) {
+
+        Text(
+            "استیکرهای ما ❤️",
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF402A30)
+        )
+
+        Spacer(
+            Modifier.height(8.dp)
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement =
+                Arrangement.SpaceAround
+        ) {
+
+            StickerItem("❤️", onStickerSelected)
+            StickerItem("🥰", onStickerSelected)
+            StickerItem("😘", onStickerSelected)
+            StickerItem("😍", onStickerSelected)
+            StickerItem("🥹", onStickerSelected)
+            StickerItem("💋", onStickerSelected)
+        }
+
+        Spacer(
+            Modifier.height(8.dp)
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement =
+                Arrangement.SpaceAround
+        ) {
+
+            StickerItem("💕", onStickerSelected)
+            StickerItem("💖", onStickerSelected)
+            StickerItem("🫶", onStickerSelected)
+            StickerItem("🌹", onStickerSelected)
+            StickerItem("💍", onStickerSelected)
+            StickerItem("❤️‍🔥", onStickerSelected)
+        }
+    }
+}
+
+@Composable
+private fun StickerItem(
+    sticker: String,
+    onStickerSelected: (String) -> Unit
+) {
+
+    Box(
+        modifier = Modifier
+            .size(44.dp)
+            .clip(CircleShape)
+            .background(
+                Color(0xFFFFF1F5)
+            )
+            .clickable {
+                onStickerSelected(sticker)
+            },
+
+        contentAlignment =
+            Alignment.Center
+    ) {
+
+        Text(
+            sticker,
+            fontSize = 24.sp
+        )
+    }
+}
+
+@Composable
 private fun MessageInput(
     messageText: String,
     onMessageChange: (String) -> Unit,
     isSending: Boolean,
+    onAttachmentClick: () -> Unit,
+    onStickerClick: () -> Unit,
     onSend: () -> Unit
 ) {
 
-    Row(
+    Column(
         modifier = Modifier
             .fillMaxWidth()
             .background(Color.White)
-            .padding(
-                horizontal = 10.dp,
-                vertical = 8.dp
-            ),
-
-        verticalAlignment = Alignment.CenterVertically
     ) {
 
-        OutlinedTextField(
-            value = messageText,
-
-            onValueChange = onMessageChange,
-
-            modifier = Modifier.weight(1f),
-
-            placeholder = {
-                Text("پیامت رو بنویس ❤️")
-            },
-
-            shape = RoundedCornerShape(24.dp),
-
-            singleLine = true
-        )
-
-        Spacer(
-            Modifier.width(6.dp)
-        )
-
-        IconButton(
-            onClick = onSend,
-
-            enabled =
-                messageText.isNotBlank() &&
-                !isSending,
-
+        Row(
             modifier = Modifier
-                .size(52.dp)
-                .background(
-                    Color(0xFFE85D75),
-                    CircleShape
-                )
+                .fillMaxWidth()
+                .padding(
+                    horizontal = 8.dp,
+                    vertical = 8.dp
+                ),
+
+            verticalAlignment =
+                Alignment.CenterVertically
         ) {
 
-            Icon(
-                Icons.Rounded.Send,
-                contentDescription = "ارسال",
-                tint = Color.White
+            IconButton(
+                onClick = onAttachmentClick,
+                modifier = Modifier.size(45.dp)
+            ) {
+
+                Icon(
+                    Icons.Rounded.AttachFile,
+                    contentDescription = "پیوست",
+                    tint = Color(0xFFE85D75),
+                    modifier = Modifier.size(25.dp)
+                )
+            }
+
+            IconButton(
+                onClick = onStickerClick,
+                modifier = Modifier.size(45.dp)
+            ) {
+
+                Icon(
+                    Icons.Rounded.EmojiEmotions,
+                    contentDescription = "استیکر",
+                    tint = Color(0xFFE85D75),
+                    modifier = Modifier.size(25.dp)
+                )
+            }
+
+            OutlinedTextField(
+                value = messageText,
+
+                onValueChange =
+                    onMessageChange,
+
+                modifier =
+                    Modifier.weight(1f),
+
+                placeholder = {
+                    Text(
+                        "پیامت رو بنویس ❤️"
+                    )
+                },
+
+                shape =
+                    RoundedCornerShape(24.dp),
+
+                singleLine = true,
+
+                enabled = !isSending
             )
+
+            Spacer(
+                Modifier.width(6.dp)
+            )
+
+            IconButton(
+                onClick = onSend,
+
+                enabled =
+                    messageText.isNotBlank() &&
+                    !isSending,
+
+                modifier = Modifier
+                    .size(52.dp)
+                    .background(
+                        if (
+                            messageText.isNotBlank() &&
+                            !isSending
+                        ) {
+                            Color(0xFFE85D75)
+                        } else {
+                            Color(0xFFE8C5CD)
+                        },
+
+                        CircleShape
+                    )
+            ) {
+
+                Icon(
+                    Icons.Rounded.Send,
+                    contentDescription = "ارسال",
+                    tint = Color.White,
+                    modifier = Modifier.size(23.dp)
+                )
+            }
         }
     }
 }
