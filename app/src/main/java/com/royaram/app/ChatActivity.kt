@@ -4,20 +4,18 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -27,16 +25,17 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.AttachFile
 import androidx.compose.material.icons.rounded.EmojiEmotions
 import androidx.compose.material.icons.rounded.Favorite
-import androidx.compose.material.icons.rounded.FavoriteBorder
 import androidx.compose.material.icons.rounded.Send
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -50,28 +49,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
-import com.google.firebase.storage.FirebaseStorage
-import java.text.SimpleDateFormat
-import java.util.Locale
-import java.util.UUID
+import com.google.firebase.firestore.Timestamp
 
 data class ChatMessage(
-    val id: String,
-    val text: String,
-    val senderId: String,
-    val time: String,
-    val type: String = "text",
-    val imageUrl: String? = null
+    val id: String = "",
+    val text: String = "",
+    val senderId: String = "",
+    val createdAt: Timestamp? = null,
+    val type: String = "text"
 )
 
 class ChatActivity : ComponentActivity() {
@@ -80,236 +74,170 @@ class ChatActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            FirebaseChatScreen(
-                onBack = { finish() }
-            )
+            MaterialTheme {
+                Surface(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    ChatScreen()
+                }
+            }
         }
     }
 }
 
 @Composable
-private fun FirebaseChatScreen(
-    onBack: () -> Unit
-) {
+fun ChatScreen() {
+
     val context = LocalContext.current
-
-    val auth = remember {
-        FirebaseAuth.getInstance()
-    }
-
-    val firestore = remember {
-        FirebaseFirestore.getInstance()
-    }
-
-    val storage = remember {
-        FirebaseStorage.getInstance()
-    }
+    val auth = remember { FirebaseAuth.getInstance() }
+    val db = remember { FirebaseFirestore.getInstance() }
 
     val currentUser = auth.currentUser
+
+    var messageText by remember { mutableStateOf("") }
+    var showStickers by remember { mutableStateOf(false) }
+    var isSending by remember { mutableStateOf(false) }
 
     val messages = remember {
         mutableStateListOf<ChatMessage>()
     }
 
-    var messageText by remember {
-        mutableStateOf("")
-    }
-
-    var isSending by remember {
-        mutableStateOf(false)
-    }
-
-    var showStickers by remember {
-        mutableStateOf(false)
-    }
-
     val listState = rememberLazyListState()
 
-    val imagePicker =
-        rememberLauncherForActivityResult(
-            ActivityResultContracts.OpenDocument()
-        ) { uri ->
+    /*
+     * فایل‌ها فعلاً انتخاب می‌شوند.
+     * اتصال آپلود به Firebase Storage را در مرحله بعد اضافه می‌کنیم.
+     */
+    val attachmentLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
 
-            if (uri == null) return@rememberLauncherForActivityResult
-
-            if (currentUser == null) {
-                Toast.makeText(
-                    context,
-                    "حساب کاربری وارد نشده است.",
-                    Toast.LENGTH_LONG
-                ).show()
-                return@rememberLauncherForActivityResult
-            }
-
-            if (isSending) {
-                return@rememberLauncherForActivityResult
-            }
-
-            isSending = true
-
+        if (uri != null) {
             Toast.makeText(
                 context,
-                "در حال ارسال عکس... 📷❤️",
+                "فایل انتخاب شد ❤️",
                 Toast.LENGTH_SHORT
             ).show()
-
-            val fileName =
-                "chat_${currentUser.uid}_${UUID.randomUUID()}.jpg"
-
-            val imageRef =
-                storage.reference
-                    .child("chatImages")
-                    .child(fileName)
-
-            imageRef
-                .putFile(uri)
-                .continueWithTask { task ->
-
-                    if (!task.isSuccessful) {
-                        throw task.exception
-                            ?: Exception("آپلود عکس ناموفق بود")
-                    }
-
-                    imageRef.downloadUrl
-                }
-                .addOnSuccessListener { downloadUri ->
-
-                    val messageData =
-                        hashMapOf(
-                            "text" to "",
-                            "senderId" to currentUser.uid,
-                            "type" to "image",
-                            "imageUrl" to downloadUri.toString(),
-                            "createdAt" to FieldValue.serverTimestamp()
-                        )
-
-                    firestore
-                        .collection("chatRooms")
-                        .document("ramin_roya")
-                        .collection("messages")
-                        .add(messageData)
-                        .addOnSuccessListener {
-
-                            isSending = false
-
-                            Toast.makeText(
-                                context,
-                                "عکس ارسال شد ❤️",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                        .addOnFailureListener { error ->
-
-                            isSending = false
-
-                            Toast.makeText(
-                                context,
-                                "ذخیره پیام عکس نشد:\n${error.message}",
-                                Toast.LENGTH_LONG
-                            ).show()
-                        }
-                }
-                .addOnFailureListener { error ->
-
-                    isSending = false
-
-                    Toast.makeText(
-                        context,
-                        "آپلود عکس انجام نشد:\n${error.message}",
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
         }
+    }
 
+    /*
+     * دریافت لحظه‌ای پیام‌ها از Firestore
+     */
     DisposableEffect(currentUser?.uid) {
 
-        var listenerRegistration:
-            com.google.firebase.firestore.ListenerRegistration? = null
+        val listener = if (currentUser != null) {
 
-        if (currentUser != null) {
+            db.collection("chatRooms")
+                .document("ramin_roya")
+                .collection("messages")
+                .orderBy(
+                    "createdAt",
+                    Query.Direction.ASCENDING
+                )
+                .addSnapshotListener { snapshot, error ->
 
-            listenerRegistration =
-                firestore
-                    .collection("chatRooms")
-                    .document("ramin_roya")
-                    .collection("messages")
-                    .orderBy(
-                        "createdAt",
-                        Query.Direction.ASCENDING
-                    )
-                    .addSnapshotListener { snapshot, error ->
+                    if (error != null) {
 
-                        if (error != null) {
+                        Toast.makeText(
+                            context,
+                            "خطای دریافت پیام: ${error.message}",
+                            Toast.LENGTH_LONG
+                        ).show()
 
-                            Toast.makeText(
-                                context,
-                                "خطای دریافت پیام:\n${error.message}",
-                                Toast.LENGTH_LONG
-                            ).show()
-
-                            return@addSnapshotListener
-                        }
-
-                        val newMessages =
-                            snapshot?.documents?.mapNotNull { document ->
-
-                                val senderId =
-                                    document.getString("senderId")
-                                        ?: return@mapNotNull null
-
-                                val type =
-                                    document.getString("type")
-                                        ?: "text"
-
-                                val text =
-                                    document.getString("text")
-                                        ?: ""
-
-                                val imageUrl =
-                                    document.getString("imageUrl")
-
-                                val timestamp =
-                                    document.getTimestamp("createdAt")
-
-                                val time =
-                                    if (timestamp != null) {
-                                        SimpleDateFormat(
-                                            "HH:mm",
-                                            Locale.getDefault()
-                                        ).format(
-                                            timestamp.toDate()
-                                        )
-                                    } else {
-                                        "..."
-                                    }
-
-                                ChatMessage(
-                                    id = document.id,
-                                    text = text,
-                                    senderId = senderId,
-                                    time = time,
-                                    type = type,
-                                    imageUrl = imageUrl
-                                )
-                            } ?: emptyList()
-
-                        messages.clear()
-                        messages.addAll(newMessages)
+                        return@addSnapshotListener
                     }
+
+                    messages.clear()
+
+                    snapshot?.documents?.forEach { document ->
+
+                        messages.add(
+                            ChatMessage(
+                                id = document.id,
+                                text = document.getString("text") ?: "",
+                                senderId = document.getString("senderId") ?: "",
+                                createdAt = document.getTimestamp("createdAt"),
+                                type = document.getString("type") ?: "text"
+                            )
+                        )
+                    }
+                }
+
+        } else {
+            null
         }
 
         onDispose {
-            listenerRegistration?.remove()
+            listener?.remove()
         }
     }
 
+    /*
+     * اسکرول خودکار به آخرین پیام
+     */
     LaunchedEffect(messages.size) {
 
         if (messages.isNotEmpty()) {
+
             listState.animateScrollToItem(
                 messages.lastIndex
             )
         }
+    }
+
+    /*
+     * ارسال پیام
+     */
+    fun sendMessage() {
+
+        val user = auth.currentUser
+
+        if (user == null) {
+
+            Toast.makeText(
+                context,
+                "ابتدا وارد حساب کاربری شوید.",
+                Toast.LENGTH_SHORT
+            ).show()
+
+            return
+        }
+
+        val cleanText = messageText.trim()
+
+        if (cleanText.isEmpty() || isSending) {
+            return
+        }
+
+        isSending = true
+
+        val message = hashMapOf(
+            "text" to cleanText,
+            "senderId" to user.uid,
+            "createdAt" to FieldValue.serverTimestamp(),
+            "type" to "text"
+        )
+
+        db.collection("chatRooms")
+            .document("ramin_roya")
+            .collection("messages")
+            .add(message)
+            .addOnSuccessListener {
+
+                messageText = ""
+                isSending = false
+            }
+            .addOnFailureListener { error ->
+
+                isSending = false
+
+                Toast.makeText(
+                    context,
+                    "ارسال نشد: ${error.message}",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
     }
 
     Column(
@@ -318,35 +246,28 @@ private fun FirebaseChatScreen(
             .background(
                 Brush.verticalGradient(
                     listOf(
-                        Color(0xFFFFF1F5),
-                        Color(0xFFFFF8FA),
+                        Color(0xFFFFF1F6),
                         Color.White
                     )
                 )
             )
-            .imePadding()
     ) {
 
-        ChatHeader(
-            onBack = onBack
-        )
+        /*
+         * هدر
+         */
+        ChatHeader()
 
+        /*
+         * پیام‌ها
+         */
         LazyColumn(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
                 .padding(horizontal = 12.dp),
-
             state = listState,
-
-            verticalArrangement =
-                Arrangement.spacedBy(7.dp),
-
-            contentPadding =
-                PaddingValues(
-                    top = 14.dp,
-                    bottom = 14.dp
-                )
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
 
             items(
@@ -356,11 +277,14 @@ private fun FirebaseChatScreen(
 
                 ChatBubble(
                     message = message,
-                    myUid = currentUser?.uid
+                    isMine = message.senderId == currentUser?.uid
                 )
             }
         }
 
+        /*
+         * پنل استیکر
+         */
         if (showStickers) {
 
             StickerPanel(
@@ -372,103 +296,329 @@ private fun FirebaseChatScreen(
             )
         }
 
+        /*
+         * ورودی پیام
+         */
         MessageInput(
-            messageText = messageText,
-
-            onMessageChange = {
+            text = messageText,
+            onTextChange = {
                 messageText = it
             },
-
-            isSending = isSending,
-
-            onAttachmentClick = {
-                imagePicker.launch(
-                    arrayOf("image/*")
-                )
+            onSend = {
+                sendMessage()
             },
-
-            onStickerClick = {
+            onSticker = {
                 showStickers = !showStickers
             },
+            onAttachment = {
 
-            onSend = {
-
-                val text =
-                    messageText.trim()
-
-                if (text.isEmpty()) {
-
-                    Toast.makeText(
-                        context,
-                        "اول یک پیام بنویس ❤️",
-                        Toast.LENGTH_SHORT
-                    ).show()
-
-                } else if (currentUser == null) {
-
-                    Toast.makeText(
-                        context,
-                        "حساب کاربری وارد نشده است.",
-                        Toast.LENGTH_LONG
-                    ).show()
-
-                } else if (!isSending) {
-
-                    isSending = true
-
-                    val messageData =
-                        hashMapOf(
-                            "text" to text,
-                            "senderId" to currentUser.uid,
-                            "type" to "text",
-                            "createdAt" to FieldValue.serverTimestamp()
-                        )
-
-                    firestore
-                        .collection("chatRooms")
-                        .document("ramin_roya")
-                        .collection("messages")
-                        .add(messageData)
-                        .addOnSuccessListener {
-
-                            messageText = ""
-                            isSending = false
-                            showStickers = false
-                        }
-                        .addOnFailureListener { error ->
-
-                            isSending = false
-
-                            Toast.makeText(
-                                context,
-                                "ارسال نشد:\n${error.message}",
-                                Toast.LENGTH_LONG
-                            ).show()
-                        }
-                }
-            }
+                attachmentLauncher.launch(
+                    arrayOf(
+                        "image/*",
+                        "audio/*",
+                        "application/pdf",
+                        "text/*"
+                    )
+                )
+            },
+            isSending = isSending
         )
     }
 }
 
+/*
+ * هدر چت
+ */
 @Composable
-private fun ChatHeader(
-    onBack: () -> Unit
-) {
+fun ChatHeader() {
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .background(Color.White)
             .padding(
-                horizontal = 10.dp,
-                vertical = 10.dp
+                horizontal = 18.dp,
+                vertical = 14.dp
             ),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
 
-        verticalAlignment =
-            Alignment.CenterVertically
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(CircleShape)
+                .background(
+                    Color(0xFFFFD7E5)
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+
+            Icon(
+                imageVector = Icons.Rounded.Favorite,
+                contentDescription = null,
+                tint = Color(0xFFE91E63),
+                modifier = Modifier.size(27.dp)
+            )
+        }
+
+        Spacer(
+            modifier = Modifier.width(12.dp)
+        )
+
+        Column {
+
+            Text(
+                text = "رامین و رویا ❤️",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF333333)
+            )
+
+            Text(
+                text = "گفتگوی خصوصی ما",
+                fontSize = 12.sp,
+                color = Color(0xFF999999)
+            )
+        }
+    }
+}
+
+/*
+ * حباب پیام
+ */
+@Composable
+fun ChatBubble(
+    message: ChatMessage,
+    isMine: Boolean
+) {
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = if (isMine) {
+            Arrangement.End
+        } else {
+            Arrangement.Start
+        }
+    ) {
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth(0.82f)
+                .clip(
+                    RoundedCornerShape(
+                        topStart = 18.dp,
+                        topEnd = 18.dp,
+                        bottomStart = if (isMine) 18.dp else 4.dp,
+                        bottomEnd = if (isMine) 4.dp else 18.dp
+                    )
+                )
+                .background(
+                    if (isMine) {
+                        Color(0xFFFFD1E0)
+                    } else {
+                        Color.White
+                    }
+                )
+                .padding(
+                    horizontal = 15.dp,
+                    vertical = 11.dp
+                )
+        ) {
+
+            Text(
+                text = message.text,
+                fontSize = 15.sp,
+                color = Color(0xFF333333),
+                textAlign = if (isMine) {
+                    TextAlign.End
+                } else {
+                    TextAlign.Start
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+}
+
+/*
+ * پنل استیکر
+ */
+@Composable
+fun StickerPanel(
+    onStickerSelected: (String) -> Unit
+) {
+
+    val stickers = listOf(
+        "❤️",
+        "😍",
+        "🥰",
+        "😘",
+        "💕",
+        "💋",
+        "🌹",
+        "🫶",
+        "💖",
+        "💗",
+        "💞",
+        "✨"
+    )
+
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth(),
+        color = Color.White,
+        shadowElevation = 4.dp
+    ) {
+
+        Column(
+            modifier = Modifier.padding(12.dp)
+        ) {
+
+            Text(
+                text = "استیکرهای عاشقانه ❤️",
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFFE91E63),
+                modifier = Modifier.padding(
+                    bottom = 8.dp
+                )
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+
+                stickers.take(6).forEach { sticker ->
+
+                    Text(
+                        text = sticker,
+                        fontSize = 28.sp,
+                        modifier = Modifier
+                            .clickable {
+                                onStickerSelected(sticker)
+                            }
+                            .padding(4.dp)
+                    )
+                }
+            }
+
+            Spacer(
+                modifier = Modifier.height(6.dp)
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+
+                stickers.drop(6).forEach { sticker ->
+
+                    Text(
+                        text = sticker,
+                        fontSize = 28.sp,
+                        modifier = Modifier
+                            .clickable {
+                                onStickerSelected(sticker)
+                            }
+                            .padding(4.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+/*
+ * نوار ورود پیام
+ */
+@Composable
+fun MessageInput(
+    text: String,
+    onTextChange: (String) -> Unit,
+    onSend: () -> Unit,
+    onSticker: () -> Unit,
+    onAttachment: () -> Unit,
+    isSending: Boolean
+) {
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color.White)
+            .padding(
+                horizontal = 8.dp,
+                vertical = 8.dp
+            ),
+        verticalAlignment = Alignment.Bottom
     ) {
 
         IconButton(
-            onClick = onBack
+            onClick = onAttachment
         ) {
-           
+
+            Icon(
+                imageVector = Icons.Rounded.AttachFile,
+                contentDescription = "فایل",
+                tint = Color(0xFFE91E63)
+            )
+        }
+
+        IconButton(
+            onClick = onSticker
+        ) {
+
+            Icon(
+                imageVector = Icons.Rounded.EmojiEmotions,
+                contentDescription = "استیکر",
+                tint = Color(0xFFE91E63)
+            )
+        }
+
+        TextField(
+            value = text,
+            onValueChange = onTextChange,
+            modifier = Modifier.weight(1f),
+            placeholder = {
+                Text(
+                    text = "یه چیزی برای عشقت بنویس ❤️",
+                    fontSize = 13.sp
+                )
+            },
+            singleLine = false,
+            maxLines = 4,
+            shape = RoundedCornerShape(24.dp),
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = Color(0xFFFFF4F7),
+                unfocusedContainerColor = Color(0xFFFFF4F7),
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent
+            )
+        )
+
+        Spacer(
+            modifier = Modifier.width(5.dp)
+        )
+
+        IconButton(
+            onClick = onSend,
+            enabled = text.trim().isNotEmpty() && !isSending,
+            modifier = Modifier
+                .size(50.dp)
+                .clip(CircleShape)
+                .background(
+                    if (text.trim().isNotEmpty() && !isSending) {
+                        Color(0xFFE91E63)
+                    } else {
+                        Color(0xFFFFB6CB)
+                    }
+                )
+        ) {
+
+            Icon(
+                imageVector = Icons.Rounded.Send,
+                contentDescription = "ارسال",
+                tint = Color.White
+            )
+        }
+    }
+}
