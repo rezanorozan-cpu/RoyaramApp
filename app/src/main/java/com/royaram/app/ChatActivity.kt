@@ -58,13 +58,12 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
-import com.google.firebase.firestore.Timestamp
 
 data class ChatMessage(
     val id: String = "",
     val text: String = "",
     val senderId: String = "",
-    val createdAt: Timestamp? = null,
+    val createdAt: Any? = null,
     val type: String = "text"
 )
 
