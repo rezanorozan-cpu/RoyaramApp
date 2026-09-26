@@ -1029,4 +1029,7 @@ private fun MemoryCard(
             )
 
             Text(
-                text = "ثبت
+    text = "ثبت شده توسط ما ❤️",
+    fontSize = 12.sp,
+    color = Color(0xFF9A7A83)
+)
