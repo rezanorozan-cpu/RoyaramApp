@@ -1033,3 +1033,227 @@ private fun MemoryCard(
     fontSize = 12.sp,
     color = Color(0xFF9A7A83)
 )
+        }
+    }
+}
+
+@Composable
+private fun AddMemoryDialog(
+    onDismiss: () -> Unit
+) {
+    val context = LocalContext.current
+
+    val auth = remember {
+        FirebaseAuth.getInstance()
+    }
+
+    val firestore = remember {
+        FirebaseFirestore.getInstance()
+    }
+
+    var title by remember {
+        mutableStateOf("")
+    }
+
+    var date by remember {
+        mutableStateOf("")
+    }
+
+    var description by remember {
+        mutableStateOf("")
+    }
+
+    var saving by remember {
+        mutableStateOf(false)
+    }
+
+    AlertDialog(
+        onDismissRequest = {
+            if (!saving) {
+                onDismiss()
+            }
+        },
+
+        title = {
+            Text(
+                text = "خاطره‌ی جدید ❤️",
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF402A30)
+            )
+        },
+
+        text = {
+            Column {
+
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = {
+                        title = it
+                    },
+
+                    modifier = Modifier.fillMaxWidth(),
+
+                    label = {
+                        Text("عنوان خاطره")
+                    },
+
+                    singleLine = true
+                )
+
+                Spacer(
+                    modifier = Modifier.height(10.dp)
+                )
+
+                OutlinedTextField(
+                    value = date,
+                    onValueChange = {
+                        date = it
+                    },
+
+                    modifier = Modifier.fillMaxWidth(),
+
+                    label = {
+                        Text("تاریخ خاطره")
+                    },
+
+                    placeholder = {
+                        Text("مثلاً ۲۰ خرداد ۱۴۰۵")
+                    },
+
+                    singleLine = true
+                )
+
+                Spacer(
+                    modifier = Modifier.height(10.dp)
+                )
+
+                OutlinedTextField(
+                    value = description,
+                    onValueChange = {
+                        description = it
+                    },
+
+                    modifier = Modifier.fillMaxWidth(),
+
+                    label = {
+                        Text("توضیحات")
+                    },
+
+                    minLines = 3,
+                    maxLines = 5
+                )
+            }
+        },
+
+        confirmButton = {
+
+            Button(
+                onClick = {
+
+                    if (title.isBlank() || date.isBlank()) {
+
+                        Toast.makeText(
+                            context,
+                            "عنوان و تاریخ را وارد کن ❤️",
+                            Toast.LENGTH_SHORT
+                        ).show()
+
+                        return@Button
+                    }
+
+                    val currentUser =
+                        auth.currentUser
+
+                    if (currentUser == null) {
+
+                        Toast.makeText(
+                            context,
+                            "ابتدا وارد حساب کاربری شو",
+                            Toast.LENGTH_SHORT
+                        ).show()
+
+                        return@Button
+                    }
+
+                    saving = true
+
+                    val memory =
+                        hashMapOf(
+                            "title" to title.trim(),
+                            "date" to date.trim(),
+                            "description" to description.trim(),
+                            "createdBy" to currentUser.uid,
+                            "createdAt" to FieldValue.serverTimestamp()
+                        )
+
+                    firestore
+                        .collection("memories")
+                        .add(memory)
+
+                        .addOnSuccessListener {
+
+                            saving = false
+
+                            Toast.makeText(
+                                context,
+                                "خاطره با موفقیت ذخیره شد ❤️",
+                                Toast.LENGTH_SHORT
+                            ).show()
+
+                            onDismiss()
+                        }
+
+                        .addOnFailureListener {
+
+                            saving = false
+
+                            Toast.makeText(
+                                context,
+                                "ذخیره خاطره انجام نشد",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                },
+
+                enabled = !saving,
+
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFE85D75)
+                ),
+
+                shape = RoundedCornerShape(16.dp)
+            ) {
+
+                Text(
+                    text =
+                        if (saving)
+                            "در حال ذخیره..."
+                        else
+                            "ذخیره ❤️"
+                )
+            }
+        },
+
+        dismissButton = {
+
+            OutlinedButton(
+                onClick = {
+                    onDismiss()
+                },
+
+                enabled = !saving,
+
+                shape = RoundedCornerShape(16.dp)
+            ) {
+
+                Text(
+                    text = "انصراف"
+                )
+            }
+        },
+
+        shape = RoundedCornerShape(28.dp),
+
+        containerColor = Color.White
+    )
+}
