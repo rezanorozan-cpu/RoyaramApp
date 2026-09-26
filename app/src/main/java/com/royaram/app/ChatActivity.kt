@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -72,8 +71,7 @@ data class ChatMessage(
     val senderId: String,
     val time: String,
     val type: String = "text",
-    val imageUrl: String? = null,
-    val liked: Boolean = false
+    val imageUrl: String? = null
 )
 
 class ChatActivity : ComponentActivity() {
@@ -83,9 +81,7 @@ class ChatActivity : ComponentActivity() {
 
         setContent {
             FirebaseChatScreen(
-                onBack = {
-                    finish()
-                }
+                onBack = { finish() }
             )
         }
     }
@@ -134,9 +130,7 @@ private fun FirebaseChatScreen(
             ActivityResultContracts.OpenDocument()
         ) { uri ->
 
-            if (uri == null) {
-                return@rememberLauncherForActivityResult
-            }
+            if (uri == null) return@rememberLauncherForActivityResult
 
             if (currentUser == null) {
                 Toast.makeText(
@@ -144,7 +138,6 @@ private fun FirebaseChatScreen(
                     "حساب کاربری وارد نشده است.",
                     Toast.LENGTH_LONG
                 ).show()
-
                 return@rememberLauncherForActivityResult
             }
 
@@ -164,8 +157,7 @@ private fun FirebaseChatScreen(
                 "chat_${currentUser.uid}_${UUID.randomUUID()}.jpg"
 
             val imageRef =
-                storage
-                    .reference
+                storage.reference
                     .child("chatImages")
                     .child(fileName)
 
@@ -231,19 +223,12 @@ private fun FirebaseChatScreen(
 
     DisposableEffect(currentUser?.uid) {
 
-        if (currentUser == null) {
+        var listenerRegistration:
+            com.google.firebase.firestore.ListenerRegistration? = null
 
-            Toast.makeText(
-                context,
-                "ابتدا وارد حساب کاربری شوید.",
-                Toast.LENGTH_LONG
-            ).show()
+        if (currentUser != null) {
 
-            onDispose { }
-
-        } else {
-
-            val listener =
+            listenerRegistration =
                 firestore
                     .collection("chatRooms")
                     .document("ramin_roya")
@@ -258,5 +243,232 @@ private fun FirebaseChatScreen(
 
                             Toast.makeText(
                                 context,
-                                "خطای دریافت پیام: ${error.message}",
-                                Toast
+                                "خطای دریافت پیام:\n${error.message}",
+                                Toast.LENGTH_LONG
+                            ).show()
+
+                            return@addSnapshotListener
+                        }
+
+                        val newMessages =
+                            snapshot?.documents?.mapNotNull { document ->
+
+                                val senderId =
+                                    document.getString("senderId")
+                                        ?: return@mapNotNull null
+
+                                val type =
+                                    document.getString("type")
+                                        ?: "text"
+
+                                val text =
+                                    document.getString("text")
+                                        ?: ""
+
+                                val imageUrl =
+                                    document.getString("imageUrl")
+
+                                val timestamp =
+                                    document.getTimestamp("createdAt")
+
+                                val time =
+                                    if (timestamp != null) {
+                                        SimpleDateFormat(
+                                            "HH:mm",
+                                            Locale.getDefault()
+                                        ).format(
+                                            timestamp.toDate()
+                                        )
+                                    } else {
+                                        "..."
+                                    }
+
+                                ChatMessage(
+                                    id = document.id,
+                                    text = text,
+                                    senderId = senderId,
+                                    time = time,
+                                    type = type,
+                                    imageUrl = imageUrl
+                                )
+                            } ?: emptyList()
+
+                        messages.clear()
+                        messages.addAll(newMessages)
+                    }
+        }
+
+        onDispose {
+            listenerRegistration?.remove()
+        }
+    }
+
+    LaunchedEffect(messages.size) {
+
+        if (messages.isNotEmpty()) {
+            listState.animateScrollToItem(
+                messages.lastIndex
+            )
+        }
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    listOf(
+                        Color(0xFFFFF1F5),
+                        Color(0xFFFFF8FA),
+                        Color.White
+                    )
+                )
+            )
+            .imePadding()
+    ) {
+
+        ChatHeader(
+            onBack = onBack
+        )
+
+        LazyColumn(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp),
+
+            state = listState,
+
+            verticalArrangement =
+                Arrangement.spacedBy(7.dp),
+
+            contentPadding =
+                PaddingValues(
+                    top = 14.dp,
+                    bottom = 14.dp
+                )
+        ) {
+
+            items(
+                items = messages,
+                key = { it.id }
+            ) { message ->
+
+                ChatBubble(
+                    message = message,
+                    myUid = currentUser?.uid
+                )
+            }
+        }
+
+        if (showStickers) {
+
+            StickerPanel(
+                onStickerSelected = { sticker ->
+
+                    messageText += sticker
+                    showStickers = false
+                }
+            )
+        }
+
+        MessageInput(
+            messageText = messageText,
+
+            onMessageChange = {
+                messageText = it
+            },
+
+            isSending = isSending,
+
+            onAttachmentClick = {
+                imagePicker.launch(
+                    arrayOf("image/*")
+                )
+            },
+
+            onStickerClick = {
+                showStickers = !showStickers
+            },
+
+            onSend = {
+
+                val text =
+                    messageText.trim()
+
+                if (text.isEmpty()) {
+
+                    Toast.makeText(
+                        context,
+                        "اول یک پیام بنویس ❤️",
+                        Toast.LENGTH_SHORT
+                    ).show()
+
+                } else if (currentUser == null) {
+
+                    Toast.makeText(
+                        context,
+                        "حساب کاربری وارد نشده است.",
+                        Toast.LENGTH_LONG
+                    ).show()
+
+                } else if (!isSending) {
+
+                    isSending = true
+
+                    val messageData =
+                        hashMapOf(
+                            "text" to text,
+                            "senderId" to currentUser.uid,
+                            "type" to "text",
+                            "createdAt" to FieldValue.serverTimestamp()
+                        )
+
+                    firestore
+                        .collection("chatRooms")
+                        .document("ramin_roya")
+                        .collection("messages")
+                        .add(messageData)
+                        .addOnSuccessListener {
+
+                            messageText = ""
+                            isSending = false
+                            showStickers = false
+                        }
+                        .addOnFailureListener { error ->
+
+                            isSending = false
+
+                            Toast.makeText(
+                                context,
+                                "ارسال نشد:\n${error.message}",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                }
+            }
+        )
+    }
+}
+
+@Composable
+private fun ChatHeader(
+    onBack: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color.White)
+            .padding(
+                horizontal = 10.dp,
+                vertical = 10.dp
+            ),
+
+        verticalAlignment =
+            Alignment.CenterVertically
+    ) {
+
+        IconButton(
+            onClick = onBack
+        ) {
+           
