@@ -57,5 +57,4 @@ dependencies {
     implementation("com.google.firebase:firebase-firestore")
     implementation("com.google.firebase:firebase-storage")
     implementation("androidx.biometric:biometric:1.1.0")
-    implementation("io.github.jan-tennert.supabase:postgrest-kt:3.2.0")
 }
