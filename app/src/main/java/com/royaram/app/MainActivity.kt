@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -250,12 +251,9 @@ private fun RoyaramHome(
                         modifier = Modifier
                             .size(54.dp)
                             .background(
-                                Color.White.copy(
-                                    alpha = 0.9f
-                                ),
+                                Color.White.copy(alpha = 0.9f),
                                 CircleShape
                             ),
-
                         contentAlignment = Alignment.Center
                     ) {
 
@@ -293,7 +291,7 @@ private fun RoyaramHome(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
 
-                        androidx.compose.foundation.Image(
+                        Image(
                             painter = painterResource(
                                 R.drawable.couple_main
                             ),
@@ -397,14 +395,12 @@ private fun RoyaramHome(
                     shape = RoundedCornerShape(22.dp),
 
                     colors = CardDefaults.cardColors(
-                        containerColor =
-                            Color(0xFFFFF0F4)
+                        containerColor = Color(0xFFFFF0F4)
                     ),
 
-                    elevation =
-                        CardDefaults.cardElevation(
-                            defaultElevation = 2.dp
-                        )
+                    elevation = CardDefaults.cardElevation(
+                        defaultElevation = 2.dp
+                    )
                 ) {
 
                     Column(
@@ -469,7 +465,6 @@ private fun RoyaramHome(
                             when (item.title) {
 
                                 "خاطرات ما" -> {
-
                                     onMemoriesClick()
                                 }
 
@@ -483,4 +478,312 @@ private fun RoyaramHome(
                                     )
                                 }
 
-                               
+                                else -> {
+
+                                    Toast.makeText(
+                                        context,
+                                        "این بخش به‌زودی به رویارام اضافه می‌شود ❤️",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun HomeCard(
+    item: HomeItem,
+    onClick: () -> Unit
+) {
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(150.dp)
+            .clickable {
+                onClick()
+            },
+
+        shape = RoundedCornerShape(24.dp),
+
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White.copy(
+                alpha = 0.94f
+            )
+        ),
+
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 4.dp
+        )
+    ) {
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(18.dp),
+
+            verticalArrangement = Arrangement.Center
+        ) {
+
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .background(
+                        Color(0xFFFFE1E9),
+                        CircleShape
+                    ),
+
+                contentAlignment = Alignment.Center
+            ) {
+
+                Icon(
+                    item.icon,
+                    contentDescription = null,
+                    tint = Color(0xFFE85D75),
+                    modifier = Modifier.size(25.dp)
+                )
+            }
+
+            Spacer(
+                Modifier.height(12.dp)
+            )
+
+            Text(
+                item.title,
+                fontSize = 17.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF402A30)
+            )
+
+            Spacer(
+                Modifier.height(4.dp)
+            )
+
+            Text(
+                item.subtitle,
+                fontSize = 12.sp,
+                color = Color(0xFF795C64)
+            )
+        }
+    }
+}
+
+@Composable
+private fun MemoriesScreen(
+    onBack: () -> Unit
+) {
+
+    val auth = remember {
+        FirebaseAuth.getInstance()
+    }
+
+    val firestore = remember {
+        FirebaseFirestore.getInstance()
+    }
+
+    val memories = remember {
+        mutableStateListOf<Memory>()
+    }
+
+    var showAddMemory by remember {
+        mutableStateOf(false)
+    }
+
+    var loading by remember {
+        mutableStateOf(true)
+    }
+
+    DisposableEffect(Unit) {
+
+        val listener = firestore
+            .collection("memories")
+            .orderBy(
+                "createdAt",
+                Query.Direction.DESCENDING
+            )
+            .addSnapshotListener { snapshot, error ->
+
+                if (error != null) {
+                    loading = false
+                    return@addSnapshotListener
+                }
+
+                if (snapshot != null) {
+
+                    val firebaseMemories =
+                        snapshot.documents.mapNotNull { document ->
+
+                            val title =
+                                document.getString("title")
+                                    ?: return@mapNotNull null
+
+                            val date =
+                                document.getString("date")
+                                    ?: return@mapNotNull null
+
+                            val description =
+                                document.getString("description")
+                                    ?: return@mapNotNull null
+
+                            val createdBy =
+                                document.getString("createdBy")
+                                    ?: return@mapNotNull null
+
+                            val createdAt =
+                                document.getTimestamp("createdAt")
+                                    ?.toDate()
+                                    ?.time
+                                    ?: 0L
+
+                            Memory(
+                                id = document.id,
+                                title = title,
+                                date = date,
+                                description = description,
+                                createdBy = createdBy,
+                                createdAt = createdAt
+                            )
+                        }
+
+                    memories.clear()
+                    memories.addAll(
+                        firebaseMemories
+                    )
+                }
+
+                loading = false
+            }
+
+        onDispose {
+            listener.remove()
+        }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    listOf(
+                        Color(0xFFFFE8EF),
+                        Color(0xFFFFF5F8),
+                        Color.White
+                    )
+                )
+            )
+    ) {
+
+        Column(
+            modifier = Modifier.fillMaxSize()
+        ) {
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        start = 16.dp,
+                        top = 26.dp,
+                        end = 16.dp,
+                        bottom = 12.dp
+                    ),
+
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(Color.White)
+                        .clickable {
+                            onBack()
+                        },
+
+                    contentAlignment = Alignment.Center
+                ) {
+
+                    Icon(
+                        Icons.Rounded.ArrowBack,
+                        contentDescription = "بازگشت",
+                        tint = Color(0xFFE85D75),
+                        modifier = Modifier.size(26.dp)
+                    )
+                }
+
+                Spacer(
+                    Modifier.width(14.dp)
+                )
+
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
+
+                    Text(
+                        "خاطرات ما ❤️",
+                        fontSize = 26.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF402A30)
+                    )
+
+                    Text(
+                        "لحظه‌هایی که نمی‌خوایم فراموش کنیم",
+                        fontSize = 13.sp,
+                        color = Color(0xFF795C64)
+                    )
+                }
+
+                IconButton(
+                    onClick = {
+                        showAddMemory = true
+                    },
+
+                    modifier = Modifier
+                        .size(50.dp)
+                        .background(
+                            Color.White,
+                            CircleShape
+                        )
+                ) {
+
+                    Icon(
+                        Icons.Rounded.Add,
+                        contentDescription = "افزودن خاطره",
+                        tint = Color(0xFFE85D75),
+                        modifier = Modifier.size(30.dp)
+                    )
+                }
+            }
+
+            if (loading) {
+
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+
+                    Text(
+                        "در حال دریافت خاطرات... ❤️",
+                        fontSize = 15.sp,
+                        color = Color(0xFF795C64)
+                    )
+                }
+
+            } else if (memories.isEmpty()) {
+
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+
+                    Column(
+                        horizontalAlignment =
+                            Alignment.CenterHorizontally
+                    ) {
+
+                        Icon(
+                            Icons.Rounded.FavoriteBorder,
