@@ -4,8 +4,8 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -26,8 +26,14 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AttachFile
+import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.EmojiEmotions
 import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.Folder
+import androidx.compose.material.icons.rounded.Image
+import androidx.compose.material.icons.rounded.LocationOn
+import androidx.compose.material.icons.rounded.Mic
+import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.Send
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -63,7 +69,6 @@ data class ChatMessage(
     val id: String = "",
     val text: String = "",
     val senderId: String = "",
-    val createdAt: Any? = null,
     val type: String = "text"
 )
 
@@ -95,6 +100,7 @@ fun ChatScreen() {
 
     var messageText by remember { mutableStateOf("") }
     var showStickers by remember { mutableStateOf(false) }
+    var showAttachmentMenu by remember { mutableStateOf(false) }
     var isSending by remember { mutableStateOf(false) }
 
     val messages = remember {
@@ -104,24 +110,55 @@ fun ChatScreen() {
     val listState = rememberLazyListState()
 
     /*
-     * فایل‌ها فعلاً انتخاب می‌شوند.
-     * اتصال آپلود به Firebase Storage را در مرحله بعد اضافه می‌کنیم.
+     * انتخاب عکس
      */
-    val attachmentLauncher = rememberLauncherForActivityResult(
+    val imageLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
 
         if (uri != null) {
             Toast.makeText(
                 context,
-                "فایل انتخاب شد ❤️",
+                "عکس انتخاب شد ❤️",
                 Toast.LENGTH_SHORT
             ).show()
         }
     }
 
     /*
-     * دریافت لحظه‌ای پیام‌ها از Firestore
+     * انتخاب موسیقی
+     */
+    val audioLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+
+        if (uri != null) {
+            Toast.makeText(
+                context,
+                "موسیقی انتخاب شد 🎵",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
+
+    /*
+     * انتخاب فایل
+     */
+    val fileLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+
+        if (uri != null) {
+            Toast.makeText(
+                context,
+                "فایل انتخاب شد 📁",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
+
+    /*
+     * دریافت لحظه‌ای پیام‌ها
      */
     DisposableEffect(currentUser?.uid) {
 
@@ -156,7 +193,6 @@ fun ChatScreen() {
                                 id = document.id,
                                 text = document.getString("text") ?: "",
                                 senderId = document.getString("senderId") ?: "",
-                                createdAt = document.getTimestamp("createdAt"),
                                 type = document.getString("type") ?: "text"
                             )
                         )
@@ -173,7 +209,7 @@ fun ChatScreen() {
     }
 
     /*
-     * اسکرول خودکار به آخرین پیام
+     * اسکرول خودکار
      */
     LaunchedEffect(messages.size) {
 
@@ -252,14 +288,8 @@ fun ChatScreen() {
             )
     ) {
 
-        /*
-         * هدر
-         */
         ChatHeader()
 
-        /*
-         * پیام‌ها
-         */
         LazyColumn(
             modifier = Modifier
                 .weight(1f)
@@ -282,7 +312,68 @@ fun ChatScreen() {
         }
 
         /*
-         * پنل استیکر
+         * منوی حرفه‌ای گیره
+         */
+        if (showAttachmentMenu) {
+
+            AttachmentMenu(
+                onClose = {
+                    showAttachmentMenu = false
+                },
+                onImage = {
+
+                    showAttachmentMenu = false
+
+                    imageLauncher.launch(
+                        arrayOf("image/*")
+                    )
+                },
+                onMusic = {
+
+                    showAttachmentMenu = false
+
+                    audioLauncher.launch(
+                        arrayOf("audio/*")
+                    )
+                },
+                onVoice = {
+
+                    showAttachmentMenu = false
+
+                    Toast.makeText(
+                        context,
+                        "ضبط صدا را در مرحله بعد اضافه می‌کنیم 🎙️",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                },
+                onFile = {
+
+                    showAttachmentMenu = false
+
+                    fileLauncher.launch(
+                        arrayOf(
+                            "application/pdf",
+                            "text/*",
+                            "application/msword",
+                            "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                        )
+                    )
+                },
+                onLocation = {
+
+                    showAttachmentMenu = false
+
+                    Toast.makeText(
+                        context,
+                        "ارسال موقعیت را در مرحله بعد وصل می‌کنیم 📍",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            )
+        }
+
+        /*
+         * استیکرها
          */
         if (showStickers) {
 
@@ -295,9 +386,6 @@ fun ChatScreen() {
             )
         }
 
-        /*
-         * ورودی پیام
-         */
         MessageInput(
             text = messageText,
             onTextChange = {
@@ -308,17 +396,11 @@ fun ChatScreen() {
             },
             onSticker = {
                 showStickers = !showStickers
+                showAttachmentMenu = false
             },
             onAttachment = {
-
-                attachmentLauncher.launch(
-                    arrayOf(
-                        "image/*",
-                        "audio/*",
-                        "application/pdf",
-                        "text/*"
-                    )
-                )
+                showAttachmentMenu = !showAttachmentMenu
+                showStickers = false
             },
             isSending = isSending
         )
@@ -326,7 +408,7 @@ fun ChatScreen() {
 }
 
 /*
- * هدر چت
+ * هدر
  */
 @Composable
 fun ChatHeader() {
@@ -346,9 +428,7 @@ fun ChatHeader() {
             modifier = Modifier
                 .size(48.dp)
                 .clip(CircleShape)
-                .background(
-                    Color(0xFFFFD7E5)
-                ),
+                .background(Color(0xFFFFD7E5)),
             contentAlignment = Alignment.Center
         ) {
 
@@ -440,7 +520,189 @@ fun ChatBubble(
 }
 
 /*
- * پنل استیکر
+ * منوی حرفه‌ای گیره
+ */
+@Composable
+fun AttachmentMenu(
+    onClose: () -> Unit,
+    onImage: () -> Unit,
+    onMusic: () -> Unit,
+    onVoice: () -> Unit,
+    onFile: () -> Unit,
+    onLocation: () -> Unit
+) {
+
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(
+                horizontal = 10.dp,
+                vertical = 6.dp
+            ),
+        shape = RoundedCornerShape(24.dp),
+        color = Color.White,
+        shadowElevation = 8.dp
+    ) {
+
+        Column(
+            modifier = Modifier.padding(14.dp)
+        ) {
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
+
+                    Text(
+                        text = "افزودن به گفت‌وگو ❤️",
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF333333)
+                    )
+
+                    Text(
+                        text = "چیزی برای رویا بفرست",
+                        fontSize = 12.sp,
+                        color = Color(0xFF999999)
+                    )
+                }
+
+                IconButton(
+                    onClick = onClose
+                ) {
+
+                    Icon(
+                        imageVector = Icons.Rounded.Close,
+                        contentDescription = "بستن",
+                        tint = Color(0xFF888888)
+                    )
+                }
+            }
+
+            Spacer(
+                modifier = Modifier.height(8.dp)
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+
+                AttachmentItem(
+                    icon = Icons.Rounded.Image,
+                    title = "عکس",
+                    subtitle = "گالری",
+                    onClick = onImage
+                )
+
+                AttachmentItem(
+                    icon = Icons.Rounded.MusicNote,
+                    title = "موسیقی",
+                    subtitle = "آهنگ",
+                    onClick = onMusic
+                )
+
+                AttachmentItem(
+                    icon = Icons.Rounded.Mic,
+                    title = "صدا",
+                    subtitle = "ویس",
+                    onClick = onVoice
+                )
+            }
+
+            Spacer(
+                modifier = Modifier.height(12.dp)
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+
+                AttachmentItem(
+                    icon = Icons.Rounded.Folder,
+                    title = "فایل",
+                    subtitle = "PDF و...",
+                    onClick = onFile
+                )
+
+                AttachmentItem(
+                    icon = Icons.Rounded.LocationOn,
+                    title = "موقعیت",
+                    subtitle = "لوکیشن",
+                    onClick = onLocation
+                )
+
+                Spacer(
+                    modifier = Modifier.width(82.dp)
+                )
+            }
+        }
+    }
+}
+
+/*
+ * آیتم منوی گیره
+ */
+@Composable
+fun AttachmentItem(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    title: String,
+    subtitle: String,
+    onClick: () -> Unit
+) {
+
+    Column(
+        modifier = Modifier
+            .width(82.dp)
+            .clickable {
+                onClick()
+            }
+            .padding(5.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+
+        Box(
+            modifier = Modifier
+                .size(52.dp)
+                .clip(CircleShape)
+                .background(Color(0xFFFFE3EC)),
+            contentAlignment = Alignment.Center
+        ) {
+
+            Icon(
+                imageVector = icon,
+                contentDescription = title,
+                tint = Color(0xFFE91E63),
+                modifier = Modifier.size(26.dp)
+            )
+        }
+
+        Spacer(
+            modifier = Modifier.height(5.dp)
+        )
+
+        Text(
+            text = title,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF333333)
+        )
+
+        Text(
+            text = subtitle,
+            fontSize = 10.sp,
+            color = Color(0xFF999999)
+        )
+    }
+}
+
+/*
+ * استیکرها
  */
 @Composable
 fun StickerPanel(
@@ -463,8 +725,7 @@ fun StickerPanel(
     )
 
     Surface(
-        modifier = Modifier
-            .fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
         color = Color.White,
         shadowElevation = 4.dp
     ) {
@@ -476,10 +737,11 @@ fun StickerPanel(
             Text(
                 text = "استیکرهای عاشقانه ❤️",
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFFE91E63),
-                modifier = Modifier.padding(
-                    bottom = 8.dp
-                )
+                color = Color(0xFFE91E63)
+            )
+
+            Spacer(
+                modifier = Modifier.height(8.dp)
             )
 
             Row(
@@ -528,7 +790,7 @@ fun StickerPanel(
 }
 
 /*
- * نوار ورود پیام
+ * نوار پیام
  */
 @Composable
 fun MessageInput(
@@ -557,7 +819,7 @@ fun MessageInput(
 
             Icon(
                 imageVector = Icons.Rounded.AttachFile,
-                contentDescription = "فایل",
+                contentDescription = "پیوست",
                 tint = Color(0xFFE91E63)
             )
         }
