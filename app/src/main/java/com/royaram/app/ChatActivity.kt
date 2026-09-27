@@ -110,20 +110,45 @@ fun ChatScreen() {
     val listState = rememberLazyListState()
 
     /*
-     * انتخاب عکس
-     */
-    val imageLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocument()
-    ) { uri ->
+ * انتخاب عکس و آپلود در Supabase
+ */
+val imageLauncher = rememberLauncherForActivityResult(
+    contract = ActivityResultContracts.OpenDocument()
+) { uri ->
 
-        if (uri != null) {
-            Toast.makeText(
-                context,
-                "عکس انتخاب شد ❤️",
-                Toast.LENGTH_SHORT
-            ).show()
+    if (uri != null) {
+
+        Toast.makeText(
+            context,
+            "در حال آپلود عکس... ⏳",
+            Toast.LENGTH_SHORT
+        ).show()
+
+        val fileName =
+            "photo_${System.currentTimeMillis()}"
+
+        val filePath =
+            "chat/ramin_roya/$fileName"
+
+        SupabaseStorage.uploadFile(
+            context = context,
+            fileUri = uri,
+            filePath = filePath
+        ) { success, message ->
+
+            android.os.Handler(
+                android.os.Looper.getMainLooper()
+            ).post {
+
+                Toast.makeText(
+                    context,
+                    message,
+                    Toast.LENGTH_LONG
+                ).show()
+            }
         }
     }
+}
 
     /*
      * انتخاب موسیقی
