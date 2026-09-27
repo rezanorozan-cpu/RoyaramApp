@@ -1,9 +1,11 @@
 package com.royaram.app
 
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,11 +15,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -27,13 +33,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import com.google.firebase.auth.FirebaseAuth
 
@@ -52,21 +62,22 @@ class LoginActivity : FragmentActivity() {
                     RoyaramLoginScreen(
                         onLogin = { email, password, onResult ->
                             loginUser(
-                                email = email,
-                                password = password,
-                                onResult = onResult
+                                email,
+                                password,
+                                onResult
                             )
                         },
                         onForgotPassword = { email, onResult ->
                             resetPassword(
-                                email = email,
-                                onResult = onResult
+                                email,
+                                onResult
                             )
                         },
                         onBiometric = {
                             showBiometricPrompt()
                         },
-                        biometricAvailable = isBiometricAvailable()
+                        biometricAvailable =
+                            isBiometricAvailable()
                     )
                 }
             }
@@ -94,7 +105,10 @@ class LoginActivity : FragmentActivity() {
             password
         )
             .addOnSuccessListener {
-                onResult(true, "ورود موفق بود ❤️")
+                onResult(
+                    true,
+                    "خوش اومدی ❤️"
+                )
                 openHome()
             }
             .addOnFailureListener {
@@ -111,11 +125,16 @@ class LoginActivity : FragmentActivity() {
     ) {
 
         if (email.isBlank()) {
-            onResult(false, "اول ایمیلت را وارد کن")
+            onResult(
+                false,
+                "اول ایمیلت را وارد کن"
+            )
             return
         }
 
-        auth.sendPasswordResetEmail(email.trim())
+        auth.sendPasswordResetEmail(
+            email.trim()
+        )
             .addOnSuccessListener {
                 onResult(
                     true,
@@ -132,11 +151,10 @@ class LoginActivity : FragmentActivity() {
 
     private fun openHome() {
 
-        val intent =
-            android.content.Intent(
-                this,
-                MainActivity::class.java
-            )
+        val intent = Intent(
+            this,
+            MainActivity::class.java
+        )
 
         startActivity(intent)
         finish()
@@ -144,10 +162,10 @@ class LoginActivity : FragmentActivity() {
 
     private fun isBiometricAvailable(): Boolean {
 
-        val biometricManager =
+        val manager =
             BiometricManager.from(this)
 
-        return biometricManager.canAuthenticate(
+        return manager.canAuthenticate(
             BiometricManager.Authenticators.BIOMETRIC_STRONG
         ) == BiometricManager.BIOMETRIC_SUCCESS
     }
@@ -155,9 +173,10 @@ class LoginActivity : FragmentActivity() {
     private fun showBiometricPrompt() {
 
         if (!isBiometricAvailable()) {
+
             Toast.makeText(
                 this,
-                "ورود با اثر انگشت یا تشخیص چهره در این دستگاه در دسترس نیست",
+                "ورود بیومتریک در این دستگاه در دسترس نیست",
                 Toast.LENGTH_LONG
             ).show()
 
@@ -165,13 +184,14 @@ class LoginActivity : FragmentActivity() {
         }
 
         val executor =
-            androidx.core.content.ContextCompat.getMainExecutor(this)
+            ContextCompat.getMainExecutor(this)
 
         val biometricPrompt =
             BiometricPrompt(
                 this,
                 executor,
-                object : BiometricPrompt.AuthenticationCallback() {
+                object :
+                    BiometricPrompt.AuthenticationCallback() {
 
                     override fun onAuthenticationSucceeded(
                         result: BiometricPrompt.AuthenticationResult
@@ -180,7 +200,7 @@ class LoginActivity : FragmentActivity() {
 
                         Toast.makeText(
                             this@LoginActivity,
-                            "ورود با موفقیت انجام شد ❤️",
+                            "ورود موفق بود ❤️",
                             Toast.LENGTH_SHORT
                         ).show()
 
@@ -218,8 +238,10 @@ class LoginActivity : FragmentActivity() {
         val promptInfo =
             BiometricPrompt.PromptInfo.Builder()
                 .setTitle("ورود به رویارام")
-                .setSubtitle("برای ورود، هویت خودت را تأیید کن")
-                .setDescription("این بخش مخصوص رامین و رویاست ❤️")
+                .setSubtitle("برای ورود هویتت را تأیید کن")
+                .setDescription(
+                    "این بخش فقط برای رامین و رویاست ❤️"
+                )
                 .setNegativeButtonText("لغو")
                 .build()
 
@@ -250,7 +272,7 @@ private fun RoyaramLoginScreen(
         mutableStateOf("")
     }
 
-    var isLoading by remember {
+    var loading by remember {
         mutableStateOf(false)
     }
 
@@ -258,212 +280,333 @@ private fun RoyaramLoginScreen(
         mutableStateOf("")
     }
 
-    var messageIsError by remember {
+    var messageError by remember {
         mutableStateOf(false)
     }
 
-    val backgroundBrush =
-        Brush.verticalGradient(
-            colors = listOf(
-                Color(0xFFFFE4EC),
-                Color(0xFFFFF5F8),
-                Color.White
-            )
+    Box(
+        modifier = Modifier.fillMaxSize()
+    ) {
+
+        Image(
+            painter = painterResource(
+                id = R.drawable.couple_main
+            ),
+            contentDescription = "رامین و رویا",
+            modifier = Modifier
+                .fillMaxSize(),
+            contentScale = ContentScale.Crop
         )
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(backgroundBrush)
-            .padding(24.dp),
-        contentAlignment = Alignment.Center
-    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xCC160A10),
+                            Color(0x990F080D),
+                            Color(0xE6000000)
+                        )
+                    )
+                )
+        )
 
         Column(
             modifier = Modifier
-                .fillMaxWidth(),
+                .fillMaxSize()
+                .padding(
+                    horizontal = 22.dp,
+                    vertical = 34.dp
+                ),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
 
-            Text(
-                text = "❤️",
-                fontSize = 58.sp
-            )
+            Box(
+                modifier = Modifier
+                    .size(78.dp)
+                    .clip(
+                        RoundedCornerShape(26.dp)
+                    )
+                    .background(
+                        Color.White.copy(
+                            alpha = 0.18f
+                        )
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+
+                Text(
+                    text = "❤️",
+                    fontSize = 40.sp
+                )
+            }
 
             Spacer(
-                modifier = Modifier.height(12.dp)
+                modifier = Modifier.height(14.dp)
             )
 
             Text(
                 text = "رویارام",
-                style = MaterialTheme.typography.headlineLarge
+                color = Color.White,
+                fontSize = 32.sp,
+                fontWeight = FontWeight.Bold
             )
 
             Spacer(
-                modifier = Modifier.height(6.dp)
+                modifier = Modifier.height(5.dp)
             )
 
             Text(
                 text = "قصه‌ی من و تو، برای همیشه",
-                fontSize = 16.sp,
-                color = Color(0xFF777777)
+                color = Color.White.copy(
+                    alpha = 0.82f
+                ),
+                fontSize = 14.sp
             )
 
             Spacer(
-                modifier = Modifier.height(30.dp)
+                modifier = Modifier.height(28.dp)
             )
 
-            OutlinedTextField(
-                value = email,
-                onValueChange = {
-                    email = it
-                    message = ""
-                },
-                modifier = Modifier.fillMaxWidth(),
-                label = {
-                    Text("ایمیل")
-                },
-                singleLine = true,
-                keyboardOptions =
-                    KeyboardOptions(
-                        keyboardType = KeyboardType.Email
-                    ),
-                enabled = !isLoading,
-                shape = RoundedCornerShape(16.dp)
-            )
-
-            Spacer(
-                modifier = Modifier.height(12.dp)
-            )
-
-            OutlinedTextField(
-                value = password,
-                onValueChange = {
-                    password = it
-                    message = ""
-                },
-                modifier = Modifier.fillMaxWidth(),
-                label = {
-                    Text("رمز عبور")
-                },
-                singleLine = true,
-                visualTransformation =
-                    PasswordVisualTransformation(),
-                keyboardOptions =
-                    KeyboardOptions(
-                        keyboardType = KeyboardType.Password
-                    ),
-                enabled = !isLoading,
-                shape = RoundedCornerShape(16.dp)
-            )
-
-            Spacer(
-                modifier = Modifier.height(18.dp)
-            )
-
-            Button(
-                onClick = {
-
-                    isLoading = true
-                    message = ""
-
-                    onLogin(
-                        email,
-                        password
-                    ) { success, result ->
-
-                        isLoading = false
-                        message = result
-                        messageIsError = !success
-                    }
-                },
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(54.dp),
-                enabled = !isLoading,
-                shape = RoundedCornerShape(16.dp)
+                    .clip(
+                        RoundedCornerShape(28.dp)
+                    )
+                    .background(
+                        Color.White.copy(
+                            alpha = 0.94f
+                        )
+                    )
+                    .padding(22.dp)
             ) {
 
-                if (isLoading) {
-
-                    CircularProgressIndicator(
-                        modifier = Modifier.height(24.dp),
-                        color = Color.White,
-                        strokeWidth = 2.dp
-                    )
-
-                } else {
-
-                    Text(
-                        text = "ورود به رویارام",
-                        fontSize = 16.sp
-                    )
-                }
-            }
-
-            Spacer(
-                modifier = Modifier.height(8.dp)
-            )
-
-            TextButton(
-                onClick = {
-
-                    onForgotPassword(
-                        email
-                    ) { success, result ->
-
-                        message = result
-                        messageIsError = !success
-                    }
-                },
-                enabled = !isLoading
-            ) {
-                Text("رمز عبورم را فراموش کردم")
-            }
-
-            if (biometricAvailable) {
-
-                Spacer(
-                    modifier = Modifier.height(4.dp)
+                Text(
+                    text = "خوش اومدی ❤️",
+                    color = Color(0xFF29202A),
+                    fontSize = 23.sp,
+                    fontWeight = FontWeight.Bold
                 )
 
-                TextButton(
-                    onClick = onBiometric,
-                    enabled = !isLoading
-                ) {
-                    Text(
-                        text = "🔐 ورود با اثر انگشت / چهره"
-                    )
-                }
-            }
+                Spacer(
+                    modifier = Modifier.height(5.dp)
+                )
 
-            if (message.isNotBlank()) {
+                Text(
+                    text = "برای ورود به دنیای دوتایی‌مون وارد شو",
+                    color = Color(0xFF777177),
+                    fontSize = 13.sp
+                )
+
+                Spacer(
+                    modifier = Modifier.height(20.dp)
+                )
+
+                OutlinedTextField(
+                    value = email,
+                    onValueChange = {
+                        email = it
+                        message = ""
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !loading,
+                    singleLine = true,
+                    label = {
+                        Text("ایمیل")
+                    },
+                    placeholder = {
+                        Text("ایمیل خودت را وارد کن")
+                    },
+                    keyboardOptions =
+                        KeyboardOptions(
+                            keyboardType =
+                                KeyboardType.Email
+                        ),
+                    shape =
+                        RoundedCornerShape(16.dp),
+                    colors =
+                        OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor =
+                                Color(0xFFE85D86),
+                            focusedLabelColor =
+                                Color(0xFFE85D86),
+                            cursorColor =
+                                Color(0xFFE85D86)
+                        )
+                )
 
                 Spacer(
                     modifier = Modifier.height(12.dp)
                 )
 
-                Text(
-                    text = message,
-                    color =
-                        if (messageIsError) {
-                            Color(0xFFD32F2F)
-                        } else {
-                            Color(0xFF2E7D32)
-                        },
-                    fontSize = 14.sp
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = {
+                        password = it
+                        message = ""
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !loading,
+                    singleLine = true,
+                    label = {
+                        Text("رمز عبور")
+                    },
+                    placeholder = {
+                        Text("رمز عبور")
+                    },
+                    visualTransformation =
+                        PasswordVisualTransformation(),
+                    keyboardOptions =
+                        KeyboardOptions(
+                            keyboardType =
+                                KeyboardType.Password
+                        ),
+                    shape =
+                        RoundedCornerShape(16.dp),
+                    colors =
+                        OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor =
+                                Color(0xFFE85D86),
+                            focusedLabelColor =
+                                Color(0xFFE85D86),
+                            cursorColor =
+                                Color(0xFFE85D86)
+                        )
                 )
+
+                Spacer(
+                    modifier = Modifier.height(8.dp)
+                )
+
+                TextButton(
+                    onClick = {
+
+                        onForgotPassword(
+                            email
+                        ) { success, result ->
+
+                            message = result
+                            messageError = !success
+                        }
+                    },
+                    enabled = !loading
+                ) {
+
+                    Text(
+                        text = "رمز عبورم را فراموش کردم",
+                        color = Color(0xFFE04F79)
+                    )
+                }
+
+                Spacer(
+                    modifier = Modifier.height(5.dp)
+                )
+
+                Button(
+                    onClick = {
+
+                        loading = true
+                        message = ""
+
+                        onLogin(
+                            email,
+                            password
+                        ) { success, result ->
+
+                            loading = false
+                            message = result
+                            messageError = !success
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    enabled = !loading,
+                    shape =
+                        RoundedCornerShape(17.dp),
+                    colors =
+                        ButtonDefaults.buttonColors(
+                            containerColor =
+                                Color(0xFFE85D86),
+                            contentColor =
+                                Color.White
+                        )
+                ) {
+
+                    if (loading) {
+
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = Color.White,
+                            strokeWidth = 2.5.dp
+                        )
+
+                    } else {
+
+                        Text(
+                            text = "ورود به دنیای ما ❤️",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+
+                if (biometricAvailable) {
+
+                    Spacer(
+                        modifier = Modifier.height(8.dp)
+                    )
+
+                    TextButton(
+                        onClick = onBiometric,
+                        enabled = !loading,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+
+                        Text(
+                            text =
+                                "🔐  ورود با اثر انگشت / چهره",
+                            color =
+                                Color(0xFFB23A62),
+                            fontWeight =
+                                FontWeight.Medium
+                        )
+                    }
+                }
+
+                if (message.isNotBlank()) {
+
+                    Spacer(
+                        modifier = Modifier.height(8.dp)
+                    )
+
+                    Text(
+                        text = message,
+                        modifier = Modifier.fillMaxWidth(),
+                        color =
+                            if (messageError) {
+                                Color(0xFFD32F2F)
+                            } else {
+                                Color(0xFF2E7D32)
+                            },
+                        fontSize = 13.sp
+                    )
+                }
             }
 
             Spacer(
-                modifier = Modifier.height(24.dp)
+                modifier = Modifier.height(20.dp)
             )
 
             Text(
-                text = "فقط برای رامین و رویا ❤️",
-                fontSize = 13.sp,
-                color = Color(0xFF999999)
+                text = "🔒  فضای خصوصی رامین و رویا",
+                color = Color.White.copy(
+                    alpha = 0.85f
+                ),
+                fontSize = 12.sp
             )
         }
     }
