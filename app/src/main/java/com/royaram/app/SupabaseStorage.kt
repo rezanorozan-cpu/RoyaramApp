@@ -2,76 +2,210 @@ package com.royaram.app
 
 import android.content.Context
 import android.net.Uri
-import java.io.IOException
+import com.google.firebase.auth.FirebaseAuth
+import java.io.DataOutputStream
 import java.net.HttpURLConnection
 import java.net.URL
 
 object SupabaseStorage {
 
-    private const val BUCKET = "royaram"
+    private const val FUNCTION_URL =
+        "https://yinitizbfaojyrpqzxvo.supabase.co/functions/v1/smooth-api"
 
     fun uploadFile(
         context: Context,
         fileUri: Uri,
         filePath: String,
-        publishableKey: String,
         onResult: (Boolean, String) -> Unit
     ) {
-        Thread {
-            var connection: HttpURLConnection? = null
 
-            try {
-                val url = URL(
-                    "${SupabaseConfig.URL}/storage/v1/object/$BUCKET/$filePath"
-                )
+        val currentUser = FirebaseAuth.getInstance().currentUser
 
-                connection = url.openConnection() as HttpURLConnection
-                connection.requestMethod = "POST"
-                connection.doOutput = true
-                connection.setRequestProperty(
-                    "apikey",
-                    publishableKey
-                )
-                connection.setRequestProperty(
-                    "Authorization",
-                    "Bearer $publishableKey"
-                )
-                connection.setRequestProperty(
-                    "Content-Type",
-                    context.contentResolver.getType(fileUri)
-                        ?: "application/octet-stream"
-                )
+        if (currentUser == null) {
+            onResult(false, "کاربر وارد حساب نشده است")
+            return
+        }
 
-                val inputStream =
-                    context.contentResolver.openInputStream(fileUri)
-                        ?: throw IOException("Unable to open file")
+        currentUser.getIdToken(false)
+            .addOnSuccessListener { result ->
 
-                inputStream.use { input ->
-                    connection.outputStream.use { output ->
-                        input.copyTo(output)
-                    }
+                val firebaseToken = result.token
+
+                if (firebaseToken.isNullOrBlank()) {
+                    onResult(false, "توکن Firebase دریافت نشد")
+                    return@addOnSuccessListener
                 }
 
-                val success =
-                    connection.responseCode in 200..299
+                Thread {
 
-                val message =
-                    if (success) {
-                        "فایل با موفقیت آپلود شد ❤️"
-                    } else {
-                        "آپلود فایل انجام نشد: ${connection.responseCode}"
+                    var connection: HttpURLConnection? = null
+
+                    try {
+
+                        val contentResolver = context.contentResolver
+
+                        val inputStream =
+                            contentResolver.openInputStream(fileUri)
+                                ?: throw Exception("فایل قابل خواندن نیست")
+
+                        val mimeType =
+                            contentResolver.getType(fileUri)
+                                ?: "application/octet-stream"
+
+                        val fileName =
+                            fileUri.lastPathSegment
+                                ?: "upload_file"
+
+                        val boundary =
+                            "----RoyaramBoundary${System.currentTimeMillis()}"
+
+                        val url = URL(FUNCTION_URL)
+
+                        connection =
+                            url.openConnection() as HttpURLConnection
+
+                        connection.requestMethod = "POST"
+                        connection.doOutput = true
+                        connection.doInput = true
+                        connection.useCaches = false
+
+                        connection.setRequestProperty(
+                            "Authorization",
+                            "Bearer $firebaseToken"
+                        )
+
+                        connection.setRequestProperty(
+                            "Content-Type",
+                            "multipart/form-data; boundary=$boundary"
+                        )
+
+                        val output =
+                            DataOutputStream(connection.outputStream)
+
+                        output.writeBytes(
+                            "--$boundary\r\n"
+                        )
+
+                        output.writeBytes(
+                            "Content-Disposition: form-data; name=\"filePath\"\r\n\r\n"
+                        )
+
+                        output.writeBytes(
+                            filePath
+                        )
+
+                        output.writeBytes("\r\n")
+
+                        output.writeBytes(
+                            "--$boundary\r\n"
+                        )
+
+                        output.writeBytes(
+                            "Content-Disposition: form-data; name=\"contentType\"\r\n\r\n"
+                        )
+
+                        output.writeBytes(
+                            mimeType
+                        )
+
+                        output.writeBytes("\r\n")
+
+                        output.writeBytes(
+                            "--$boundary\r\n"
+                        )
+
+                        output.writeBytes(
+                            "Content-Disposition: form-data; name=\"file\"; filename=\"$fileName\"\r\n"
+                        )
+
+                        output.writeBytes(
+                            "Content-Type: $mimeType\r\n\r\n"
+                        )
+
+                        inputStream.use { input ->
+
+                            val buffer = ByteArray(8192)
+
+                            var bytesRead: Int
+
+                            while (
+                                input.read(buffer)
+                                    .also { bytesRead = it } != -1
+                            ) {
+
+                                output.write(
+                                    buffer,
+                                    0,
+                                    bytesRead
+                                )
+                            }
+                        }
+
+                        output.writeBytes("\r\n")
+
+                        output.writeBytes(
+                            "--$boundary--\r\n"
+                        )
+
+                        output.flush()
+                        output.close()
+
+                        val responseCode =
+                            connection.responseCode
+
+                        val responseText =
+                            try {
+
+                                val stream =
+                                    if (responseCode in 200..299) {
+                                        connection.inputStream
+                                    } else {
+                                        connection.errorStream
+                                    }
+
+                                stream?.bufferedReader()
+                                    ?.use { it.readText() }
+                                    ?: ""
+
+                            } catch (_: Exception) {
+                                ""
+                            }
+
+                        if (responseCode in 200..299) {
+
+                            onResult(
+                                true,
+                                "فایل با موفقیت آپلود شد ❤️"
+                            )
+
+                        } else {
+
+                            onResult(
+                                false,
+                                "آپلود انجام نشد: HTTP $responseCode\n$responseText"
+                            )
+                        }
+
+                    } catch (e: Exception) {
+
+                        onResult(
+                            false,
+                            e.message ?: "خطای ناشناخته در آپلود"
+                        )
+
+                    } finally {
+
+                        connection?.disconnect()
                     }
 
-                onResult(success, message)
+                }.start()
+            }
+            .addOnFailureListener {
 
-            } catch (e: Exception) {
                 onResult(
                     false,
-                    e.message ?: "خطای ناشناخته"
+                    "دریافت توکن Firebase انجام نشد"
                 )
-            } finally {
-                connection?.disconnect()
             }
-        }.start()
     }
 }
