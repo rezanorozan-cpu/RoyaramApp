@@ -1050,4 +1050,496 @@ fun MemoriesScreen(
                 Modifier
                     .fillMaxWidth()
                     .padding(
-                        horizontal = 
+                        horizontal = 16.dp,
+                        vertical = 10.dp
+                    ),
+
+            verticalAlignment =
+                Alignment.CenterVertically,
+
+            horizontalArrangement =
+                Arrangement.SpaceBetween
+        ) {
+
+            TextButton(
+                onClick = onBack
+            ) {
+
+                Text(
+                    text = "← بازگشت",
+                    color = DeepPink
+                )
+            }
+
+            Text(
+                text = "خاطرات ما ❤️",
+                fontSize = 21.sp,
+                fontWeight =
+                    FontWeight.Bold,
+                color = TextDark
+            )
+
+            IconButton(
+                onClick = {
+                    showAddDialog = true
+                }
+            ) {
+
+                Icon(
+                    imageVector =
+                        Icons.Default.Favorite,
+                    contentDescription =
+                        "افزودن خاطره",
+                    tint = Pink
+                )
+            }
+        }
+
+        if (memories.isEmpty()) {
+
+            Box(
+
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .padding(30.dp),
+
+                contentAlignment =
+                    Alignment.Center
+            ) {
+
+                Column(
+                    horizontalAlignment =
+                        Alignment.CenterHorizontally
+                ) {
+
+                    Text(
+                        text = "🌷",
+                        fontSize = 55.sp
+                    )
+
+                    Spacer(
+                        modifier =
+                            Modifier.height(12.dp)
+                    )
+
+                    Text(
+                        text =
+                            "هنوز خاطره‌ای ثبت نشده",
+                        fontSize = 19.sp,
+                        fontWeight =
+                            FontWeight.Bold,
+                        color = TextDark
+                    )
+
+                    Spacer(
+                        modifier =
+                            Modifier.height(8.dp)
+                    )
+
+                    Text(
+                        text =
+                            "اولین خاطره‌ی قشنگمون رو ثبت کنیم؟ ❤️",
+                        fontSize = 13.sp,
+                        color = SoftText,
+                        textAlign =
+                            TextAlign.Center
+                    )
+
+                    Spacer(
+                        modifier =
+                            Modifier.height(18.dp)
+                    )
+
+                    Button(
+                        onClick = {
+                            showAddDialog = true
+                        },
+                        colors =
+                            ButtonDefaults.buttonColors(
+                                containerColor = Pink
+                            )
+                    ) {
+
+                        Text(
+                            text = "افزودن اولین خاطره"
+                        )
+                    }
+                }
+            }
+
+        } else {
+
+            LazyColumn(
+
+                modifier =
+                    Modifier.fillMaxSize(),
+
+                contentPadding =
+                    PaddingValues(
+                        start = 16.dp,
+                        end = 16.dp,
+                        top = 5.dp,
+                        bottom = 30.dp
+                    ),
+
+                verticalArrangement =
+                    Arrangement.spacedBy(14.dp)
+            ) {
+
+                items(memories) { memory ->
+
+                    MemoryCard(
+                        memory = memory
+                    )
+                }
+            }
+        }
+    }
+
+    if (showAddDialog) {
+
+        AddMemoryDialog(
+
+            onDismiss = {
+                showAddDialog = false
+            },
+
+            onSaved = {
+                showAddDialog = false
+            }
+        )
+    }
+}
+
+@Composable
+private fun MemoryCard(
+    memory: Memory
+) {
+
+    Card(
+
+        modifier =
+            Modifier.fillMaxWidth(),
+
+        shape =
+            RoundedCornerShape(26.dp),
+
+        colors =
+            CardDefaults.cardColors(
+                containerColor = Color.White
+            ),
+
+        elevation =
+            CardDefaults.cardElevation(
+                defaultElevation = 5.dp
+            )
+    ) {
+
+        Column(
+            modifier =
+                Modifier.padding(18.dp)
+        ) {
+
+            if (memory.imageUrl.isNotBlank()) {
+
+                AsyncImage(
+
+                    model =
+                        memory.imageUrl,
+
+                    contentDescription =
+                        memory.title,
+
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .height(190.dp)
+                            .clip(
+                                RoundedCornerShape(20.dp)
+                            ),
+
+                    contentScale =
+                        ContentScale.Crop
+                )
+
+                Spacer(
+                    modifier =
+                        Modifier.height(14.dp)
+                )
+            }
+
+            Row(
+                verticalAlignment =
+                    Alignment.CenterVertically
+            ) {
+
+                Box(
+
+                    modifier =
+                        Modifier
+                            .size(45.dp)
+                            .clip(
+                                RoundedCornerShape(15.dp)
+                            )
+                            .background(
+                                LightPink
+                            ),
+
+                    contentAlignment =
+                        Alignment.Center
+                ) {
+
+                    Text(
+                        text = "❤️",
+                        fontSize = 22.sp
+                    )
+                }
+
+                Spacer(
+                    modifier =
+                        Modifier.width(12.dp)
+                )
+
+                Column(
+                    modifier =
+                        Modifier.weight(1f)
+                ) {
+
+                    Text(
+                        text =
+                            memory.title.ifBlank {
+                                "یک خاطره‌ی قشنگ"
+                            },
+                        fontSize = 18.sp,
+                        fontWeight =
+                            FontWeight.Bold,
+                        color = TextDark
+                    )
+
+                    if (memory.date.isNotBlank()) {
+
+                        Text(
+                            text =
+                                memory.date,
+                            fontSize = 11.sp,
+                            color = Pink
+                        )
+                    }
+                }
+            }
+
+            if (memory.description.isNotBlank()) {
+
+                Spacer(
+                    modifier =
+                        Modifier.height(12.dp)
+                )
+
+                Text(
+                    text =
+                        memory.description,
+                    fontSize = 13.sp,
+                    lineHeight = 22.sp,
+                    color = SoftText
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun AddMemoryDialog(
+    onDismiss: () -> Unit,
+    onSaved: () -> Unit
+) {
+
+    var title by remember {
+        mutableStateOf("")
+    }
+
+    var date by remember {
+        mutableStateOf("")
+    }
+
+    var description by remember {
+        mutableStateOf("")
+    }
+
+    var saving by remember {
+        mutableStateOf(false)
+    }
+
+    val auth =
+        FirebaseAuth.getInstance()
+
+    val db =
+        FirebaseFirestore.getInstance()
+
+    AlertDialog(
+
+        onDismissRequest = {
+            if (!saving) {
+                onDismiss()
+            }
+        },
+
+        title = {
+
+            Text(
+                text = "خاطره‌ی جدید ❤️",
+                fontWeight =
+                    FontWeight.Bold
+            )
+        },
+
+        text = {
+
+            Column {
+
+                OutlinedTextField(
+
+                    value = title,
+
+                    onValueChange = {
+                        title = it
+                    },
+
+                    modifier =
+                        Modifier.fillMaxWidth(),
+
+                    singleLine = true,
+
+                    label = {
+                        Text("عنوان خاطره")
+                    }
+                )
+
+                Spacer(
+                    modifier =
+                        Modifier.height(10.dp)
+                )
+
+                OutlinedTextField(
+
+                    value = date,
+
+                    onValueChange = {
+                        date = it
+                    },
+
+                    modifier =
+                        Modifier.fillMaxWidth(),
+
+                    singleLine = true,
+
+                    label = {
+                        Text("تاریخ")
+                    },
+
+                    placeholder = {
+                        Text("مثلاً ۱۴۰۵/۰۳/۲۰")
+                    }
+                )
+
+                Spacer(
+                    modifier =
+                        Modifier.height(10.dp)
+                )
+
+                OutlinedTextField(
+
+                    value = description,
+
+                    onValueChange = {
+                        description = it
+                    },
+
+                    modifier =
+                        Modifier.fillMaxWidth(),
+
+                    minLines = 4,
+
+                    label = {
+                        Text("توضیح خاطره")
+                    }
+                )
+            }
+        },
+
+        confirmButton = {
+
+            Button(
+
+                onClick = {
+
+                    if (
+                        title.isBlank() ||
+                        description.isBlank()
+                    ) {
+                        return@Button
+                    }
+
+                    val user =
+                        auth.currentUser
+                            ?: return@Button
+
+                    saving = true
+
+                    val data =
+                        hashMapOf(
+                            "title" to title.trim(),
+                            "date" to date.trim(),
+                            "description" to description.trim(),
+                            "createdBy" to user.uid,
+                            "createdAt" to
+                                    FieldValue.serverTimestamp()
+                        )
+
+                    db.collection("memories")
+                        .add(data)
+                        .addOnSuccessListener {
+
+                            saving = false
+                            onSaved()
+                        }
+                        .addOnFailureListener {
+
+                            saving = false
+                        }
+                },
+
+                enabled = !saving,
+
+                colors =
+                    ButtonDefaults.buttonColors(
+                        containerColor = Pink
+                    )
+            ) {
+
+                Text(
+                    text =
+                        if (saving) {
+                            "در حال ذخیره..."
+                        } else {
+                            "ذخیره ❤️"
+                        }
+                )
+            }
+        },
+
+        dismissButton = {
+
+            TextButton(
+                onClick = onDismiss,
+                enabled = !saving
+            ) {
+
+                Text(
+                    text = "لغو",
+                    color = SoftText
+                )
+            }
+        }
+    )
+}
