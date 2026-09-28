@@ -8,8 +8,8 @@ import android.os.Looper
 import android.util.Patterns
 import android.widget.Toast
 
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
+import androidx.fragment.app.FragmentActivity
+import android.activity.compose.setContent
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.compose.foundation.background
@@ -53,8 +53,7 @@ import androidx.compose.ui.unit.sp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthException
 
-class LoginActivity : ComponentActivity() {
-
+class LoginActivity : FragmentActivity() {
     private lateinit var auth: FirebaseAuth
 
     private val prefsName =
