@@ -62,19 +62,27 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthException
 
 
 class LoginActivity : FragmentActivity() {
 
-    private val PREFS_NAME = "royaram_security"
-    private val KEY_SECURE_LOGIN = "secure_login_enabled"
-
     private lateinit var auth: FirebaseAuth
 
-    override fun onCreate(savedInstanceState: Bundle?) {
+    private val PREFS_NAME =
+        "royaram_security"
+
+    private val KEY_SECURE_LOGIN =
+        "secure_login_enabled"
+
+
+    override fun onCreate(
+        savedInstanceState: Bundle?
+    ) {
         super.onCreate(savedInstanceState)
 
-        auth = FirebaseAuth.getInstance()
+        auth =
+            FirebaseAuth.getInstance()
 
         setContentView(
             androidx.compose.ui.platform.ComposeView(this).apply {
@@ -83,7 +91,10 @@ class LoginActivity : FragmentActivity() {
 
                     RoyaramLoginScreen(
 
-                        onLogin = { email, password, onResult ->
+                        onLogin = {
+                                email,
+                                password,
+                                onResult ->
 
                             loginUser(
                                 email,
@@ -92,7 +103,9 @@ class LoginActivity : FragmentActivity() {
                             )
                         },
 
-                        onForgotPassword = { email, onResult ->
+                        onForgotPassword = {
+                                email,
+                                onResult ->
 
                             resetPassword(
                                 email,
@@ -100,131 +113,12 @@ class LoginActivity : FragmentActivity() {
                             )
                         },
 
-                        private fun showBiometricPrompt() {
-
-    val currentUser =
-        auth.currentUser
-
-    if (currentUser == null) {
-
-        Toast.makeText(
-            this,
-            "اول با ایمیل و رمز وارد شو ❤️",
-            Toast.LENGTH_LONG
-        ).show()
-
-        return
-    }
-
-    if (!isSecureDeviceAuthenticationAvailable()) {
-
-        Toast.makeText(
-            this,
-            "قفل امن گوشی فعال نیست",
-            Toast.LENGTH_LONG
-        ).show()
-
-        return
-    }
-
-    val executor =
-        ContextCompat.getMainExecutor(this)
-
-    val biometricPrompt =
-        BiometricPrompt(
-            this,
-            executor,
-
-            object :
-                BiometricPrompt.AuthenticationCallback() {
-
-                override fun onAuthenticationSucceeded(
-                    result: BiometricPrompt.AuthenticationResult
-                ) {
-
-                    super.onAuthenticationSucceeded(
-                        result
-                    )
-
-                    if (auth.currentUser != null) {
-
-                        Toast.makeText(
-                            this@LoginActivity,
-                            "خوش اومدی ❤️",
-                            Toast.LENGTH_SHORT
-                        ).show()
-
-                        openHome()
-
-                    } else {
-
-                        Toast.makeText(
-                            this@LoginActivity,
-                            "نشست ورود پیدا نشد؛ با ایمیل و رمز وارد شو.",
-                            Toast.LENGTH_LONG
-                        ).show()
-                    }
-                }
-
-                override fun onAuthenticationError(
-                    errorCode: Int,
-                    errString: CharSequence
-                ) {
-
-                    super.onAuthenticationError(
-                        errorCode,
-                        errString
-                    )
-
-                    Toast.makeText(
-                        this@LoginActivity,
-                        errString.toString(),
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-
-                override fun onAuthenticationFailed() {
-
-                    super.onAuthenticationFailed()
-
-                    Toast.makeText(
-                        this@LoginActivity,
-                        "تأیید انجام نشد، دوباره امتحان کن",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            }
-        )
-
-    val promptInfo =
-        BiometricPrompt.PromptInfo.Builder()
-
-            .setTitle(
-                "ورود امن به رویارام"
-            )
-
-            .setSubtitle(
-                "اثر انگشت، چهره یا قفل گوشی"
-            )
-
-            .setDescription(
-                "برای ورود به فضای خصوصی رامین و رویا ❤️"
-            )
-
-            .setAllowedAuthenticators(
-                BiometricManager.Authenticators.BIOMETRIC_STRONG or
-                        BiometricManager.Authenticators.DEVICE_CREDENTIAL
-            )
-
-            .build()
-
-    biometricPrompt.authenticate(
-        promptInfo
-    )
-}
+                        onBiometric = {
+                            showBiometricPrompt()
+                        },
 
                         biometricAvailable =
-                             isSecureDeviceAuthenticationAvailable()
+                            isSecureDeviceAuthenticationAvailable()
                     )
                 }
             }
@@ -232,13 +126,60 @@ class LoginActivity : FragmentActivity() {
     }
 
 
+    /*
+     * بررسی می‌کند آیا دستگاه یکی از روش‌های
+     * احراز هویت امن را دارد:
+     *
+     * اثر انگشت
+     * چهره
+     * PIN
+     * Pattern
+     * Password گوشی
+     */
+    private fun isSecureDeviceAuthenticationAvailable(): Boolean {
+
+        val manager =
+            BiometricManager.from(this)
+
+        val authenticators =
+            BiometricManager.Authenticators.BIOMETRIC_STRONG or
+                    BiometricManager.Authenticators.DEVICE_CREDENTIAL
+
+        return manager.canAuthenticate(
+            authenticators
+        ) ==
+                BiometricManager.BIOMETRIC_SUCCESS
+    }
+
+
+    /*
+     * بررسی می‌کند ورود امن قبلاً فعال شده یا نه.
+     */
+    private fun isSecureLoginEnabled(): Boolean {
+
+        return getSharedPreferences(
+            PREFS_NAME,
+            MODE_PRIVATE
+        ).getBoolean(
+            KEY_SECURE_LOGIN,
+            false
+        )
+    }
+
+
+    /*
+     * ورود با ایمیل و رمز عبور
+     */
     private fun loginUser(
         email: String,
         password: String,
         onResult: (Boolean, String) -> Unit
     ) {
 
-        if (email.isBlank()) {
+        val cleanEmail =
+            email.trim()
+
+        if (cleanEmail.isBlank()) {
 
             onResult(
                 false,
@@ -259,54 +200,89 @@ class LoginActivity : FragmentActivity() {
         }
 
         auth.signInWithEmailAndPassword(
-            email.trim(),
+            cleanEmail,
             password
         )
             .addOnSuccessListener {
 
-    getSharedPreferences(
-        PREFS_NAME,
-        MODE_PRIVATE
-    )
-        .edit()
-        .putBoolean(
-            KEY_SECURE_LOGIN,
-            true
-        )
-        .apply()
-
-    onResult(
-        true,
-        "ورود موفق بود ❤️"
-    )
-
-    openHome()
-}
+                /*
+                 * بعد از اولین ورود موفق،
+                 * ورود امن دستگاه فعال می‌شود.
+                 *
+                 * رمز عبور ذخیره نمی‌شود.
+                 */
+                getSharedPreferences(
+                    PREFS_NAME,
+                    MODE_PRIVATE
+                )
+                    .edit()
+                    .putBoolean(
+                        KEY_SECURE_LOGIN,
+                        true
+                    )
+                    .apply()
 
                 onResult(
                     true,
-                    "خوش اومدی ❤️"
+                    "ورود موفق بود ❤️"
                 )
 
                 openHome()
             }
 
-            .addOnFailureListener {
+            .addOnFailureListener { error ->
+
+                val message =
+                    when (
+                        (error as? FirebaseAuthException)
+                            ?.errorCode
+                    ) {
+
+                        "ERROR_INVALID_EMAIL" ->
+                            "فرمت ایمیل درست نیست"
+
+                        "ERROR_INVALID_CREDENTIAL" ->
+                            "ایمیل یا رمز عبور صحیح نیست"
+
+                        "ERROR_WRONG_PASSWORD" ->
+                            "رمز عبور صحیح نیست"
+
+                        "ERROR_USER_NOT_FOUND" ->
+                            "حسابی با این ایمیل پیدا نشد"
+
+                        "ERROR_USER_DISABLED" ->
+                            "این حساب غیرفعال شده است"
+
+                        "ERROR_TOO_MANY_REQUESTS" ->
+                            "تلاش‌های زیادی انجام شده. کمی بعد دوباره امتحان کن"
+
+                        "ERROR_NETWORK_REQUEST_FAILED" ->
+                            "اتصال اینترنت برقرار نیست"
+
+                        else ->
+                            "ورود انجام نشد. دوباره امتحان کن"
+                    }
 
                 onResult(
                     false,
-                    "ایمیل یا رمز عبور اشتباه است"
+                    message
                 )
             }
     }
 
 
+    /*
+     * بازیابی رمز عبور
+     */
     private fun resetPassword(
         email: String,
         onResult: (Boolean, String) -> Unit
     ) {
 
-        if (email.isBlank()) {
+        val cleanEmail =
+            email.trim()
+
+        if (cleanEmail.isBlank()) {
 
             onResult(
                 false,
@@ -317,26 +293,51 @@ class LoginActivity : FragmentActivity() {
         }
 
         auth.sendPasswordResetEmail(
-            email.trim()
+            cleanEmail
         )
             .addOnSuccessListener {
 
                 onResult(
                     true,
-                    "لینک بازیابی رمز عبور ارسال شد ❤️"
+                    "لینک بازیابی رمز ارسال شد ❤️\nایمیل اصلی و پوشه Spam را هم بررسی کن."
                 )
             }
 
-            .addOnFailureListener {
+            .addOnFailureListener { error ->
+
+                val message =
+                    when (
+                        (error as? FirebaseAuthException)
+                            ?.errorCode
+                    ) {
+
+                        "ERROR_INVALID_EMAIL" ->
+                            "فرمت ایمیل درست نیست"
+
+                        "ERROR_USER_NOT_FOUND" ->
+                            "حسابی با این ایمیل پیدا نشد"
+
+                        "ERROR_NETWORK_REQUEST_FAILED" ->
+                            "اتصال اینترنت برقرار نیست"
+
+                        "ERROR_TOO_MANY_REQUESTS" ->
+                            "درخواست‌های زیادی ارسال شده. کمی بعد دوباره امتحان کن"
+
+                        else ->
+                            "ارسال لینک بازیابی انجام نشد. دوباره امتحان کن"
+                    }
 
                 onResult(
                     false,
-                    "ارسال لینک بازیابی انجام نشد"
+                    message
                 )
             }
     }
 
 
+    /*
+     * باز کردن صفحه اصلی
+     */
     private fun openHome() {
 
         val intent =
@@ -351,28 +352,33 @@ class LoginActivity : FragmentActivity() {
     }
 
 
-    private fun isSecureDeviceAuthenticationAvailable(): Boolean {
-
-    val manager =
-        BiometricManager.from(this)
-
-    val authenticators =
-        BiometricManager.Authenticators.BIOMETRIC_STRONG or
-                BiometricManager.Authenticators.DEVICE_CREDENTIAL
-
-    return manager.canAuthenticate(
-        authenticators
-    ) == BiometricManager.BIOMETRIC_SUCCESS
-}
-
-
+    /*
+     * ورود امن با اثر انگشت،
+     * چهره یا قفل خود گوشی
+     */
     private fun showBiometricPrompt() {
 
-        if (!isBiometricAvailable()) {
+        val currentUser =
+            auth.currentUser
+
+        if (currentUser == null) {
 
             Toast.makeText(
                 this,
-                "ورود بیومتریک در این دستگاه در دسترس نیست",
+                "اول با ایمیل و رمز وارد شو ❤️",
+                Toast.LENGTH_LONG
+            ).show()
+
+            return
+        }
+
+        if (
+            !isSecureDeviceAuthenticationAvailable()
+        ) {
+
+            Toast.makeText(
+                this,
+                "قفل امن گوشی فعال نیست",
                 Toast.LENGTH_LONG
             ).show()
 
@@ -398,13 +404,26 @@ class LoginActivity : FragmentActivity() {
                             result
                         )
 
-                        Toast.makeText(
-                            this@LoginActivity,
-                            "ورود موفق بود ❤️",
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        if (
+                            auth.currentUser != null
+                        ) {
 
-                        openHome()
+                            Toast.makeText(
+                                this@LoginActivity,
+                                "خوش اومدی ❤️",
+                                Toast.LENGTH_SHORT
+                            ).show()
+
+                            openHome()
+
+                        } else {
+
+                            Toast.makeText(
+                                this@LoginActivity,
+                                "نشست ورود پیدا نشد؛ با ایمیل و رمز وارد شو.",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
                     }
 
 
@@ -432,7 +451,7 @@ class LoginActivity : FragmentActivity() {
 
                         Toast.makeText(
                             this@LoginActivity,
-                            "تشخیص انجام نشد، دوباره امتحان کن",
+                            "تأیید انجام نشد، دوباره امتحان کن",
                             Toast.LENGTH_SHORT
                         ).show()
                     }
@@ -444,19 +463,20 @@ class LoginActivity : FragmentActivity() {
             BiometricPrompt.PromptInfo.Builder()
 
                 .setTitle(
-                    "ورود به رویارام"
+                    "ورود امن به رویارام"
                 )
 
                 .setSubtitle(
-                    "برای ورود هویتت را تأیید کن"
+                    "اثر انگشت، چهره یا قفل گوشی"
                 )
 
                 .setDescription(
-                    "این بخش فقط برای رامین و رویاست ❤️"
+                    "برای ورود به فضای خصوصی رامین و رویا ❤️"
                 )
 
-                .setNegativeButtonText(
-                    "لغو"
+                .setAllowedAuthenticators(
+                    BiometricManager.Authenticators.BIOMETRIC_STRONG or
+                            BiometricManager.Authenticators.DEVICE_CREDENTIAL
                 )
 
                 .build()
@@ -469,6 +489,9 @@ class LoginActivity : FragmentActivity() {
 }
 
 
+/*
+ * صفحه ورود رویارام
+ */
 @Composable
 private fun RoyaramLoginScreen(
 
@@ -514,14 +537,16 @@ private fun RoyaramLoginScreen(
 
 
     Box(
-        modifier = Modifier.fillMaxSize()
+        modifier =
+            Modifier.fillMaxSize()
     ) {
 
-
         Image(
+
             painter =
                 painterResource(
-                    id = R.drawable.couple_main
+                    id =
+                        R.drawable.couple_main
                 ),
 
             contentDescription =
@@ -536,19 +561,23 @@ private fun RoyaramLoginScreen(
 
 
         Box(
+
             modifier =
                 Modifier
                     .fillMaxSize()
                     .background(
+
                         Brush.verticalGradient(
-                            colors = listOf(
 
-                                Color(0xCC160A10),
+                            colors =
+                                listOf(
 
-                                Color(0x990F080D),
+                                    Color(0xCC160A10),
 
-                                Color(0xE6000000)
-                            )
+                                    Color(0x990F080D),
+
+                                    Color(0xE6000000)
+                                )
                         )
                     )
         )
@@ -605,7 +634,8 @@ private fun RoyaramLoginScreen(
 
             Text(
 
-                text = "رویارام",
+                text =
+                    "رویارام",
 
                 color =
                     Color.White,
@@ -992,7 +1022,9 @@ private fun RoyaramLoginScreen(
                 }
 
 
-                if (biometricAvailable) {
+                if (
+                    biometricAvailable
+                ) {
 
                     Spacer(
                         modifier =
@@ -1015,7 +1047,7 @@ private fun RoyaramLoginScreen(
                         Text(
 
                             text =
-                                "🔐  ورود با اثر انگشت / چهره",
+                                "🔐  ورود با اثر انگشت / چهره / رمز گوشی",
 
                             color =
                                 Color(0xFFB23A62),
@@ -1027,7 +1059,9 @@ private fun RoyaramLoginScreen(
                 }
 
 
-                if (message.isNotBlank()) {
+                if (
+                    message.isNotBlank()
+                ) {
 
                     Spacer(
                         modifier =
