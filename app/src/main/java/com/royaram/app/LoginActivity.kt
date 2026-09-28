@@ -9,7 +9,8 @@ import android.util.Patterns
 import android.widget.Toast
 
 import androidx.fragment.app.FragmentActivity
-import android.activity.compose.setContent
+import androidx.compose.ui.platform.ComposeView
+import androidx.activity.compose.setContent
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.compose.foundation.background
@@ -72,9 +73,13 @@ class LoginActivity : FragmentActivity() {
         auth =
             FirebaseAuth.getInstance()
 
+        setContentView(
+    ComposeView(this).apply {
         setContent {
             LoginScreen()
         }
+    }
+)
 
         /*
          * اگر قبلاً وارد حساب شده‌ای،
