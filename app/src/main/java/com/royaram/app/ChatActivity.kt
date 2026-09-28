@@ -4,10 +4,13 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.provider.OpenableColumns
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -30,7 +33,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AttachFile
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.ErrorOutline
@@ -38,34 +40,30 @@ import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.InsertDriveFile
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SmallTopAppBar
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberTopAppBarState
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -96,14 +94,6 @@ class ChatActivity : ComponentActivity() {
 
 private const val CHAT_ROOM = "ramin_roya"
 
-private enum class MessageType {
-    TEXT,
-    IMAGE,
-    VIDEO,
-    AUDIO,
-    FILE
-}
-
 private enum class LocalMessageStatus {
     SENDING,
     SENT,
@@ -124,15 +114,20 @@ private data class ChatMessage(
     val localStatus: LocalMessageStatus? = null
 )
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun RoyaramChatScreen() {
 
     val context = LocalContext.current
-    val auth = remember { FirebaseAuth.getInstance() }
-    val firestore = remember { FirebaseFirestore.getInstance() }
+    val auth = remember {
+        FirebaseAuth.getInstance()
+    }
 
-    val currentUserId = auth.currentUser?.uid ?: ""
+    val firestore = remember {
+        FirebaseFirestore.getInstance()
+    }
+
+    val currentUserId =
+        auth.currentUser?.uid ?: ""
 
     val messages = remember {
         mutableStateListOf<ChatMessage>()
@@ -146,19 +141,13 @@ private fun RoyaramChatScreen() {
         mutableStateOf(false)
     }
 
-    var selectedFileUri by remember {
-        mutableStateOf<Uri?>(null)
-    }
-
-    var isSending by remember {
-        mutableStateOf(false)
-    }
-
-    val listState = rememberLazyListState()
+    val listState =
+        rememberLazyListState()
 
     val filePicker =
         rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.OpenDocument()
+            contract =
+                ActivityResultContracts.OpenDocument()
         ) { uri ->
 
             if (uri == null) {
@@ -166,14 +155,15 @@ private fun RoyaramChatScreen() {
             }
 
             try {
-                context.contentResolver.takePersistableUriPermission(
-                    uri,
-                    Intent.FLAG_GRANT_READ_URI_PERMISSION
-                )
+
+                context.contentResolver
+                    .takePersistableUriPermission(
+                        uri,
+                        Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    )
+
             } catch (_: Exception) {
             }
-
-            selectedFileUri = uri
 
             uploadFileToChat(
                 context = context,
@@ -187,6 +177,7 @@ private fun RoyaramChatScreen() {
     LaunchedEffect(Unit) {
 
         if (currentUserId.isBlank()) {
+
             Toast.makeText(
                 context,
                 "لطفاً ابتدا وارد حساب شوید",
@@ -207,6 +198,7 @@ private fun RoyaramChatScreen() {
             .addSnapshotListener { snapshot, error ->
 
                 if (error != null) {
+
                     Toast.makeText(
                         context,
                         "خطا در دریافت پیام‌ها",
@@ -249,29 +241,34 @@ private fun RoyaramChatScreen() {
                                 document.getLong("fileSize")
                                     ?: 0L,
                             createdAt =
-                                document.getTimestamp("createdAt"),
+                                document.getTimestamp(
+                                    "createdAt"
+                                ),
                             localStatus =
                                 LocalMessageStatus.SENT
                         )
                     }
 
-                messages.removeAll {
-                    it.localStatus != null &&
-                        it.localStatus != LocalMessageStatus.SENDING &&
-                        it.localStatus != LocalMessageStatus.FAILED
-                }
+                val localPending =
+                    messages.filter {
+                        it.localStatus ==
+                                LocalMessageStatus.SENDING ||
+                                it.localStatus ==
+                                LocalMessageStatus.FAILED
+                    }
 
-                messages.addAll(remoteMessages)
-
-                val unique =
-                    messages
-                        .distinctBy { it.id }
+                val merged =
+                    (remoteMessages + localPending)
+                        .distinctBy {
+                            it.id
+                        }
                         .sortedBy {
-                            it.createdAt?.seconds ?: 0L
+                            it.createdAt?.seconds
+                                ?: 0L
                         }
 
                 messages.clear()
-                messages.addAll(unique)
+                messages.addAll(merged)
             }
     }
 
@@ -289,7 +286,7 @@ private fun RoyaramChatScreen() {
 
         topBar = {
 
-            SmallTopAppBar(
+            TopAppBar(
 
                 title = {
 
@@ -297,7 +294,8 @@ private fun RoyaramChatScreen() {
 
                         Text(
                             text = "رامین ❤️ رویا",
-                            fontWeight = FontWeight.Bold
+                            fontWeight =
+                                FontWeight.Bold
                         )
 
                         Text(
@@ -315,45 +313,37 @@ private fun RoyaramChatScreen() {
                     ) {
 
                         Icon(
-                            imageVector = Icons.Default.MoreVert,
-                            contentDescription = "بیشتر"
+                            imageVector =
+                                Icons.Default.MoreVert,
+                            contentDescription =
+                                "بیشتر"
                         )
                     }
-                },
-
-                colors =
-                    TopAppBarDefaults
-                        .smallTopAppBarColors(
-                            containerColor =
-                                Color(0xFFFFF4F7)
-                        )
+                }
             )
         },
 
         bottomBar = {
 
             ChatInputBar(
-
                 text = messageText,
-
                 onTextChange = {
                     messageText = it
                 },
-
                 onAttachClick = {
                     showAttachmentMenu = true
                 },
-
                 onSendClick = {
 
-                    if (
-                        messageText.trim().isNotEmpty()
-                    ) {
+                    val text =
+                        messageText.trim()
+
+                    if (text.isNotEmpty()) {
 
                         sendTextMessage(
                             firestore = firestore,
                             auth = auth,
-                            text = messageText.trim(),
+                            text = text,
                             messages = messages
                         )
 
@@ -412,12 +402,15 @@ private fun RoyaramChatScreen() {
 
                     items(
                         items = messages,
-                        key = { it.id }
+                        key = {
+                            it.id
+                        }
                     ) { message ->
 
                         ChatMessageBubble(
                             message = message,
-                            currentUserId = currentUserId,
+                            currentUserId =
+                                currentUserId,
                             context = context
                         )
                     }
@@ -458,8 +451,10 @@ private fun RoyaramChatScreen() {
 private fun EmptyChat() {
 
     Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
+        modifier =
+            Modifier.fillMaxSize(),
+        contentAlignment =
+            Alignment.Center
     ) {
 
         Column(
@@ -478,9 +473,11 @@ private fun EmptyChat() {
             )
 
             Text(
-                text = "اینجا جای حرف‌های من و توئه",
+                text =
+                    "اینجا جای حرف‌های من و توئه",
                 fontSize = 18.sp,
-                fontWeight = FontWeight.Bold
+                fontWeight =
+                    FontWeight.Bold
             )
 
             Spacer(
@@ -489,7 +486,8 @@ private fun EmptyChat() {
             )
 
             Text(
-                text = "اولین پیام رو بفرست 🌹",
+                text =
+                    "اولین پیام رو بفرست 🌹",
                 color = Color.Gray
             )
         }
@@ -504,86 +502,82 @@ private fun ChatInputBar(
     onSendClick: () -> Unit
 ) {
 
-    Surface(
+    Row(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .navigationBarsPadding(),
-        shadowElevation = 8.dp,
-        color = Color.White
+                .navigationBarsPadding()
+                .background(Color.White)
+                .padding(
+                    horizontal = 8.dp,
+                    vertical = 8.dp
+                ),
+        verticalAlignment =
+            Alignment.CenterVertically
     ) {
 
-        Row(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        horizontal = 8.dp,
-                        vertical = 8.dp
-                    ),
-            verticalAlignment =
-                Alignment.CenterVertically
+        IconButton(
+            onClick = onAttachClick
         ) {
 
-            IconButton(
-                onClick = onAttachClick
+            Icon(
+                imageVector =
+                    Icons.Default.AttachFile,
+                contentDescription =
+                    "پیوست"
+            )
+        }
+
+        OutlinedTextField(
+
+            value = text,
+
+            onValueChange =
+                onTextChange,
+
+            modifier =
+                Modifier.weight(1f),
+
+            placeholder = {
+                Text(
+                    text = "پیامت رو بنویس..."
+                )
+            },
+
+            maxLines = 4,
+
+            shape =
+                RoundedCornerShape(24.dp)
+        )
+
+        Spacer(
+            modifier =
+                Modifier.width(6.dp)
+        )
+
+        IconButton(
+            onClick = onSendClick
+        ) {
+
+            Box(
+                modifier =
+                    Modifier
+                        .size(46.dp)
+                        .clip(CircleShape)
+                        .background(
+                            Color(0xFFE91E63)
+                        ),
+                contentAlignment =
+                    Alignment.Center
             ) {
 
                 Icon(
                     imageVector =
-                        Icons.Default.AttachFile,
-                    contentDescription = "پیوست"
+                        Icons.Default.Send,
+                    contentDescription =
+                        "ارسال",
+                    tint = Color.White
                 )
-            }
-
-            androidx.compose.material3.OutlinedTextField(
-
-                value = text,
-
-                onValueChange = onTextChange,
-
-                modifier =
-                    Modifier
-                        .weight(1f),
-
-                placeholder = {
-                    Text("پیامت رو بنویس...")
-                },
-
-                maxLines = 4,
-
-                shape =
-                    RoundedCornerShape(24.dp)
-            )
-
-            Spacer(
-                modifier =
-                    Modifier.width(6.dp)
-            )
-
-            IconButton(
-                onClick = onSendClick
-            ) {
-
-                Box(
-                    modifier =
-                        Modifier
-                            .size(46.dp)
-                            .clip(CircleShape)
-                            .background(
-                                Color(0xFFE91E63)
-                            ),
-                    contentAlignment =
-                        Alignment.Center
-                ) {
-
-                    Icon(
-                        imageVector =
-                            Icons.Default.Send,
-                        contentDescription = "ارسال",
-                        tint = Color.White
-                    )
-                }
             }
         }
     }
@@ -617,35 +611,43 @@ private fun ChatMessageBubble(
                     Alignment.Start
         ) {
 
-            Surface(
-                shape =
-                    RoundedCornerShape(
-                        topStart = 18.dp,
-                        topEnd = 18.dp,
-                        bottomStart =
-                            if (isMine) 18.dp else 4.dp,
-                        bottomEnd =
-                            if (isMine) 4.dp else 18.dp
-                    ),
-                color =
-                    if (isMine)
-                        Color(0xFFFFD9E5)
-                    else
-                        Color.White,
-                shadowElevation = 2.dp
+            Box(
+                modifier =
+                    Modifier
+                        .clip(
+                            RoundedCornerShape(
+                                topStart = 18.dp,
+                                topEnd = 18.dp,
+                                bottomStart =
+                                    if (isMine)
+                                        18.dp
+                                    else
+                                        4.dp,
+                                bottomEnd =
+                                    if (isMine)
+                                        4.dp
+                                    else
+                                        18.dp
+                            )
+                        )
+                        .background(
+                            if (isMine)
+                                Color(0xFFFFD9E5)
+                            else
+                                Color.White
+                        )
+                        .padding(10.dp)
             ) {
 
-                Column(
-                    modifier =
-                        Modifier.padding(10.dp)
-                ) {
+                Column {
 
                     when (message.type.uppercase()) {
 
                         "TEXT" -> {
 
                             Text(
-                                text = message.text,
+                                text =
+                                    message.text,
                                 fontSize = 16.sp
                             )
                         }
@@ -653,8 +655,7 @@ private fun ChatMessageBubble(
                         "IMAGE" -> {
 
                             ImageMessageContent(
-                                message = message,
-                                context = context
+                                message = message
                             )
                         }
 
@@ -720,7 +721,9 @@ private fun ChatMessageBubble(
 
                                     CircularProgressIndicator(
                                         modifier =
-                                            Modifier.size(11.dp),
+                                            Modifier.size(
+                                                11.dp
+                                            ),
                                         strokeWidth = 1.5.dp
                                     )
                                 }
@@ -733,7 +736,9 @@ private fun ChatMessageBubble(
                                         contentDescription =
                                             "خطا",
                                         modifier =
-                                            Modifier.size(14.dp),
+                                            Modifier.size(
+                                                14.dp
+                                            ),
                                         tint =
                                             Color.Red
                                     )
@@ -759,38 +764,15 @@ private fun ChatMessageBubble(
                 LocalMessageStatus.FAILED
             ) {
 
-                Row(
-                    verticalAlignment =
-                        Alignment.CenterVertically
-                ) {
-
-                    Text(
-                        text = "ارسال نشد",
-                        color = Color.Red,
-                        fontSize = 11.sp
-                    )
-
-                    Spacer(
-                        modifier =
-                            Modifier.width(4.dp)
-                    )
-
-                    Text(
-                        text = "تلاش دوباره",
-                        color =
-                            Color(0xFFE91E63),
-                        fontSize = 11.sp,
-                        fontWeight =
-                            FontWeight.Bold,
-                        modifier =
-                            Modifier.clickable {
-                                retryMessage(
-                                    message,
-                                    context
-                                )
-                            }
-                    )
-                }
+                Text(
+                    text = "ارسال نشد",
+                    color = Color.Red,
+                    fontSize = 11.sp,
+                    modifier =
+                        Modifier.padding(
+                            top = 2.dp
+                        )
+                )
             }
         }
     }
@@ -798,15 +780,19 @@ private fun ChatMessageBubble(
 
 @Composable
 private fun ImageMessageContent(
-    message: ChatMessage,
-    context: Context
+    message: ChatMessage
 ) {
 
     if (message.localUri.isNotBlank()) {
 
         AsyncImage(
-            model = message.localUri.toUri(),
-            contentDescription = message.fileName,
+
+            model =
+                message.localUri.toUri(),
+
+            contentDescription =
+                message.fileName,
+
             modifier =
                 Modifier
                     .size(
@@ -816,7 +802,9 @@ private fun ImageMessageContent(
                     .clip(
                         RoundedCornerShape(14.dp)
                     ),
-            contentScale = ContentScale.Crop
+
+            contentScale =
+                ContentScale.Crop
         )
 
     } else {
@@ -836,11 +824,6 @@ private fun ImageMessageContent(
                     Color(0xFFE91E63)
             )
 
-            Spacer(
-                modifier =
-                    Modifier.height(5.dp)
-            )
-
             Text(
                 text =
                     message.fileName.ifBlank {
@@ -858,7 +841,7 @@ private fun ImageMessageContent(
 @Composable
 private fun FileMessageContent(
     message: ChatMessage,
-    icon: androidx.compose.ui.graphics.vector.ImageVector
+    icon: ImageVector
 ) {
 
     Row(
@@ -872,7 +855,9 @@ private fun FileMessageContent(
             modifier =
                 Modifier
                     .size(48.dp)
-                    .clip(RoundedCornerShape(12.dp))
+                    .clip(
+                        RoundedCornerShape(12.dp)
+                    )
                     .background(
                         Color(0xFFFFE4EC)
                     ),
@@ -910,11 +895,6 @@ private fun FileMessageContent(
                     TextOverflow.Ellipsis
             )
 
-            Spacer(
-                modifier =
-                    Modifier.height(3.dp)
-            )
-
             Text(
                 text =
                     formatFileSize(
@@ -925,17 +905,14 @@ private fun FileMessageContent(
             )
         }
 
-        IconButton(
-            onClick = {}
-        ) {
-
-            Icon(
-                imageVector =
-                    Icons.Default.Download,
-                contentDescription =
-                    "دانلود"
-            )
-        }
+        Icon(
+            imageVector =
+                Icons.Default.Download,
+            contentDescription =
+                "دانلود",
+            modifier =
+                Modifier.size(22.dp)
+        )
     }
 }
 
@@ -947,9 +924,11 @@ private fun AttachmentDialog(
 
     AlertDialog(
 
-        onDismissRequest = onDismiss,
+        onDismissRequest =
+            onDismiss,
 
         title = {
+
             Text(
                 text = "ارسال فایل",
                 fontWeight =
@@ -962,27 +941,39 @@ private fun AttachmentDialog(
             Column {
 
                 AttachmentItem(
-                    icon = Icons.Default.Image,
-                    title = "عکس یا تصویر",
-                    onClick = onSelect
+                    icon =
+                        Icons.Default.Image,
+                    title =
+                        "عکس یا تصویر",
+                    onClick =
+                        onSelect
                 )
 
                 AttachmentItem(
-                    icon = Icons.Default.Videocam,
-                    title = "ویدیو",
-                    onClick = onSelect
+                    icon =
+                        Icons.Default.Videocam,
+                    title =
+                        "ویدیو",
+                    onClick =
+                        onSelect
                 )
 
                 AttachmentItem(
-                    icon = Icons.Default.Mic,
-                    title = "فایل صوتی",
-                    onClick = onSelect
+                    icon =
+                        Icons.Default.Mic,
+                    title =
+                        "فایل صوتی",
+                    onClick =
+                        onSelect
                 )
 
                 AttachmentItem(
-                    icon = Icons.Default.Description,
-                    title = "سند و فایل",
-                    onClick = onSelect
+                    icon =
+                        Icons.Default.Description,
+                    title =
+                        "سند و فایل",
+                    onClick =
+                        onSelect
                 )
             }
         },
@@ -990,9 +981,12 @@ private fun AttachmentDialog(
         confirmButton = {},
 
         dismissButton = {
+
             TextButton(
-                onClick = onDismiss
+                onClick =
+                    onDismiss
             ) {
+
                 Text("بستن")
             }
         }
@@ -1001,7 +995,7 @@ private fun AttachmentDialog(
 
 @Composable
 private fun AttachmentItem(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector,
     title: String,
     onClick: () -> Unit
 ) {
@@ -1013,7 +1007,9 @@ private fun AttachmentItem(
                 .clickable(
                     onClick = onClick
                 )
-                .padding(vertical = 12.dp),
+                .padding(
+                    vertical = 12.dp
+                ),
         verticalAlignment =
             Alignment.CenterVertically
     ) {
@@ -1051,25 +1047,30 @@ private fun sendTextMessage(
     val messageId =
         UUID.randomUUID().toString()
 
+    val createdAt =
+        Timestamp.now()
+
     val localMessage =
         ChatMessage(
             id = messageId,
             senderId = user.uid,
             type = "TEXT",
             text = text,
-            createdAt = Timestamp.now(),
+            createdAt = createdAt,
             localStatus =
                 LocalMessageStatus.SENDING
         )
 
-    messages.add(localMessage)
+    messages.add(
+        localMessage
+    )
 
     val data =
         hashMapOf<String, Any>(
             "senderId" to user.uid,
             "type" to "TEXT",
             "text" to text,
-            "createdAt" to Timestamp.now()
+            "createdAt" to createdAt
         )
 
     firestore
@@ -1162,6 +1163,9 @@ private fun uploadFileToChat(
     val filePath =
         "chat/ramin_roya/$messageId-$fileName"
 
+    val createdAt =
+        Timestamp.now()
+
     val localMessage =
         ChatMessage(
             id = messageId,
@@ -1172,12 +1176,14 @@ private fun uploadFileToChat(
             mimeType = mimeType,
             fileSize = fileSize,
             localUri = uri.toString(),
-            createdAt = Timestamp.now(),
+            createdAt = createdAt,
             localStatus =
                 LocalMessageStatus.SENDING
         )
 
-    messages.add(localMessage)
+    messages.add(
+        localMessage
+    )
 
     Toast.makeText(
         context,
@@ -1191,8 +1197,8 @@ private fun uploadFileToChat(
         filePath = filePath
     ) { success, result ->
 
-        android.os.Handler(
-            android.os.Looper.getMainLooper()
+        Handler(
+            Looper.getMainLooper()
         ).post {
 
             if (success) {
@@ -1206,7 +1212,7 @@ private fun uploadFileToChat(
                         "fileName" to fileName,
                         "mimeType" to mimeType,
                         "fileSize" to fileSize,
-                        "createdAt" to Timestamp.now()
+                        "createdAt" to createdAt
                     )
 
                 firestore
@@ -1255,7 +1261,7 @@ private fun uploadFileToChat(
 
                         Toast.makeText(
                             context,
-                            "فایل آپلود شد ولی پیام ثبت نشد",
+                            "آپلود شد ولی ثبت پیام ناموفق بود",
                             Toast.LENGTH_LONG
                         ).show()
                     }
@@ -1278,35 +1284,12 @@ private fun uploadFileToChat(
 
                 Toast.makeText(
                     context,
-                    result,
+                    "ارسال فایل ناموفق بود:\n$result",
                     Toast.LENGTH_LONG
                 ).show()
             }
         }
     }
-}
-
-private fun retryMessage(
-    message: ChatMessage,
-    context: Context
-) {
-
-    if (message.localUri.isBlank()) {
-
-        Toast.makeText(
-            context,
-            "فایل اصلی برای تلاش دوباره پیدا نشد",
-            Toast.LENGTH_LONG
-        ).show()
-
-        return
-    }
-
-    Toast.makeText(
-        context,
-        "تلاش دوباره برای ارسال...",
-        Toast.LENGTH_SHORT
-    ).show()
 }
 
 private fun getFileName(
@@ -1316,32 +1299,37 @@ private fun getFileName(
 
     var result: String? = null
 
-    context.contentResolver
-        .query(
-            uri,
-            arrayOf(
-                OpenableColumns.DISPLAY_NAME
-            ),
-            null,
-            null,
-            null
-        )
-        ?.use { cursor ->
+    try {
 
-            if (cursor.moveToFirst()) {
+        context.contentResolver
+            .query(
+                uri,
+                arrayOf(
+                    OpenableColumns.DISPLAY_NAME
+                ),
+                null,
+                null,
+                null
+            )
+            ?.use { cursor ->
 
-                val index =
-                    cursor.getColumnIndex(
-                        OpenableColumns.DISPLAY_NAME
-                    )
+                if (cursor.moveToFirst()) {
 
-                if (index >= 0) {
+                    val index =
+                        cursor.getColumnIndex(
+                            OpenableColumns.DISPLAY_NAME
+                        )
 
-                    result =
-                        cursor.getString(index)
+                    if (index >= 0) {
+
+                        result =
+                            cursor.getString(index)
+                    }
                 }
             }
-        }
+
+    } catch (_: Exception) {
+    }
 
     return result
         ?: uri.lastPathSegment
@@ -1413,7 +1401,8 @@ private fun formatFileSize(
             String.format(
                 Locale.US,
                 "%.1f MB",
-                bytes / (1024.0 * 1024.0)
+                bytes /
+                        (1024.0 * 1024.0)
             )
 
         else ->
@@ -1421,7 +1410,9 @@ private fun formatFileSize(
                 Locale.US,
                 "%.1f GB",
                 bytes /
-                    (1024.0 * 1024.0 * 1024.0)
+                        (1024.0 *
+                                1024.0 *
+                                1024.0)
             )
     }
 }
