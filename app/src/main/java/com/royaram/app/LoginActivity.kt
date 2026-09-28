@@ -213,16 +213,19 @@ class LoginActivity : FragmentActivity() {
     }
 
 
-    private fun isBiometricAvailable(): Boolean {
+    private fun isSecureDeviceAuthenticationAvailable(): Boolean {
 
-        val manager =
-            BiometricManager.from(this)
+    val manager =
+        BiometricManager.from(this)
 
-        return manager.canAuthenticate(
-            BiometricManager.Authenticators.BIOMETRIC_STRONG
-        ) ==
-                BiometricManager.BIOMETRIC_SUCCESS
-    }
+    val authenticators =
+        BiometricManager.Authenticators.BIOMETRIC_STRONG or
+                BiometricManager.Authenticators.DEVICE_CREDENTIAL
+
+    return manager.canAuthenticate(
+        authenticators
+    ) == BiometricManager.BIOMETRIC_SUCCESS
+}
 
 
     private fun showBiometricPrompt() {
