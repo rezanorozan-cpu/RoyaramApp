@@ -1,13 +1,17 @@
 package com.royaram.app
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.util.Patterns
 import android.widget.Toast
 
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
-
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,64 +21,49 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-
 import androidx.compose.foundation.shape.RoundedCornerShape
-
-import androidx.compose.foundation.text.KeyboardOptions
-
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Fingerprint
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
-
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
-
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
-import androidx.core.content.ContextCompat
-import androidx.fragment.app.FragmentActivity
 
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthException
 
-
-class LoginActivity : FragmentActivity() {
+class LoginActivity : ComponentActivity() {
 
     private lateinit var auth: FirebaseAuth
 
-    private val PREFS_NAME =
+    private val prefsName =
         "royaram_security"
 
-    private val KEY_SECURE_LOGIN =
+    private val secureLoginKey =
         "secure_login_enabled"
 
+    private var biometricStarted = false
 
     override fun onCreate(
         savedInstanceState: Bundle?
@@ -84,140 +73,112 @@ class LoginActivity : FragmentActivity() {
         auth =
             FirebaseAuth.getInstance()
 
-        setContentView(
-            androidx.compose.ui.platform.ComposeView(this).apply {
+        setContent {
+            LoginScreen()
+        }
 
-                setContent {
+        /*
+         * اگر قبلاً وارد حساب شده‌ای،
+         * بعد از نمایش کوتاه صفحه،
+         * احراز هویت امن را خودکار باز می‌کنیم.
+         */
+        Handler(
+            Looper.getMainLooper()
+        ).postDelayed({
 
-                    RoyaramLoginScreen(
+            tryAutoSecureLogin()
 
-                        onLogin = {
-                                email,
-                                password,
-                                onResult ->
-
-                            loginUser(
-                                email,
-                                password,
-                                onResult
-                            )
-                        },
-
-                        onForgotPassword = {
-                                email,
-                                onResult ->
-
-                            resetPassword(
-                                email,
-                                onResult
-                            )
-                        },
-
-                        onBiometric = {
-                            showBiometricPrompt()
-                        },
-
-                        biometricAvailable =
-                            isSecureDeviceAuthenticationAvailable()
-                    )
-                }
-            }
-        )
+        }, 350)
     }
 
+    private fun tryAutoSecureLogin() {
 
-    /*
-     * بررسی می‌کند آیا دستگاه یکی از روش‌های
-     * احراز هویت امن را دارد:
-     *
-     * اثر انگشت
-     * چهره
-     * PIN
-     * Pattern
-     * Password گوشی
-     */
-    private fun isSecureDeviceAuthenticationAvailable(): Boolean {
+        if (biometricStarted) {
+            return
+        }
 
-        val manager =
-            BiometricManager.from(this)
+        val currentUser =
+            auth.currentUser
 
-        val authenticators =
-            BiometricManager.Authenticators.BIOMETRIC_STRONG or
-                    BiometricManager.Authenticators.DEVICE_CREDENTIAL
+        val secureLoginEnabled =
+            getSharedPreferences(
+                prefsName,
+                Context.MODE_PRIVATE
+            )
+                .getBoolean(
+                    secureLoginKey,
+                    false
+                )
 
-        return manager.canAuthenticate(
-            authenticators
-        ) ==
-                BiometricManager.BIOMETRIC_SUCCESS
+        /*
+         * اگر قبلاً ورود امن فعال نشده،
+         * صفحه معمولی ورود نمایش داده می‌شود.
+         */
+        if (
+            currentUser == null ||
+            !secureLoginEnabled
+        ) {
+            return
+        }
+
+        if (
+            !isSecureAuthenticationAvailable()
+        ) {
+            return
+        }
+
+        biometricStarted = true
+
+        showBiometricPrompt()
     }
 
-
-    /*
-     * بررسی می‌کند ورود امن قبلاً فعال شده یا نه.
-     */
-    private fun isSecureLoginEnabled(): Boolean {
-
-        return getSharedPreferences(
-            PREFS_NAME,
-            MODE_PRIVATE
-        ).getBoolean(
-            KEY_SECURE_LOGIN,
-            false
-        )
-    }
-
-
-    /*
-     * ورود با ایمیل و رمز عبور
-     */
     private fun loginUser(
         email: String,
         password: String,
         onResult: (Boolean, String) -> Unit
     ) {
 
-        val cleanEmail =
-            email.trim()
-
-        if (cleanEmail.isBlank()) {
-
+        if (email.isBlank()) {
             onResult(
                 false,
                 "ایمیل را وارد کن"
             )
+            return
+        }
 
+        if (
+            !Patterns.EMAIL_ADDRESS
+                .matcher(email)
+                .matches()
+        ) {
+            onResult(
+                false,
+                "فرمت ایمیل درست نیست"
+            )
             return
         }
 
         if (password.isBlank()) {
-
             onResult(
                 false,
                 "رمز عبور را وارد کن"
             )
-
             return
         }
 
         auth.signInWithEmailAndPassword(
-            cleanEmail,
+            email.trim(),
             password
         )
             .addOnSuccessListener {
 
-                /*
-                 * بعد از اولین ورود موفق،
-                 * ورود امن دستگاه فعال می‌شود.
-                 *
-                 * رمز عبور ذخیره نمی‌شود.
-                 */
                 getSharedPreferences(
-                    PREFS_NAME,
-                    MODE_PRIVATE
+                    prefsName,
+                    Context.MODE_PRIVATE
                 )
                     .edit()
                     .putBoolean(
-                        KEY_SECURE_LOGIN,
+                        secureLoginKey,
                         true
                     )
                     .apply()
@@ -226,146 +187,109 @@ class LoginActivity : FragmentActivity() {
                     true,
                     "ورود موفق بود ❤️"
                 )
-
-                openHome()
             }
-
             .addOnFailureListener { error ->
 
+                val firebaseError =
+                    error as? FirebaseAuthException
+
+                val code =
+                    firebaseError?.errorCode
+                        ?: "UNKNOWN_ERROR"
+
                 val message =
-                    when (
-                        (error as? FirebaseAuthException)
-                            ?.errorCode
-                    ) {
-
-                        "ERROR_INVALID_EMAIL" ->
-                            "فرمت ایمیل درست نیست"
-
-                        "ERROR_INVALID_CREDENTIAL" ->
-                            "ایمیل یا رمز عبور صحیح نیست"
-
-                        "ERROR_WRONG_PASSWORD" ->
-                            "رمز عبور صحیح نیست"
-
-                        "ERROR_USER_NOT_FOUND" ->
-                            "حسابی با این ایمیل پیدا نشد"
-
-                        "ERROR_USER_DISABLED" ->
-                            "این حساب غیرفعال شده است"
-
-                        "ERROR_TOO_MANY_REQUESTS" ->
-                            "تلاش‌های زیادی انجام شده. کمی بعد دوباره امتحان کن"
-
-                        "ERROR_NETWORK_REQUEST_FAILED" ->
-                            "اتصال اینترنت برقرار نیست"
-
-                        else ->
-                            "ورود انجام نشد. دوباره امتحان کن"
-                    }
+                    error.message
+                        ?: "پیام خطا موجود نیست"
 
                 onResult(
                     false,
-                    message
+                    "کد خطای Firebase:\n" +
+                            "$code\n\n$message"
                 )
             }
     }
 
-
-    /*
-     * بازیابی رمز عبور
-     */
     private fun resetPassword(
         email: String,
         onResult: (Boolean, String) -> Unit
     ) {
 
-        val cleanEmail =
-            email.trim()
-
-        if (cleanEmail.isBlank()) {
-
+        if (email.isBlank()) {
             onResult(
                 false,
                 "اول ایمیلت را وارد کن"
             )
+            return
+        }
 
+        if (
+            !Patterns.EMAIL_ADDRESS
+                .matcher(email)
+                .matches()
+        ) {
+            onResult(
+                false,
+                "فرمت ایمیل درست نیست"
+            )
             return
         }
 
         auth.sendPasswordResetEmail(
-            cleanEmail
+            email.trim()
         )
             .addOnSuccessListener {
 
                 onResult(
                     true,
-                    "لینک بازیابی رمز ارسال شد ❤️\nایمیل اصلی و پوشه Spam را هم بررسی کن."
+                    "لینک بازیابی رمز ارسال شد.\nایمیل و پوشه Spam را بررسی کن."
                 )
             }
-
             .addOnFailureListener { error ->
 
+                val firebaseError =
+                    error as? FirebaseAuthException
+
+                val code =
+                    firebaseError?.errorCode
+                        ?: "UNKNOWN_ERROR"
+
                 val message =
-                    when (
-                        (error as? FirebaseAuthException)
-                            ?.errorCode
-                    ) {
-
-                        "ERROR_INVALID_EMAIL" ->
-                            "فرمت ایمیل درست نیست"
-
-                        "ERROR_USER_NOT_FOUND" ->
-                            "حسابی با این ایمیل پیدا نشد"
-
-                        "ERROR_NETWORK_REQUEST_FAILED" ->
-                            "اتصال اینترنت برقرار نیست"
-
-                        "ERROR_TOO_MANY_REQUESTS" ->
-                            "درخواست‌های زیادی ارسال شده. کمی بعد دوباره امتحان کن"
-
-                        else ->
-                            "ارسال لینک بازیابی انجام نشد. دوباره امتحان کن"
-                    }
+                    error.message
+                        ?: "پیام خطا موجود نیست"
 
                 onResult(
                     false,
-                    message
+                    "کد خطای بازیابی Firebase:\n" +
+                            "$code\n\n$message"
                 )
             }
     }
 
+    private fun isSecureAuthenticationAvailable():
+            Boolean {
 
-    /*
-     * باز کردن صفحه اصلی
-     */
-    private fun openHome() {
+        val biometricManager =
+            BiometricManager.from(this)
 
-        val intent =
-            Intent(
-                this,
-                MainActivity::class.java
-            )
+        val authenticators =
+            BiometricManager.Authenticators.BIOMETRIC_STRONG or
+                    BiometricManager.Authenticators.DEVICE_CREDENTIAL
 
-        startActivity(intent)
-
-        finish()
+        return biometricManager.canAuthenticate(
+            authenticators
+        ) ==
+                BiometricManager.BIOMETRIC_SUCCESS
     }
 
-
-    /*
-     * ورود امن با اثر انگشت،
-     * چهره یا قفل خود گوشی
-     */
     private fun showBiometricPrompt() {
 
-        val currentUser =
-            auth.currentUser
+        if (auth.currentUser == null) {
 
-        if (currentUser == null) {
+            biometricStarted = false
 
             Toast.makeText(
                 this,
-                "اول با ایمیل و رمز وارد شو ❤️",
+                "اول یک بار با ایمیل و رمز وارد شو",
                 Toast.LENGTH_LONG
             ).show()
 
@@ -373,12 +297,14 @@ class LoginActivity : FragmentActivity() {
         }
 
         if (
-            !isSecureDeviceAuthenticationAvailable()
+            !isSecureAuthenticationAvailable()
         ) {
+
+            biometricStarted = false
 
             Toast.makeText(
                 this,
-                "قفل امن گوشی فعال نیست",
+                "اثر انگشت یا قفل امن گوشی در دسترس نیست",
                 Toast.LENGTH_LONG
             ).show()
 
@@ -386,678 +312,388 @@ class LoginActivity : FragmentActivity() {
         }
 
         val executor =
-            ContextCompat.getMainExecutor(this)
+            androidx.core.content
+                .ContextCompat
+                .getMainExecutor(this)
 
         val biometricPrompt =
             BiometricPrompt(
                 this,
                 executor,
-
                 object :
                     BiometricPrompt.AuthenticationCallback() {
 
                     override fun onAuthenticationSucceeded(
-                        result: BiometricPrompt.AuthenticationResult
+                        result:
+                        BiometricPrompt.AuthenticationResult
                     ) {
 
-                        super.onAuthenticationSucceeded(
-                            result
-                        )
+                        super
+                            .onAuthenticationSucceeded(
+                                result
+                            )
 
-                        if (
-                            auth.currentUser != null
-                        ) {
+                        biometricStarted = false
 
-                            Toast.makeText(
-                                this@LoginActivity,
-                                "خوش اومدی ❤️",
-                                Toast.LENGTH_SHORT
-                            ).show()
-
-                            openHome()
-
-                        } else {
-
-                            Toast.makeText(
-                                this@LoginActivity,
-                                "نشست ورود پیدا نشد؛ با ایمیل و رمز وارد شو.",
-                                Toast.LENGTH_LONG
-                            ).show()
-                        }
+                        openHome()
                     }
-
 
                     override fun onAuthenticationError(
                         errorCode: Int,
                         errString: CharSequence
                     ) {
 
-                        super.onAuthenticationError(
-                            errorCode,
-                            errString
-                        )
+                        super
+                            .onAuthenticationError(
+                                errorCode,
+                                errString
+                            )
 
-                        Toast.makeText(
-                            this@LoginActivity,
-                            errString.toString(),
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        biometricStarted = false
+
+                        /*
+                         * اگر کاربر لغو کرد،
+                         * صفحه ورود باقی می‌ماند.
+                         */
+                        if (
+                            errorCode !=
+                            BiometricPrompt
+                                .ERROR_CANCELED
+                        ) {
+
+                            Toast.makeText(
+                                this@LoginActivity,
+                                errString.toString(),
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
                     }
-
 
                     override fun onAuthenticationFailed() {
 
-                        super.onAuthenticationFailed()
+                        super
+                            .onAuthenticationFailed()
 
-                        Toast.makeText(
-                            this@LoginActivity,
-                            "تأیید انجام نشد، دوباره امتحان کن",
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        /*
+                         * اینجا برنامه بسته نمی‌شود.
+                         * کاربر می‌تواند دوباره امتحان کند.
+                         */
                     }
                 }
             )
 
-
         val promptInfo =
             BiometricPrompt.PromptInfo.Builder()
-
                 .setTitle(
                     "ورود امن به رویارام"
                 )
-
                 .setSubtitle(
-                    "اثر انگشت، چهره یا قفل گوشی"
+                    "اثر انگشت یا قفل امن گوشی"
                 )
-
-                .setDescription(
-                    "برای ورود به فضای خصوصی رامین و رویا ❤️"
-                )
-
                 .setAllowedAuthenticators(
-                    BiometricManager.Authenticators.BIOMETRIC_STRONG or
-                            BiometricManager.Authenticators.DEVICE_CREDENTIAL
+                    BiometricManager
+                        .Authenticators
+                        .BIOMETRIC_STRONG or
+                            BiometricManager
+                                .Authenticators
+                                .DEVICE_CREDENTIAL
                 )
-
                 .build()
-
 
         biometricPrompt.authenticate(
             promptInfo
         )
     }
-}
 
+    private fun openHome() {
 
-/*
- * صفحه ورود رویارام
- */
-@Composable
-private fun RoyaramLoginScreen(
-
-    onLogin: (
-        String,
-        String,
-        (Boolean, String) -> Unit
-    ) -> Unit,
-
-    onForgotPassword: (
-        String,
-        (Boolean, String) -> Unit
-    ) -> Unit,
-
-    onBiometric: () -> Unit,
-
-    biometricAvailable: Boolean
-) {
-
-    var email by remember {
-        mutableStateOf("")
-    }
-
-    var password by remember {
-        mutableStateOf("")
-    }
-
-    var loading by remember {
-        mutableStateOf(false)
-    }
-
-    var message by remember {
-        mutableStateOf("")
-    }
-
-    var messageError by remember {
-        mutableStateOf(false)
-    }
-
-    var showPassword by remember {
-        mutableStateOf(false)
-    }
-
-
-    Box(
-        modifier =
-            Modifier.fillMaxSize()
-    ) {
-
-        Image(
-
-            painter =
-                painterResource(
-                    id =
-                        R.drawable.couple_main
-                ),
-
-            contentDescription =
-                "رامین و رویا",
-
-            modifier =
-                Modifier.fillMaxSize(),
-
-            contentScale =
-                ContentScale.Crop
+        startActivity(
+            Intent(
+                this,
+                MainActivity::class.java
+            )
         )
 
+        finish()
+    }
+
+    @Composable
+    private fun LoginScreen() {
+
+        var email by remember {
+            mutableStateOf("")
+        }
+
+        var password by remember {
+            mutableStateOf("")
+        }
+
+        var passwordVisible by remember {
+            mutableStateOf(false)
+        }
+
+        var message by remember {
+            mutableStateOf("")
+        }
+
+        var isLoading by remember {
+            mutableStateOf(false)
+        }
+
+        val backgroundBrush =
+            Brush.verticalGradient(
+                colors = listOf(
+                    Color(0xFFFFE8EF),
+                    Color(0xFFFFF5F8),
+                    Color.White
+                )
+            )
 
         Box(
-
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .background(
-
-                        Brush.verticalGradient(
-
-                            colors =
-                                listOf(
-
-                                    Color(0xCC160A10),
-
-                                    Color(0x990F080D),
-
-                                    Color(0xE6000000)
-                                )
-                        )
-                    )
-        )
-
-
-        Column(
-
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(
-                        horizontal = 22.dp,
-                        vertical = 34.dp
-                    ),
-
-            horizontalAlignment =
-                Alignment.CenterHorizontally,
-
-            verticalArrangement =
-                Arrangement.Center
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    backgroundBrush
+                )
+                .padding(24.dp),
+            contentAlignment =
+                Alignment.Center
         ) {
 
-
-            Box(
-
+            Column(
                 modifier =
-                    Modifier
-                        .size(78.dp)
-                        .clip(
-                            RoundedCornerShape(26.dp)
-                        )
-                        .background(
-                            Color.White.copy(
-                                alpha = 0.18f
-                            )
-                        ),
-
-                contentAlignment =
-                    Alignment.Center
+                    Modifier.fillMaxWidth(),
+                horizontalAlignment =
+                    Alignment.CenterHorizontally,
+                verticalArrangement =
+                    Arrangement.Center
             ) {
 
                 Text(
                     text = "❤️",
-                    fontSize = 40.sp
+                    fontSize = 58.sp
                 )
-            }
-
-
-            Spacer(
-                modifier =
-                    Modifier.height(14.dp)
-            )
-
-
-            Text(
-
-                text =
-                    "رویارام",
-
-                color =
-                    Color.White,
-
-                fontSize =
-                    32.sp,
-
-                fontWeight =
-                    FontWeight.Bold
-            )
-
-
-            Spacer(
-                modifier =
-                    Modifier.height(5.dp)
-            )
-
-
-            Text(
-
-                text =
-                    "قصه‌ی من و تو، برای همیشه",
-
-                color =
-                    Color.White.copy(
-                        alpha = 0.82f
-                    ),
-
-                fontSize =
-                    14.sp
-            )
-
-
-            Spacer(
-                modifier =
-                    Modifier.height(28.dp)
-            )
-
-
-            Column(
-
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .clip(
-                            RoundedCornerShape(28.dp)
-                        )
-                        .background(
-                            Color.White.copy(
-                                alpha = 0.94f
-                            )
-                        )
-                        .padding(22.dp)
-            ) {
-
-
-                Text(
-
-                    text =
-                        "خوش اومدی ❤️",
-
-                    color =
-                        Color(0xFF29202A),
-
-                    fontSize =
-                        23.sp,
-
-                    fontWeight =
-                        FontWeight.Bold
-                )
-
-
-                Spacer(
-                    modifier =
-                        Modifier.height(5.dp)
-                )
-
-
-                Text(
-
-                    text =
-                        "برای ورود به دنیای دوتایی‌مون وارد شو",
-
-                    color =
-                        Color(0xFF777177),
-
-                    fontSize =
-                        13.sp
-                )
-
-
-                Spacer(
-                    modifier =
-                        Modifier.height(20.dp)
-                )
-
-
-                OutlinedTextField(
-
-                    value =
-                        email,
-
-                    onValueChange = {
-
-                        email = it
-
-                        message = ""
-                    },
-
-                    modifier =
-                        Modifier.fillMaxWidth(),
-
-                    enabled =
-                        !loading,
-
-                    singleLine =
-                        true,
-
-                    label = {
-                        Text("ایمیل")
-                    },
-
-                    placeholder = {
-                        Text(
-                            "ایمیل خودت را وارد کن"
-                        )
-                    },
-
-                    keyboardOptions =
-                        KeyboardOptions(
-                            keyboardType =
-                                KeyboardType.Email
-                        ),
-
-                    shape =
-                        RoundedCornerShape(16.dp),
-
-                    colors =
-                        OutlinedTextFieldDefaults.colors(
-
-                            focusedBorderColor =
-                                Color(0xFFE85D86),
-
-                            focusedLabelColor =
-                                Color(0xFFE85D86),
-
-                            cursorColor =
-                                Color(0xFFE85D86)
-                        )
-                )
-
 
                 Spacer(
                     modifier =
                         Modifier.height(12.dp)
                 )
 
+                Text(
+                    text = "رویارام",
+                    style =
+                        MaterialTheme
+                            .typography
+                            .headlineLarge
+                )
+
+                Spacer(
+                    modifier =
+                        Modifier.height(6.dp)
+                )
+
+                Text(
+                    text =
+                        "قصه‌ی من و تو، برای همیشه",
+                    style =
+                        MaterialTheme
+                            .typography
+                            .bodyMedium
+                )
+
+                Spacer(
+                    modifier =
+                        Modifier.height(28.dp)
+                )
 
                 OutlinedTextField(
-
-                    value =
-                        password,
-
+                    value = email,
                     onValueChange = {
-
-                        password = it
-
+                        email = it
                         message = ""
                     },
-
                     modifier =
                         Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    label = {
+                        Text("ایمیل")
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector =
+                                Icons.Default.Email,
+                            contentDescription =
+                                null
+                        )
+                    },
+                    shape =
+                        RoundedCornerShape(18.dp)
+                )
 
-                    enabled =
-                        !loading,
+                Spacer(
+                    modifier =
+                        Modifier.height(12.dp)
+                )
 
-                    singleLine =
-                        true,
-
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = {
+                        password = it
+                        message = ""
+                    },
+                    modifier =
+                        Modifier.fillMaxWidth(),
+                    singleLine = true,
                     label = {
                         Text("رمز عبور")
                     },
-
-                    placeholder = {
-                        Text("رمز عبور")
+                    leadingIcon = {
+                        Icon(
+                            imageVector =
+                                Icons.Default.Lock,
+                            contentDescription =
+                                null
+                        )
                     },
-
-                    visualTransformation =
-
-                        if (showPassword) {
-
-                            androidx.compose.ui.text.input.VisualTransformation.None
-
-                        } else {
-
-                            PasswordVisualTransformation()
-                        },
-
-
                     trailingIcon = {
 
                         IconButton(
-
                             onClick = {
-
-                                showPassword =
-                                    !showPassword
+                                passwordVisible =
+                                    !passwordVisible
                             }
                         ) {
 
                             Icon(
-
                                 imageVector =
-
-                                    if (showPassword) {
-
-                                        Icons.Filled.VisibilityOff
-
-                                    } else {
-
-                                        Icons.Filled.Visibility
-                                    },
-
+                                    if (
+                                        passwordVisible
+                                    )
+                                        Icons.Default
+                                            .VisibilityOff
+                                    else
+                                        Icons.Default
+                                            .Visibility,
                                 contentDescription =
-
-                                    if (showPassword) {
-
-                                        "مخفی کردن رمز"
-
-                                    } else {
-
-                                        "نمایش رمز"
-                                    }
+                                    null
                             )
                         }
                     },
-
-
-                    keyboardOptions =
-                        KeyboardOptions(
-                            keyboardType =
-                                KeyboardType.Password
-                        ),
-
-                    shape =
-                        RoundedCornerShape(16.dp),
-
-                    colors =
-                        OutlinedTextFieldDefaults.colors(
-
-                            focusedBorderColor =
-                                Color(0xFFE85D86),
-
-                            focusedLabelColor =
-                                Color(0xFFE85D86),
-
-                            cursorColor =
-                                Color(0xFFE85D86)
+                    visualTransformation =
+                        if (
+                            passwordVisible
                         )
+                            VisualTransformation.None
+                        else
+                            PasswordVisualTransformation(),
+                    shape =
+                        RoundedCornerShape(18.dp)
                 )
-
 
                 Spacer(
                     modifier =
-                        Modifier.height(8.dp)
+                        Modifier.height(18.dp)
                 )
 
-
-                TextButton(
-
+                Button(
                     onClick = {
 
-                        onForgotPassword(
-                            email
+                        isLoading = true
+                        message = ""
+
+                        loginUser(
+                            email,
+                            password
                         ) { success, result ->
 
-                            message =
-                                result
+                            isLoading = false
+                            message = result
 
-                            messageError =
-                                !success
+                            if (success) {
+                                openHome()
+                            }
                         }
                     },
-
+                    modifier =
+                        Modifier.fillMaxWidth(),
                     enabled =
-                        !loading
+                        !isLoading,
+                    shape =
+                        RoundedCornerShape(18.dp)
                 ) {
 
                     Text(
-
                         text =
-                            "رمز عبورم را فراموش کردم",
-
-                        color =
-                            Color(0xFFE04F79)
+                            if (isLoading)
+                                "در حال ورود..."
+                            else
+                                "ورود به رویارام ❤️"
                     )
                 }
-
 
                 Spacer(
                     modifier =
-                        Modifier.height(5.dp)
+                        Modifier.height(10.dp)
                 )
 
-
-                Button(
-
+                OutlinedButton(
                     onClick = {
-
-                        loading = true
-
-                        message = ""
-
-                        onLogin(
-
-                            email,
-
-                            password
-
-                        ) { success, result ->
-
-                            loading =
-                                false
-
-                            message =
-                                result
-
-                            messageError =
-                                !success
-                        }
+                        showBiometricPrompt()
                     },
-
                     modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .height(56.dp),
-
-                    enabled =
-                        !loading,
-
+                        Modifier.fillMaxWidth(),
                     shape =
-                        RoundedCornerShape(17.dp),
-
-                    colors =
-                        ButtonDefaults.buttonColors(
-
-                            containerColor =
-                                Color(0xFFE85D86),
-
-                            contentColor =
-                                Color.White
-                        )
+                        RoundedCornerShape(18.dp)
                 ) {
 
-
-                    if (loading) {
-
-                        CircularProgressIndicator(
-
-                            modifier =
-                                Modifier.size(24.dp),
-
-                            color =
-                                Color.White,
-
-                            strokeWidth =
-                                2.5.dp
-                        )
-
-                    } else {
-
-                        Text(
-
-                            text =
-                                "ورود به دنیای ما ❤️",
-
-                            fontSize =
-                                16.sp,
-
-                            fontWeight =
-                                FontWeight.Bold
-                        )
-                    }
-                }
-
-
-                if (
-                    biometricAvailable
-                ) {
+                    Icon(
+                        imageVector =
+                            Icons.Default.Fingerprint,
+                        contentDescription =
+                            null
+                    )
 
                     Spacer(
                         modifier =
-                            Modifier.height(8.dp)
+                            Modifier.padding(
+                                horizontal = 4.dp
+                            )
                     )
 
-
-                    TextButton(
-
-                        onClick =
-                            onBiometric,
-
-                        enabled =
-                            !loading,
-
-                        modifier =
-                            Modifier.fillMaxWidth()
-                    ) {
-
-                        Text(
-
-                            text =
-                                "🔐  ورود با اثر انگشت / چهره / رمز گوشی",
-
-                            color =
-                                Color(0xFFB23A62),
-
-                            fontWeight =
-                                FontWeight.Medium
-                        )
-                    }
+                    Text(
+                        text =
+                            "ورود با اثر انگشت / رمز گوشی"
+                    )
                 }
 
+                Spacer(
+                    modifier =
+                        Modifier.height(4.dp)
+                )
+
+                TextButton(
+                    onClick = {
+
+                        resetPassword(
+                            email
+                        ) { success, result ->
+
+                            message = result
+
+                            Toast.makeText(
+                                this@LoginActivity,
+                                result,
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                    }
+                ) {
+
+                    Text(
+                        text =
+                            "رمز عبور را فراموش کرده‌ام"
+                    )
+                }
 
                 if (
                     message.isNotBlank()
@@ -1065,55 +701,34 @@ private fun RoyaramLoginScreen(
 
                     Spacer(
                         modifier =
-                            Modifier.height(8.dp)
+                            Modifier.height(12.dp)
                     )
 
-
-                    Text(
-
-                        text =
-                            message,
-
+                    Box(
                         modifier =
-                            Modifier.fillMaxWidth(),
+                            Modifier
+                                .fillMaxWidth()
+                                .background(
+                                    Color.White.copy(
+                                        alpha = 0.8f
+                                    ),
+                                    RoundedCornerShape(
+                                        16.dp
+                                    )
+                                )
+                                .padding(14.dp)
+                    ) {
 
-                        color =
-
-                            if (messageError) {
-
-                                Color(0xFFD32F2F)
-
-                            } else {
-
-                                Color(0xFF2E7D32)
-                            },
-
-                        fontSize =
-                            13.sp
-                    )
+                        Text(
+                            text = message,
+                            style =
+                                MaterialTheme
+                                    .typography
+                                    .bodySmall
+                        )
+                    }
                 }
             }
-
-
-            Spacer(
-                modifier =
-                    Modifier.height(20.dp)
-            )
-
-
-            Text(
-
-                text =
-                    "🔒  فضای خصوصی رامین و رویا",
-
-                color =
-                    Color.White.copy(
-                        alpha = 0.85f
-                    ),
-
-                fontSize =
-                    12.sp
-            )
         }
     }
 }
