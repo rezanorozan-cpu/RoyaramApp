@@ -1,12 +1,13 @@
 package com.royaram.app
 
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
+import android.provider.OpenableColumns
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -18,6 +19,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -27,25 +29,32 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.AttachFile
-import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.EmojiEmotions
-import androidx.compose.material.icons.rounded.Favorite
-import androidx.compose.material.icons.rounded.Folder
-import androidx.compose.material.icons.rounded.Image
-import androidx.compose.material.icons.rounded.LocationOn
-import androidx.compose.material.icons.rounded.Mic
-import androidx.compose.material.icons.rounded.MusicNote
-import androidx.compose.material.icons.rounded.Send
+import androidx.compose.material.icons.filled.AttachFile
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.InsertDriveFile
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.filled.Videocam
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SmallTopAppBar
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -60,386 +69,211 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.net.toUri
 import coil.compose.AsyncImage
+import com.google.firebase.Timestamp
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
-
-
-data class ChatMessage(
-    val id: String = "",
-    val text: String = "",
-    val senderId: String = "",
-    val type: String = "text",
-    val filePath: String = "",
-    val mimeType: String = "",
-    val fileName: String = ""
-)
-
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.UUID
 
 class ChatActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
-
         super.onCreate(savedInstanceState)
 
         setContent {
-
-            MaterialTheme {
-
-                Surface(
-                    modifier = Modifier.fillMaxSize()
-                ) {
-
-                    ChatScreen()
-                }
-            }
+            RoyaramChatScreen()
         }
     }
 }
 
+private const val CHAT_ROOM = "ramin_roya"
 
-/* =========================================================
-   MAIN CHAT SCREEN
-   ========================================================= */
+private enum class MessageType {
+    TEXT,
+    IMAGE,
+    VIDEO,
+    AUDIO,
+    FILE
+}
 
+private enum class LocalMessageStatus {
+    SENDING,
+    SENT,
+    FAILED
+}
+
+private data class ChatMessage(
+    val id: String,
+    val senderId: String,
+    val type: String = "TEXT",
+    val text: String = "",
+    val filePath: String = "",
+    val fileName: String = "",
+    val mimeType: String = "",
+    val fileSize: Long = 0L,
+    val createdAt: Timestamp? = null,
+    val localUri: String = "",
+    val localStatus: LocalMessageStatus? = null
+)
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatScreen() {
+private fun RoyaramChatScreen() {
 
     val context = LocalContext.current
+    val auth = remember { FirebaseAuth.getInstance() }
+    val firestore = remember { FirebaseFirestore.getInstance() }
 
-    val auth =
-        remember {
-            FirebaseAuth.getInstance()
-        }
+    val currentUserId = auth.currentUser?.uid ?: ""
 
-    val db =
-        remember {
-            FirebaseFirestore.getInstance()
-        }
-
-    val currentUser =
-        auth.currentUser
-
+    val messages = remember {
+        mutableStateListOf<ChatMessage>()
+    }
 
     var messageText by remember {
         mutableStateOf("")
-    }
-
-    var showStickers by remember {
-        mutableStateOf(false)
     }
 
     var showAttachmentMenu by remember {
         mutableStateOf(false)
     }
 
+    var selectedFileUri by remember {
+        mutableStateOf<Uri?>(null)
+    }
+
     var isSending by remember {
         mutableStateOf(false)
     }
 
+    val listState = rememberLazyListState()
 
-    val messages =
-        remember {
-            mutableStateListOf<ChatMessage>()
-        }
-
-
-    val listState =
-        rememberLazyListState()
-
-
-    /* =====================================================
-       IMAGE PICKER
-       ===================================================== */
-
-    val imageLauncher =
+    val filePicker =
         rememberLauncherForActivityResult(
-            contract =
-                ActivityResultContracts.OpenDocument()
+            contract = ActivityResultContracts.OpenDocument()
         ) { uri ->
 
             if (uri == null) {
-    return@rememberLauncherForActivityResult
-}
-
-Toast.makeText(
-    context,
-    "عکس انتخاب شد 📸",
-    Toast.LENGTH_LONG
-).show()
-
-
-            val user =
-                auth.currentUser
-
-            if (user == null) {
-
-                Toast.makeText(
-                    context,
-                    "ابتدا وارد حساب کاربری شوید.",
-                    Toast.LENGTH_LONG
-                ).show()
-
                 return@rememberLauncherForActivityResult
             }
 
+            try {
+                context.contentResolver.takePersistableUriPermission(
+                    uri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            } catch (_: Exception) {
+            }
 
+            selectedFileUri = uri
+
+            uploadFileToChat(
+                context = context,
+                firestore = firestore,
+                auth = auth,
+                uri = uri,
+                messages = messages
+            )
+        }
+
+    LaunchedEffect(Unit) {
+
+        if (currentUserId.isBlank()) {
             Toast.makeText(
                 context,
-                "در حال آپلود عکس... ⏳",
-                Toast.LENGTH_SHORT
+                "لطفاً ابتدا وارد حساب شوید",
+                Toast.LENGTH_LONG
             ).show()
 
+            return@LaunchedEffect
+        }
 
-            val timestamp =
-                System.currentTimeMillis()
+        firestore
+            .collection("chatRooms")
+            .document(CHAT_ROOM)
+            .collection("messages")
+            .orderBy(
+                "createdAt",
+                Query.Direction.ASCENDING
+            )
+            .addSnapshotListener { snapshot, error ->
 
+                if (error != null) {
+                    Toast.makeText(
+                        context,
+                        "خطا در دریافت پیام‌ها",
+                        Toast.LENGTH_SHORT
+                    ).show()
 
-            val fileName =
-                uri.lastPathSegment
-                    ?: "photo_$timestamp"
-
-
-            /*
-             * مسیر اختصاصی عکس‌های چت
-             */
-
-            val filePath =
-                "chat/ramin_roya/photo_$timestamp"
-
-
-            /*
-             * نوع فایل
-             */
-
-            val mimeType =
-                context.contentResolver
-                    .getType(uri)
-                    ?: "image/jpeg"
-
-
-            SupabaseStorage.uploadFile(
-                context = context,
-                fileUri = uri,
-                filePath = filePath
-            ) { success, message ->
-
-
-                Handler(
-                    Looper.getMainLooper()
-                ).post {
-
-
-                    if (!success) {
-
-                        Toast.makeText(
-                            context,
-                            message,
-                            Toast.LENGTH_LONG
-                        ).show()
-
-                        return@post
-                    }
-
-
-                    /*
-                     * آپلود موفق شد.
-                     *
-                     * حالا خود عکس را به عنوان
-                     * یک پیام Firestore ثبت می‌کنیم.
-                     */
-
-                    val imageMessage =
-                        hashMapOf(
-                            "text" to "",
-                            "senderId" to user.uid,
-                            "createdAt" to
-                                FieldValue.serverTimestamp(),
-
-                            "type" to "image",
-
-                            "filePath" to filePath,
-
-                            "mimeType" to mimeType,
-
-                            "fileName" to fileName
-                        )
-
-
-                    db.collection("chatRooms")
-                        .document("ramin_roya")
-                        .collection("messages")
-                        .add(imageMessage)
-                        .addOnSuccessListener {
-
-                            Toast.makeText(
-                                context,
-                                "عکس داخل گپ قرار گرفت ❤️📸",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                        .addOnFailureListener { error ->
-
-                            Toast.makeText(
-                                context,
-                                "عکس آپلود شد ولی پیام ثبت نشد:\n${error.message}",
-                                Toast.LENGTH_LONG
-                            ).show()
-                        }
+                    return@addSnapshotListener
                 }
-            }
-        }
 
+                if (snapshot == null) {
+                    return@addSnapshotListener
+                }
 
-    /* =====================================================
-       AUDIO PICKER
-       ===================================================== */
+                val remoteMessages =
+                    snapshot.documents.mapNotNull { document ->
 
-    val audioLauncher =
-        rememberLauncherForActivityResult(
-            contract =
-                ActivityResultContracts.OpenDocument()
-        ) { uri ->
+                        val senderId =
+                            document.getString("senderId")
+                                ?: return@mapNotNull null
 
-            if (uri != null) {
-
-                Toast.makeText(
-                    context,
-                    "موسیقی انتخاب شد 🎵",
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
-        }
-
-
-    /* =====================================================
-       FILE PICKER
-       ===================================================== */
-
-    val fileLauncher =
-        rememberLauncherForActivityResult(
-            contract =
-                ActivityResultContracts.OpenDocument()
-        ) { uri ->
-
-            if (uri != null) {
-
-                Toast.makeText(
-                    context,
-                    "فایل انتخاب شد 📁",
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
-        }
-
-
-    /* =====================================================
-       FIRESTORE REAL-TIME LISTENER
-       ===================================================== */
-
-    DisposableEffect(currentUser?.uid) {
-
-        val listener =
-
-            if (currentUser != null) {
-
-                db.collection("chatRooms")
-                    .document("ramin_roya")
-                    .collection("messages")
-                    .orderBy(
-                        "createdAt",
-                        Query.Direction.ASCENDING
-                    )
-                    .addSnapshotListener { snapshot, error ->
-
-
-                        if (error != null) {
-
-                            Toast.makeText(
-                                context,
-                                "خطای دریافت پیام:\n${error.message}",
-                                Toast.LENGTH_LONG
-                            ).show()
-
-                            return@addSnapshotListener
-                        }
-
-
-                        messages.clear()
-
-
-                        snapshot
-                            ?.documents
-                            ?.forEach { document ->
-
-
-                                messages.add(
-
-                                    ChatMessage(
-
-                                        id =
-                                            document.id,
-
-                                        text =
-                                            document.getString(
-                                                "text"
-                                            )
-                                                ?: "",
-
-                                        senderId =
-                                            document.getString(
-                                                "senderId"
-                                            )
-                                                ?: "",
-
-                                        type =
-                                            document.getString(
-                                                "type"
-                                            )
-                                                ?: "text",
-
-                                        filePath =
-                                            document.getString(
-                                                "filePath"
-                                            )
-                                                ?: "",
-
-                                        mimeType =
-                                            document.getString(
-                                                "mimeType"
-                                            )
-                                                ?: "",
-
-                                        fileName =
-                                            document.getString(
-                                                "fileName"
-                                            )
-                                                ?: ""
-                                    )
-                                )
-                            }
+                        ChatMessage(
+                            id = document.id,
+                            senderId = senderId,
+                            type =
+                                document.getString("type")
+                                    ?: "TEXT",
+                            text =
+                                document.getString("text")
+                                    ?: "",
+                            filePath =
+                                document.getString("filePath")
+                                    ?: "",
+                            fileName =
+                                document.getString("fileName")
+                                    ?: "",
+                            mimeType =
+                                document.getString("mimeType")
+                                    ?: "",
+                            fileSize =
+                                document.getLong("fileSize")
+                                    ?: 0L,
+                            createdAt =
+                                document.getTimestamp("createdAt"),
+                            localStatus =
+                                LocalMessageStatus.SENT
+                        )
                     }
 
-            } else {
-                null
+                messages.removeAll {
+                    it.localStatus != null &&
+                        it.localStatus != LocalMessageStatus.SENDING &&
+                        it.localStatus != LocalMessageStatus.FAILED
+                }
+
+                messages.addAll(remoteMessages)
+
+                val unique =
+                    messages
+                        .distinctBy { it.id }
+                        .sortedBy {
+                            it.createdAt?.seconds ?: 0L
+                        }
+
+                messages.clear()
+                messages.addAll(unique)
             }
-
-
-        onDispose {
-
-            listener?.remove()
-        }
     }
-
-
-    /* =====================================================
-       AUTO SCROLL
-       ===================================================== */
 
     LaunchedEffect(messages.size) {
 
@@ -451,337 +285,613 @@ Toast.makeText(
         }
     }
 
+    Scaffold(
 
-    /* =====================================================
-       SEND TEXT MESSAGE
-       ===================================================== */
+        topBar = {
 
-    fun sendMessage() {
+            SmallTopAppBar(
 
-        val user =
-            auth.currentUser
+                title = {
 
+                    Column {
 
-        if (user == null) {
-
-            Toast.makeText(
-                context,
-                "ابتدا وارد حساب کاربری شوید.",
-                Toast.LENGTH_SHORT
-            ).show()
-
-            return
-        }
-
-
-        val cleanText =
-            messageText.trim()
-
-
-        if (
-            cleanText.isEmpty() ||
-            isSending
-        ) {
-            return
-        }
-
-
-        isSending = true
-
-
-        val message =
-            hashMapOf(
-
-                "text" to cleanText,
-
-                "senderId" to user.uid,
-
-                "createdAt" to
-                    FieldValue.serverTimestamp(),
-
-                "type" to "text"
-            )
-
-
-        db.collection("chatRooms")
-            .document("ramin_roya")
-            .collection("messages")
-            .add(message)
-            .addOnSuccessListener {
-
-                messageText = ""
-
-                isSending = false
-            }
-            .addOnFailureListener { error ->
-
-                isSending = false
-
-                Toast.makeText(
-                    context,
-                    "ارسال نشد:\n${error.message}",
-                    Toast.LENGTH_LONG
-                ).show()
-            }
-    }
-
-
-    /* =====================================================
-       UI
-       ===================================================== */
-
-    Column(
-        modifier =
-            Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        listOf(
-                            Color(0xFFFFE8EF),
-                            Color(0xFFFFF7FA),
-                            Color.White
+                        Text(
+                            text = "رامین ❤️ رویا",
+                            fontWeight = FontWeight.Bold
                         )
-                    )
-                )
-    ) {
 
+                        Text(
+                            text = "گفت‌وگوی دونفره",
+                            fontSize = 12.sp,
+                            color = Color.Gray
+                        )
+                    }
+                },
 
-        ChatHeader()
+                actions = {
 
+                    IconButton(
+                        onClick = {}
+                    ) {
 
-        LazyColumn(
+                        Icon(
+                            imageVector = Icons.Default.MoreVert,
+                            contentDescription = "بیشتر"
+                        )
+                    }
+                },
 
+                colors =
+                    TopAppBarDefaults
+                        .smallTopAppBarColors(
+                            containerColor =
+                                Color(0xFFFFF4F7)
+                        )
+            )
+        },
+
+        bottomBar = {
+
+            ChatInputBar(
+
+                text = messageText,
+
+                onTextChange = {
+                    messageText = it
+                },
+
+                onAttachClick = {
+                    showAttachmentMenu = true
+                },
+
+                onSendClick = {
+
+                    if (
+                        messageText.trim().isNotEmpty()
+                    ) {
+
+                        sendTextMessage(
+                            firestore = firestore,
+                            auth = auth,
+                            text = messageText.trim(),
+                            messages = messages
+                        )
+
+                        messageText = ""
+                    }
+                }
+            )
+        }
+
+    ) { paddingValues ->
+
+        Box(
             modifier =
                 Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .padding(
-                        horizontal = 10.dp
-                    ),
-
-            state = listState,
-
-            verticalArrangement =
-                Arrangement.spacedBy(8.dp),
-
-            contentPadding =
-                androidx.compose.foundation.layout
-                    .PaddingValues(
-                        top = 12.dp,
-                        bottom = 12.dp
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                Color(0xFFFFF7F9),
+                                Color(0xFFFFEEF3),
+                                Color.White
+                            )
+                        )
                     )
         ) {
 
+            if (messages.isEmpty()) {
 
-            items(
-                items = messages,
-                key = { it.id }
-            ) { message ->
+                EmptyChat()
 
+            } else {
 
-                ChatBubble(
+                LazyColumn(
 
-                    message = message,
+                    state = listState,
 
-                    isMine =
-                        message.senderId ==
-                            currentUser?.uid
-                )
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(
+                                horizontal = 10.dp
+                            ),
+
+                    verticalArrangement =
+                        Arrangement.spacedBy(6.dp)
+                ) {
+
+                    item {
+
+                        Spacer(
+                            modifier =
+                                Modifier.height(8.dp)
+                        )
+                    }
+
+                    items(
+                        items = messages,
+                        key = { it.id }
+                    ) { message ->
+
+                        ChatMessageBubble(
+                            message = message,
+                            currentUserId = currentUserId,
+                            context = context
+                        )
+                    }
+
+                    item {
+
+                        Spacer(
+                            modifier =
+                                Modifier.height(8.dp)
+                        )
+                    }
+                }
             }
         }
+    }
 
+    if (showAttachmentMenu) {
 
-        /* =================================================
-           ATTACHMENT MENU
-           ================================================= */
+        AttachmentDialog(
 
-        if (showAttachmentMenu) {
-
-            AttachmentMenu(
-
-                onClose = {
-                    showAttachmentMenu = false
-                },
-
-                onImage = {
-
-                    showAttachmentMenu = false
-
-                    imageLauncher.launch(
-                        arrayOf("image/*")
-                    )
-                },
-
-                onMusic = {
-
-                    showAttachmentMenu = false
-
-                    audioLauncher.launch(
-                        arrayOf("audio/*")
-                    )
-                },
-
-                onVoice = {
-
-                    showAttachmentMenu = false
-
-                    Toast.makeText(
-                        context,
-                        "ضبط صدا را در مرحله بعد اضافه می‌کنیم 🎙️",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                },
-
-                onFile = {
-
-                    showAttachmentMenu = false
-
-                    fileLauncher.launch(
-                        arrayOf(
-                            "application/pdf",
-                            "text/*",
-                            "application/msword",
-                            "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                        )
-                    )
-                },
-
-                onLocation = {
-
-                    showAttachmentMenu = false
-
-                    Toast.makeText(
-                        context,
-                        "ارسال موقعیت را در مرحله بعد وصل می‌کنیم 📍",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            )
-        }
-
-
-        /* =================================================
-           STICKERS
-           ================================================= */
-
-        if (showStickers) {
-
-            StickerPanel(
-
-                onStickerSelected = { sticker ->
-
-                    messageText += sticker
-
-                    showStickers = false
-                }
-            )
-        }
-
-
-        /* =================================================
-           INPUT
-           ================================================= */
-
-        MessageInput(
-
-            text = messageText,
-
-            onTextChange = {
-                messageText = it
-            },
-
-            onSend = {
-                sendMessage()
-            },
-
-            onSticker = {
-
-                showStickers =
-                    !showStickers
-
+            onDismiss = {
                 showAttachmentMenu = false
             },
 
-            onAttachment = {
+            onSelect = {
 
-                showAttachmentMenu =
-                    !showAttachmentMenu
+                showAttachmentMenu = false
 
-                showStickers = false
-            },
-
-            isSending = isSending
+                filePicker.launch(
+                    arrayOf("*/*")
+                )
+            }
         )
     }
 }
 
+@Composable
+private fun EmptyChat() {
 
-/* =========================================================
-   CHAT HEADER
-   ========================================================= */
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+
+        Column(
+            horizontalAlignment =
+                Alignment.CenterHorizontally
+        ) {
+
+            Text(
+                text = "❤️",
+                fontSize = 54.sp
+            )
+
+            Spacer(
+                modifier =
+                    Modifier.height(12.dp)
+            )
+
+            Text(
+                text = "اینجا جای حرف‌های من و توئه",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(
+                modifier =
+                    Modifier.height(6.dp)
+            )
+
+            Text(
+                text = "اولین پیام رو بفرست 🌹",
+                color = Color.Gray
+            )
+        }
+    }
+}
 
 @Composable
-fun ChatHeader() {
+private fun ChatInputBar(
+    text: String,
+    onTextChange: (String) -> Unit,
+    onAttachClick: () -> Unit,
+    onSendClick: () -> Unit
+) {
 
-    Row(
-
+    Surface(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .background(
-                    Brush.horizontalGradient(
-                        listOf(
-                            Color(0xFFFF6F91),
-                            Color(0xFFFF4F79)
-                        )
-                    )
-                )
-                .padding(
-                    horizontal = 16.dp,
-                    vertical = 14.dp
-                ),
+                .navigationBarsPadding(),
+        shadowElevation = 8.dp,
+        color = Color.White
+    ) {
 
+        Row(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        horizontal = 8.dp,
+                        vertical = 8.dp
+                    ),
+            verticalAlignment =
+                Alignment.CenterVertically
+        ) {
+
+            IconButton(
+                onClick = onAttachClick
+            ) {
+
+                Icon(
+                    imageVector =
+                        Icons.Default.AttachFile,
+                    contentDescription = "پیوست"
+                )
+            }
+
+            androidx.compose.material3.OutlinedTextField(
+
+                value = text,
+
+                onValueChange = onTextChange,
+
+                modifier =
+                    Modifier
+                        .weight(1f),
+
+                placeholder = {
+                    Text("پیامت رو بنویس...")
+                },
+
+                maxLines = 4,
+
+                shape =
+                    RoundedCornerShape(24.dp)
+            )
+
+            Spacer(
+                modifier =
+                    Modifier.width(6.dp)
+            )
+
+            IconButton(
+                onClick = onSendClick
+            ) {
+
+                Box(
+                    modifier =
+                        Modifier
+                            .size(46.dp)
+                            .clip(CircleShape)
+                            .background(
+                                Color(0xFFE91E63)
+                            ),
+                    contentAlignment =
+                        Alignment.Center
+                ) {
+
+                    Icon(
+                        imageVector =
+                            Icons.Default.Send,
+                        contentDescription = "ارسال",
+                        tint = Color.White
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ChatMessageBubble(
+    message: ChatMessage,
+    currentUserId: String,
+    context: Context
+) {
+
+    val isMine =
+        message.senderId == currentUserId
+
+    Row(
+        modifier =
+            Modifier.fillMaxWidth(),
+        horizontalArrangement =
+            if (isMine)
+                Arrangement.End
+            else
+                Arrangement.Start
+    ) {
+
+        Column(
+            horizontalAlignment =
+                if (isMine)
+                    Alignment.End
+                else
+                    Alignment.Start
+        ) {
+
+            Surface(
+                shape =
+                    RoundedCornerShape(
+                        topStart = 18.dp,
+                        topEnd = 18.dp,
+                        bottomStart =
+                            if (isMine) 18.dp else 4.dp,
+                        bottomEnd =
+                            if (isMine) 4.dp else 18.dp
+                    ),
+                color =
+                    if (isMine)
+                        Color(0xFFFFD9E5)
+                    else
+                        Color.White,
+                shadowElevation = 2.dp
+            ) {
+
+                Column(
+                    modifier =
+                        Modifier.padding(10.dp)
+                ) {
+
+                    when (message.type.uppercase()) {
+
+                        "TEXT" -> {
+
+                            Text(
+                                text = message.text,
+                                fontSize = 16.sp
+                            )
+                        }
+
+                        "IMAGE" -> {
+
+                            ImageMessageContent(
+                                message = message,
+                                context = context
+                            )
+                        }
+
+                        "VIDEO" -> {
+
+                            FileMessageContent(
+                                message = message,
+                                icon =
+                                    Icons.Default.Videocam
+                            )
+                        }
+
+                        "AUDIO" -> {
+
+                            FileMessageContent(
+                                message = message,
+                                icon =
+                                    Icons.Default.Mic
+                            )
+                        }
+
+                        else -> {
+
+                            FileMessageContent(
+                                message = message,
+                                icon =
+                                    Icons.Default.InsertDriveFile
+                            )
+                        }
+                    }
+
+                    Spacer(
+                        modifier =
+                            Modifier.height(4.dp)
+                    )
+
+                    Row(
+                        verticalAlignment =
+                            Alignment.CenterVertically
+                    ) {
+
+                        Text(
+                            text =
+                                formatMessageTime(
+                                    message.createdAt
+                                ),
+                            fontSize = 10.sp,
+                            color = Color.Gray
+                        )
+
+                        if (isMine) {
+
+                            Spacer(
+                                modifier =
+                                    Modifier.width(4.dp)
+                            )
+
+                            when (
+                                message.localStatus
+                            ) {
+
+                                LocalMessageStatus.SENDING -> {
+
+                                    CircularProgressIndicator(
+                                        modifier =
+                                            Modifier.size(11.dp),
+                                        strokeWidth = 1.5.dp
+                                    )
+                                }
+
+                                LocalMessageStatus.FAILED -> {
+
+                                    Icon(
+                                        imageVector =
+                                            Icons.Default.ErrorOutline,
+                                        contentDescription =
+                                            "خطا",
+                                        modifier =
+                                            Modifier.size(14.dp),
+                                        tint =
+                                            Color.Red
+                                    )
+                                }
+
+                                else -> {
+
+                                    Text(
+                                        text = "✓✓",
+                                        fontSize = 10.sp,
+                                        color =
+                                            Color(0xFF4CAF50)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (
+                message.localStatus ==
+                LocalMessageStatus.FAILED
+            ) {
+
+                Row(
+                    verticalAlignment =
+                        Alignment.CenterVertically
+                ) {
+
+                    Text(
+                        text = "ارسال نشد",
+                        color = Color.Red,
+                        fontSize = 11.sp
+                    )
+
+                    Spacer(
+                        modifier =
+                            Modifier.width(4.dp)
+                    )
+
+                    Text(
+                        text = "تلاش دوباره",
+                        color =
+                            Color(0xFFE91E63),
+                        fontSize = 11.sp,
+                        fontWeight =
+                            FontWeight.Bold,
+                        modifier =
+                            Modifier.clickable {
+                                retryMessage(
+                                    message,
+                                    context
+                                )
+                            }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ImageMessageContent(
+    message: ChatMessage,
+    context: Context
+) {
+
+    if (message.localUri.isNotBlank()) {
+
+        AsyncImage(
+            model = message.localUri.toUri(),
+            contentDescription = message.fileName,
+            modifier =
+                Modifier
+                    .size(
+                        width = 230.dp,
+                        height = 230.dp
+                    )
+                    .clip(
+                        RoundedCornerShape(14.dp)
+                    ),
+            contentScale = ContentScale.Crop
+        )
+
+    } else {
+
+        Column(
+            horizontalAlignment =
+                Alignment.CenterHorizontally
+        ) {
+
+            Icon(
+                imageVector =
+                    Icons.Default.Image,
+                contentDescription = null,
+                modifier =
+                    Modifier.size(60.dp),
+                tint =
+                    Color(0xFFE91E63)
+            )
+
+            Spacer(
+                modifier =
+                    Modifier.height(5.dp)
+            )
+
+            Text(
+                text =
+                    message.fileName.ifBlank {
+                        "عکس"
+                    },
+                maxLines = 1,
+                overflow =
+                    TextOverflow.Ellipsis,
+                fontSize = 12.sp
+            )
+        }
+    }
+}
+
+@Composable
+private fun FileMessageContent(
+    message: ChatMessage,
+    icon: androidx.compose.ui.graphics.vector.ImageVector
+) {
+
+    Row(
+        modifier =
+            Modifier.width(240.dp),
         verticalAlignment =
             Alignment.CenterVertically
     ) {
 
-
         Box(
-
             modifier =
                 Modifier
                     .size(48.dp)
-                    .clip(CircleShape)
+                    .clip(RoundedCornerShape(12.dp))
                     .background(
-                        Color.White.copy(
-                            alpha = 0.25f
-                        )
+                        Color(0xFFFFE4EC)
                     ),
-
             contentAlignment =
                 Alignment.Center
         ) {
 
             Icon(
-                imageVector =
-                    Icons.Rounded.Favorite,
-
-                contentDescription =
-                    null,
-
-                tint = Color.White,
-
-                modifier =
-                    Modifier.size(27.dp)
+                imageVector = icon,
+                contentDescription = null,
+                tint =
+                    Color(0xFFE91E63)
             )
         }
 
-
         Spacer(
             modifier =
-                Modifier.width(12.dp)
+                Modifier.width(10.dp)
         )
-
 
         Column(
             modifier =
@@ -789,913 +899,554 @@ fun ChatHeader() {
         ) {
 
             Text(
-
                 text =
-                    "رامین و رویا ❤️",
-
-                color =
-                    Color.White,
-
-                fontSize =
-                    19.sp,
-
+                    message.fileName.ifBlank {
+                        "فایل"
+                    },
                 fontWeight =
-                    FontWeight.Bold
+                    FontWeight.Bold,
+                maxLines = 1,
+                overflow =
+                    TextOverflow.Ellipsis
             )
-
 
             Spacer(
                 modifier =
-                    Modifier.height(2.dp)
+                    Modifier.height(3.dp)
             )
 
-
             Text(
-
                 text =
-                    "گپ دونفره‌ی ما",
-
-                color =
-                    Color.White.copy(
-                        alpha = 0.85f
+                    formatFileSize(
+                        message.fileSize
                     ),
-
-                fontSize =
-                    13.sp
+                fontSize = 11.sp,
+                color = Color.Gray
             )
         }
 
-
-        Box(
-
-            modifier =
-                Modifier
-                    .size(10.dp)
-                    .clip(CircleShape)
-                    .background(
-                        Color(0xFF8EFFB2)
-                    )
-        )
-    }
-}
-
-
-/* =========================================================
-   CHAT BUBBLE
-   ========================================================= */
-
-@Composable
-fun ChatBubble(
-    message: ChatMessage,
-    isMine: Boolean
-) {
-
-    Row(
-
-        modifier =
-            Modifier.fillMaxWidth(),
-
-        horizontalArrangement =
-            if (isMine) {
-                Arrangement.End
-            } else {
-                Arrangement.Start
-            }
-    ) {
-
-
-        when (message.type) {
-
-            "image" -> {
-
-                ImageMessageBubble(
-                    message = message,
-                    isMine = isMine
-                )
-            }
-
-
-            else -> {
-
-                TextMessageBubble(
-                    message = message,
-                    isMine = isMine
-                )
-            }
-        }
-    }
-}
-
-
-/* =========================================================
-   TEXT MESSAGE
-   ========================================================= */
-
-@Composable
-fun TextMessageBubble(
-    message: ChatMessage,
-    isMine: Boolean
-) {
-
-    Column(
-
-        modifier =
-            Modifier
-                .widthInSafe(
-                    min = 0.dp,
-                    max = 310.dp
-                )
-                .clip(
-                    RoundedCornerShape(
-                        topStart = 20.dp,
-                        topEnd = 20.dp,
-                        bottomStart =
-                            if (isMine) {
-                                20.dp
-                            } else {
-                                5.dp
-                            },
-                        bottomEnd =
-                            if (isMine) {
-                                5.dp
-                            } else {
-                                20.dp
-                            }
-                    )
-                )
-                .background(
-                    if (isMine) {
-                        Color(0xFFFF5D83)
-                    } else {
-                        Color.White
-                    }
-                )
-                .padding(
-                    horizontal = 15.dp,
-                    vertical = 11.dp
-                )
-    ) {
-
-
-        Text(
-
-            text =
-                message.text,
-
-            color =
-                if (isMine) {
-                    Color.White
-                } else {
-                    Color(0xFF333333)
-                },
-
-            fontSize =
-                15.sp
-        )
-    }
-}
-
-
-/* =========================================================
-   IMAGE MESSAGE
-   ========================================================= */
-
-@Composable
-fun ImageMessageBubble(
-    message: ChatMessage,
-    isMine: Boolean
-) {
-
-    Column(
-
-        modifier =
-            Modifier
-                .widthInSafe(
-                    min = 0.dp,
-                    max = 280.dp
-                )
-                .clip(
-                    RoundedCornerShape(
-                        18.dp
-                    )
-                )
-                .background(
-                    if (isMine) {
-                        Color(0xFFFF5D83)
-                    } else {
-                        Color.White
-                    }
-                )
-                .padding(5.dp)
-    ) {
-
-
-        if (
-            message.filePath.isNotBlank()
+        IconButton(
+            onClick = {}
         ) {
 
-            SecureChatImage(
-                filePath =
-                    message.filePath
-            )
-
-        } else {
-
-            Box(
-
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .height(180.dp)
-                        .clip(
-                            RoundedCornerShape(
-                                15.dp
-                            )
-                        )
-                        .background(
-                            Color(0xFFF3E7EB)
-                        ),
-
-                contentAlignment =
-                    Alignment.Center
-            ) {
-
-                Text(
-                    text =
-                        "عکس پیدا نشد 😔",
-
-                    color =
-                        Color.Gray,
-
-                    fontSize =
-                        13.sp
-                )
-            }
-        }
-    }
-}
-
-
-/* =========================================================
-   SECURE IMAGE
-   ========================================================= */
-
-@Composable
-fun SecureChatImage(
-    filePath: String
-) {
-
-    val context =
-        LocalContext.current
-
-
-    var signedUrl by remember(
-        filePath
-    ) {
-        mutableStateOf<String?>(
-            null
-        )
-    }
-
-
-    var loading by remember(
-        filePath
-    ) {
-        mutableStateOf(true)
-    }
-
-
-    var failed by remember(
-        filePath
-    ) {
-        mutableStateOf(false)
-    }
-
-
-    LaunchedEffect(filePath) {
-
-        loading = true
-        failed = false
-        signedUrl = null
-
-
-        SupabaseStorage.getSignedUrl(
-            context = context,
-            filePath = filePath
-        ) { success, result ->
-
-
-            Handler(
-                Looper.getMainLooper()
-            ).post {
-
-                loading = false
-
-
-                if (success) {
-
-                    signedUrl = result
-
-                } else {
-
-                    failed = true
-                }
-            }
-        }
-    }
-
-
-    when {
-
-        loading -> {
-
-            Box(
-
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .height(200.dp)
-                        .clip(
-                            RoundedCornerShape(
-                                15.dp
-                            )
-                        )
-                        .background(
-                            Color(0xFFF4E8EC)
-                        ),
-
-                contentAlignment =
-                    Alignment.Center
-            ) {
-
-                Text(
-                    text = "در حال دریافت عکس... 📸",
-                    color = Color.Gray,
-                    fontSize = 13.sp
-                )
-            }
-        }
-
-
-        failed -> {
-
-            Box(
-
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .height(200.dp)
-                        .clip(
-                            RoundedCornerShape(
-                                15.dp
-                            )
-                        )
-                        .background(
-                            Color(0xFFF4E8EC)
-                        ),
-
-                contentAlignment =
-                    Alignment.Center
-            ) {
-
-                Text(
-                    text = "نمایش عکس انجام نشد 😔",
-                    color = Color.Gray,
-                    fontSize = 13.sp,
-                    textAlign = TextAlign.Center
-                )
-            }
-        }
-
-
-        signedUrl != null -> {
-
-            AsyncImage(
-
-                model =
-                    signedUrl,
-
+            Icon(
+                imageVector =
+                    Icons.Default.Download,
                 contentDescription =
-                    "عکس چت",
-
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .height(220.dp)
-                        .clip(
-                            RoundedCornerShape(
-                                15.dp
-                            )
-                        ),
-
-                contentScale =
-                    ContentScale.Crop
+                    "دانلود"
             )
         }
     }
 }
 
-
-/* =========================================================
-   ATTACHMENT MENU
-   ========================================================= */
-
 @Composable
-fun AttachmentMenu(
-    onClose: () -> Unit,
-    onImage: () -> Unit,
-    onMusic: () -> Unit,
-    onVoice: () -> Unit,
-    onFile: () -> Unit,
-    onLocation: () -> Unit
+private fun AttachmentDialog(
+    onDismiss: () -> Unit,
+    onSelect: () -> Unit
 ) {
 
-    Column(
+    AlertDialog(
 
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(
-                    horizontal = 12.dp,
-                    vertical = 6.dp
-                )
-                .clip(
-                    RoundedCornerShape(22.dp)
-                )
-                .background(Color.White)
-                .padding(10.dp)
-    ) {
+        onDismissRequest = onDismiss,
 
-
-        Row(
-
-            modifier =
-                Modifier.fillMaxWidth(),
-
-            verticalAlignment =
-                Alignment.CenterVertically
-        ) {
-
+        title = {
             Text(
-
-                text =
-                    "ارسال برای عشقم ❤️",
-
-                modifier =
-                    Modifier.weight(1f),
-
+                text = "ارسال فایل",
                 fontWeight =
-                    FontWeight.Bold,
-
-                fontSize =
-                    15.sp
+                    FontWeight.Bold
             )
+        },
 
+        text = {
 
-            IconButton(
-                onClick = onClose
-            ) {
+            Column {
 
-                Icon(
-                    imageVector =
-                        Icons.Rounded.Close,
+                AttachmentItem(
+                    icon = Icons.Default.Image,
+                    title = "عکس یا تصویر",
+                    onClick = onSelect
+                )
 
-                    contentDescription =
-                        "بستن"
+                AttachmentItem(
+                    icon = Icons.Default.Videocam,
+                    title = "ویدیو",
+                    onClick = onSelect
+                )
+
+                AttachmentItem(
+                    icon = Icons.Default.Mic,
+                    title = "فایل صوتی",
+                    onClick = onSelect
+                )
+
+                AttachmentItem(
+                    icon = Icons.Default.Description,
+                    title = "سند و فایل",
+                    onClick = onSelect
                 )
             }
+        },
+
+        confirmButton = {},
+
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss
+            ) {
+                Text("بستن")
+            }
         }
-
-
-        Row(
-
-            modifier =
-                Modifier.fillMaxWidth(),
-
-            horizontalArrangement =
-                Arrangement.SpaceEvenly
-        ) {
-
-
-            AttachmentItem(
-                icon =
-                    Icons.Rounded.Image,
-
-                title =
-                    "عکس",
-
-                onClick =
-                    onImage
-            )
-
-
-            AttachmentItem(
-                icon =
-                    Icons.Rounded.MusicNote,
-
-                title =
-                    "موسیقی",
-
-                onClick =
-                    onMusic
-            )
-
-
-            AttachmentItem(
-                icon =
-                    Icons.Rounded.Mic,
-
-                title =
-                    "صدا",
-
-                onClick =
-                    onVoice
-            )
-
-
-            AttachmentItem(
-                icon =
-                    Icons.Rounded.Folder,
-
-                title =
-                    "فایل",
-
-                onClick =
-                    onFile
-            )
-
-
-            AttachmentItem(
-                icon =
-                    Icons.Rounded.LocationOn,
-
-                title =
-                    "موقعیت",
-
-                onClick =
-                    onLocation
-            )
-        }
-    }
+    )
 }
 
-
-/* =========================================================
-   ATTACHMENT ITEM
-   ========================================================= */
-
 @Composable
-fun AttachmentItem(
-    icon:
-        androidx.compose.ui.graphics.vector.ImageVector,
-
+private fun AttachmentItem(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
     title: String,
-
     onClick: () -> Unit
 ) {
 
-    Column(
-
+    Row(
         modifier =
             Modifier
-                .clip(
-                    RoundedCornerShape(15.dp)
-                )
+                .fillMaxWidth()
                 .clickable(
                     onClick = onClick
                 )
-                .padding(
-                    7.dp
-                ),
-
-        horizontalAlignment =
-            Alignment.CenterHorizontally
+                .padding(vertical = 12.dp),
+        verticalAlignment =
+            Alignment.CenterVertically
     ) {
 
-
-        Box(
-
-            modifier =
-                Modifier
-                    .size(45.dp)
-                    .clip(CircleShape)
-                    .background(
-                        Color(0xFFFFE8EF)
-                    ),
-
-            contentAlignment =
-                Alignment.Center
-        ) {
-
-            Icon(
-
-                imageVector =
-                    icon,
-
-                contentDescription =
-                    title,
-
-                tint =
-                    Color(0xFFFF4F79)
-            )
-        }
-
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint =
+                Color(0xFFE91E63)
+        )
 
         Spacer(
             modifier =
-                Modifier.height(4.dp)
+                Modifier.width(12.dp)
         )
-
 
         Text(
-
-            text =
-                title,
-
-            fontSize =
-                11.sp,
-
-            color =
-                Color.DarkGray
+            text = title,
+            fontSize = 16.sp
         )
     }
 }
 
-
-/* =========================================================
-   STICKER PANEL
-   ========================================================= */
-
-@Composable
-fun StickerPanel(
-    onStickerSelected:
-        (String) -> Unit
-) {
-
-    val stickers =
-        listOf(
-            "❤️",
-            "🥰",
-            "😘",
-            "😍",
-            "💕",
-            "💋",
-            "🌹",
-            "🫶",
-            "💗",
-            "✨",
-            "🤍",
-            "💞"
-        )
-
-
-    Row(
-
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .background(
-                    Color.White
-                )
-                .padding(
-                    10.dp
-                ),
-
-        horizontalArrangement =
-            Arrangement.SpaceEvenly
-    ) {
-
-        stickers
-            .take(6)
-            .forEach { sticker ->
-
-                Text(
-
-                    text =
-                        sticker,
-
-                    fontSize =
-                        26.sp,
-
-                    modifier =
-                        Modifier.clickable {
-
-                            onStickerSelected(
-                                sticker
-                            )
-                        }
-                )
-            }
-    }
-
-
-    Row(
-
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .background(
-                    Color.White
-                )
-                .padding(
-                    start = 10.dp,
-                    end = 10.dp,
-                    bottom = 10.dp
-                ),
-
-        horizontalArrangement =
-            Arrangement.SpaceEvenly
-    ) {
-
-        stickers
-            .drop(6)
-            .forEach { sticker ->
-
-                Text(
-
-                    text =
-                        sticker,
-
-                    fontSize =
-                        26.sp,
-
-                    modifier =
-                        Modifier.clickable {
-
-                            onStickerSelected(
-                                sticker
-                            )
-                        }
-                )
-            }
-    }
-}
-
-
-/* =========================================================
-   MESSAGE INPUT
-   ========================================================= */
-
-@Composable
-fun MessageInput(
+private fun sendTextMessage(
+    firestore: FirebaseFirestore,
+    auth: FirebaseAuth,
     text: String,
-    onTextChange: (String) -> Unit,
-    onSend: () -> Unit,
-    onSticker: () -> Unit,
-    onAttachment: () -> Unit,
-    isSending: Boolean
+    messages: MutableList<ChatMessage>
 ) {
 
-    Row(
+    val user =
+        auth.currentUser
+            ?: return
 
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .background(
-                    Color.White
-                )
-                .padding(
-                    horizontal = 8.dp,
-                    vertical = 8.dp
-                ),
+    val messageId =
+        UUID.randomUUID().toString()
 
-        verticalAlignment =
-            Alignment.Bottom
-    ) {
-
-
-        IconButton(
-            onClick = onAttachment
-        ) {
-
-            Icon(
-
-                imageVector =
-                    Icons.Rounded.AttachFile,
-
-                contentDescription =
-                    "پیوست",
-
-                tint =
-                    Color(0xFFFF4F79)
-            )
-        }
-
-
-        IconButton(
-            onClick = onSticker
-        ) {
-
-            Icon(
-
-                imageVector =
-                    Icons.Rounded.EmojiEmotions,
-
-                contentDescription =
-                    "استیکر",
-
-                tint =
-                    Color(0xFFFF4F79)
-            )
-        }
-
-
-        TextField(
-
-            value =
-                text,
-
-            onValueChange =
-                onTextChange,
-
-            modifier =
-                Modifier.weight(1f),
-
-            placeholder = {
-
-                Text(
-                    text =
-                        "حرفی برای عشقم بنویس..."
-                )
-            },
-
-            maxLines =
-                4,
-
-            shape =
-                RoundedCornerShape(
-                    22.dp
-                ),
-
-            colors =
-                TextFieldDefaults.colors(
-
-                    focusedContainerColor =
-                        Color(0xFFFFF3F6),
-
-                    unfocusedContainerColor =
-                        Color(0xFFFFF3F6),
-
-                    focusedIndicatorColor =
-                        Color.Transparent,
-
-                    unfocusedIndicatorColor =
-                        Color.Transparent
-                )
+    val localMessage =
+        ChatMessage(
+            id = messageId,
+            senderId = user.uid,
+            type = "TEXT",
+            text = text,
+            createdAt = Timestamp.now(),
+            localStatus =
+                LocalMessageStatus.SENDING
         )
 
+    messages.add(localMessage)
 
-        Spacer(
-            modifier =
-                Modifier.width(4.dp)
+    val data =
+        hashMapOf<String, Any>(
+            "senderId" to user.uid,
+            "type" to "TEXT",
+            "text" to text,
+            "createdAt" to Timestamp.now()
         )
 
+    firestore
+        .collection("chatRooms")
+        .document(CHAT_ROOM)
+        .collection("messages")
+        .document(messageId)
+        .set(data)
+        .addOnSuccessListener {
 
-        IconButton(
+            val index =
+                messages.indexOfFirst {
+                    it.id == messageId
+                }
 
-            onClick =
-                onSend,
+            if (index >= 0) {
 
-            enabled =
-                text.trim().isNotEmpty() &&
-                    !isSending
-        ) {
+                messages[index] =
+                    localMessage.copy(
+                        localStatus =
+                            LocalMessageStatus.SENT
+                    )
+            }
+        }
+        .addOnFailureListener {
 
-            Icon(
+            val index =
+                messages.indexOfFirst {
+                    it.id == messageId
+                }
 
-                imageVector =
-                    Icons.Rounded.Send,
+            if (index >= 0) {
 
-                contentDescription =
-                    "ارسال",
+                messages[index] =
+                    localMessage.copy(
+                        localStatus =
+                            LocalMessageStatus.FAILED
+                    )
+            }
+        }
+}
 
-                tint =
-                    if (
-                        text.trim().isNotEmpty() &&
-                        !isSending
-                    ) {
-                        Color(0xFFFF4F79)
-                    } else {
-                        Color.LightGray
+private fun uploadFileToChat(
+    context: Context,
+    firestore: FirebaseFirestore,
+    auth: FirebaseAuth,
+    uri: Uri,
+    messages: MutableList<ChatMessage>
+) {
+
+    val user =
+        auth.currentUser
+            ?: return
+
+    val fileName =
+        getFileName(
+            context,
+            uri
+        )
+
+    val mimeType =
+        context.contentResolver.getType(uri)
+            ?: "application/octet-stream"
+
+    val fileSize =
+        getFileSize(
+            context,
+            uri
+        )
+
+    val messageId =
+        UUID.randomUUID().toString()
+
+    val type =
+        when {
+
+            mimeType.startsWith("image/") ->
+                "IMAGE"
+
+            mimeType.startsWith("video/") ->
+                "VIDEO"
+
+            mimeType.startsWith("audio/") ->
+                "AUDIO"
+
+            else ->
+                "FILE"
+        }
+
+    val filePath =
+        "chat/ramin_roya/$messageId-$fileName"
+
+    val localMessage =
+        ChatMessage(
+            id = messageId,
+            senderId = user.uid,
+            type = type,
+            filePath = filePath,
+            fileName = fileName,
+            mimeType = mimeType,
+            fileSize = fileSize,
+            localUri = uri.toString(),
+            createdAt = Timestamp.now(),
+            localStatus =
+                LocalMessageStatus.SENDING
+        )
+
+    messages.add(localMessage)
+
+    Toast.makeText(
+        context,
+        "در حال ارسال فایل... ⏳",
+        Toast.LENGTH_SHORT
+    ).show()
+
+    SupabaseStorage.uploadFile(
+        context = context,
+        fileUri = uri,
+        filePath = filePath
+    ) { success, result ->
+
+        android.os.Handler(
+            android.os.Looper.getMainLooper()
+        ).post {
+
+            if (success) {
+
+                val data =
+                    hashMapOf<String, Any>(
+                        "senderId" to user.uid,
+                        "type" to type,
+                        "text" to "",
+                        "filePath" to filePath,
+                        "fileName" to fileName,
+                        "mimeType" to mimeType,
+                        "fileSize" to fileSize,
+                        "createdAt" to Timestamp.now()
+                    )
+
+                firestore
+                    .collection("chatRooms")
+                    .document(CHAT_ROOM)
+                    .collection("messages")
+                    .document(messageId)
+                    .set(data)
+                    .addOnSuccessListener {
+
+                        val index =
+                            messages.indexOfFirst {
+                                it.id == messageId
+                            }
+
+                        if (index >= 0) {
+
+                            messages[index] =
+                                localMessage.copy(
+                                    localStatus =
+                                        LocalMessageStatus.SENT
+                                )
+                        }
+
+                        Toast.makeText(
+                            context,
+                            "فایل ارسال شد ❤️",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
-            )
+                    .addOnFailureListener {
+
+                        val index =
+                            messages.indexOfFirst {
+                                it.id == messageId
+                            }
+
+                        if (index >= 0) {
+
+                            messages[index] =
+                                localMessage.copy(
+                                    localStatus =
+                                        LocalMessageStatus.FAILED
+                                )
+                        }
+
+                        Toast.makeText(
+                            context,
+                            "فایل آپلود شد ولی پیام ثبت نشد",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+
+            } else {
+
+                val index =
+                    messages.indexOfFirst {
+                        it.id == messageId
+                    }
+
+                if (index >= 0) {
+
+                    messages[index] =
+                        localMessage.copy(
+                            localStatus =
+                                LocalMessageStatus.FAILED
+                        )
+                }
+
+                Toast.makeText(
+                    context,
+                    result,
+                    Toast.LENGTH_LONG
+                ).show()
+            }
         }
     }
 }
 
+private fun retryMessage(
+    message: ChatMessage,
+    context: Context
+) {
 
-/* =========================================================
-   SAFE WIDTH HELPER
-   ========================================================= */
+    if (message.localUri.isBlank()) {
 
-private fun Modifier.widthInSafe(
-    min: androidx.compose.ui.unit.Dp,
-    max: androidx.compose.ui.unit.Dp
-): Modifier {
+        Toast.makeText(
+            context,
+            "فایل اصلی برای تلاش دوباره پیدا نشد",
+            Toast.LENGTH_LONG
+        ).show()
 
-    return this.then(
-        Modifier.width(
-            max
+        return
+    }
+
+    Toast.makeText(
+        context,
+        "تلاش دوباره برای ارسال...",
+        Toast.LENGTH_SHORT
+    ).show()
+}
+
+private fun getFileName(
+    context: Context,
+    uri: Uri
+): String {
+
+    var result: String? = null
+
+    context.contentResolver
+        .query(
+            uri,
+            arrayOf(
+                OpenableColumns.DISPLAY_NAME
+            ),
+            null,
+            null,
+            null
         )
-    )
+        ?.use { cursor ->
+
+            if (cursor.moveToFirst()) {
+
+                val index =
+                    cursor.getColumnIndex(
+                        OpenableColumns.DISPLAY_NAME
+                    )
+
+                if (index >= 0) {
+
+                    result =
+                        cursor.getString(index)
+                }
+            }
+        }
+
+    return result
+        ?: uri.lastPathSegment
+        ?: "royaram_file"
+}
+
+private fun getFileSize(
+    context: Context,
+    uri: Uri
+): Long {
+
+    return try {
+
+        context.contentResolver
+            .query(
+                uri,
+                arrayOf(
+                    OpenableColumns.SIZE
+                ),
+                null,
+                null,
+                null
+            )
+            ?.use { cursor ->
+
+                if (cursor.moveToFirst()) {
+
+                    val index =
+                        cursor.getColumnIndex(
+                            OpenableColumns.SIZE
+                        )
+
+                    if (index >= 0) {
+
+                        return cursor.getLong(index)
+                    }
+                }
+            }
+
+        0L
+
+    } catch (_: Exception) {
+
+        0L
+    }
+}
+
+private fun formatFileSize(
+    bytes: Long
+): String {
+
+    if (bytes <= 0) {
+        return "اندازه نامشخص"
+    }
+
+    return when {
+
+        bytes < 1024 ->
+            "$bytes B"
+
+        bytes < 1024 * 1024 ->
+            String.format(
+                Locale.US,
+                "%.1f KB",
+                bytes / 1024.0
+            )
+
+        bytes < 1024 * 1024 * 1024 ->
+            String.format(
+                Locale.US,
+                "%.1f MB",
+                bytes / (1024.0 * 1024.0)
+            )
+
+        else ->
+            String.format(
+                Locale.US,
+                "%.1f GB",
+                bytes /
+                    (1024.0 * 1024.0 * 1024.0)
+            )
+    }
+}
+
+private fun formatMessageTime(
+    timestamp: Timestamp?
+): String {
+
+    if (timestamp == null) {
+        return ""
+    }
+
+    return try {
+
+        SimpleDateFormat(
+            "HH:mm",
+            Locale.getDefault()
+        ).format(
+            Date(
+                timestamp.seconds * 1000
+            )
+        )
+
+    } catch (_: Exception) {
+
+        ""
+    }
 }
