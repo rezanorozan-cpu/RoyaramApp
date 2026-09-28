@@ -100,12 +100,131 @@ class LoginActivity : FragmentActivity() {
                             )
                         },
 
-                        onBiometric = {
-                            showBiometricPrompt()
-                        },
+                        private fun showBiometricPrompt() {
+
+    val currentUser =
+        auth.currentUser
+
+    if (currentUser == null) {
+
+        Toast.makeText(
+            this,
+            "اول با ایمیل و رمز وارد شو ❤️",
+            Toast.LENGTH_LONG
+        ).show()
+
+        return
+    }
+
+    if (!isSecureDeviceAuthenticationAvailable()) {
+
+        Toast.makeText(
+            this,
+            "قفل امن گوشی فعال نیست",
+            Toast.LENGTH_LONG
+        ).show()
+
+        return
+    }
+
+    val executor =
+        ContextCompat.getMainExecutor(this)
+
+    val biometricPrompt =
+        BiometricPrompt(
+            this,
+            executor,
+
+            object :
+                BiometricPrompt.AuthenticationCallback() {
+
+                override fun onAuthenticationSucceeded(
+                    result: BiometricPrompt.AuthenticationResult
+                ) {
+
+                    super.onAuthenticationSucceeded(
+                        result
+                    )
+
+                    if (auth.currentUser != null) {
+
+                        Toast.makeText(
+                            this@LoginActivity,
+                            "خوش اومدی ❤️",
+                            Toast.LENGTH_SHORT
+                        ).show()
+
+                        openHome()
+
+                    } else {
+
+                        Toast.makeText(
+                            this@LoginActivity,
+                            "نشست ورود پیدا نشد؛ با ایمیل و رمز وارد شو.",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                }
+
+                override fun onAuthenticationError(
+                    errorCode: Int,
+                    errString: CharSequence
+                ) {
+
+                    super.onAuthenticationError(
+                        errorCode,
+                        errString
+                    )
+
+                    Toast.makeText(
+                        this@LoginActivity,
+                        errString.toString(),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+
+                override fun onAuthenticationFailed() {
+
+                    super.onAuthenticationFailed()
+
+                    Toast.makeText(
+                        this@LoginActivity,
+                        "تأیید انجام نشد، دوباره امتحان کن",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+        )
+
+    val promptInfo =
+        BiometricPrompt.PromptInfo.Builder()
+
+            .setTitle(
+                "ورود امن به رویارام"
+            )
+
+            .setSubtitle(
+                "اثر انگشت، چهره یا قفل گوشی"
+            )
+
+            .setDescription(
+                "برای ورود به فضای خصوصی رامین و رویا ❤️"
+            )
+
+            .setAllowedAuthenticators(
+                BiometricManager.Authenticators.BIOMETRIC_STRONG or
+                        BiometricManager.Authenticators.DEVICE_CREDENTIAL
+            )
+
+            .build()
+
+    biometricPrompt.authenticate(
+        promptInfo
+    )
+}
 
                         biometricAvailable =
-                            isBiometricAvailable()
+                             isSecureDeviceAuthenticationAvailable()
                     )
                 }
             }
@@ -144,6 +263,25 @@ class LoginActivity : FragmentActivity() {
             password
         )
             .addOnSuccessListener {
+
+    getSharedPreferences(
+        PREFS_NAME,
+        MODE_PRIVATE
+    )
+        .edit()
+        .putBoolean(
+            KEY_SECURE_LOGIN,
+            true
+        )
+        .apply()
+
+    onResult(
+        true,
+        "ورود موفق بود ❤️"
+    )
+
+    openHome()
+}
 
                 onResult(
                     true,
