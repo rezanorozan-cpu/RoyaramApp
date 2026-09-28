@@ -114,6 +114,7 @@ private data class ChatMessage(
     val localStatus: LocalMessageStatus? = null
 )
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun RoyaramChatScreen() {
 
