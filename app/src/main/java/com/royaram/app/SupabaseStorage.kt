@@ -19,37 +19,61 @@ object SupabaseStorage {
         onResult: (Boolean, String) -> Unit
     ) {
 
-        val currentUser = FirebaseAuth.getInstance().currentUser
+        val currentUser =
+            FirebaseAuth.getInstance().currentUser
 
         if (currentUser == null) {
-            onResult(false, "کاربر وارد حساب نشده است")
+            onResult(
+                false,
+                "کاربر وارد حساب نشده است"
+            )
             return
         }
 
-        currentUser.getIdToken(false)
+        /*
+         * دریافت توکن Firebase
+         *
+         * true یعنی توکن را تازه‌سازی کن
+         * تا مطمئن شویم Edge Function توکن معتبر دریافت می‌کند.
+         */
+        currentUser.getIdToken(true)
             .addOnSuccessListener { result ->
 
-                val firebaseToken = result.token
+                val firebaseToken =
+                    result.token
 
                 if (firebaseToken.isNullOrBlank()) {
-                    onResult(false, "توکن Firebase دریافت نشد")
+
+                    onResult(
+                        false,
+                        "Firebase توکن خالی برگرداند"
+                    )
+
                     return@addOnSuccessListener
                 }
 
                 Thread {
 
-                    var connection: HttpURLConnection? = null
+                    var connection:
+                            HttpURLConnection? = null
 
                     try {
 
-                        val contentResolver = context.contentResolver
+                        val contentResolver =
+                            context.contentResolver
 
                         val inputStream =
-                            contentResolver.openInputStream(fileUri)
-                                ?: throw Exception("فایل قابل خواندن نیست")
+                            contentResolver.openInputStream(
+                                fileUri
+                            )
+                                ?: throw Exception(
+                                    "فایل قابل خواندن نیست"
+                                )
 
                         val mimeType =
-                            contentResolver.getType(fileUri)
+                            contentResolver.getType(
+                                fileUri
+                            )
                                 ?: "application/octet-stream"
 
                         val fileName =
@@ -59,15 +83,30 @@ object SupabaseStorage {
                         val boundary =
                             "----RoyaramBoundary${System.currentTimeMillis()}"
 
-                        val url = URL(FUNCTION_URL)
+                        val url =
+                            URL(FUNCTION_URL)
 
                         connection =
-                            url.openConnection() as HttpURLConnection
+                            url.openConnection()
+                                    as HttpURLConnection
 
-                        connection.requestMethod = "POST"
-                        connection.doOutput = true
-                        connection.doInput = true
-                        connection.useCaches = false
+                        connection.requestMethod =
+                            "POST"
+
+                        connection.doOutput =
+                            true
+
+                        connection.doInput =
+                            true
+
+                        connection.useCaches =
+                            false
+
+                        connection.connectTimeout =
+                            30000
+
+                        connection.readTimeout =
+                            60000
 
                         connection.setRequestProperty(
                             "Authorization",
@@ -80,8 +119,13 @@ object SupabaseStorage {
                         )
 
                         val output =
-                            DataOutputStream(connection.outputStream)
+                            DataOutputStream(
+                                connection.outputStream
+                            )
 
+                        /*
+                         * filePath
+                         */
                         output.writeBytes(
                             "--$boundary\r\n"
                         )
@@ -94,8 +138,13 @@ object SupabaseStorage {
                             filePath
                         )
 
-                        output.writeBytes("\r\n")
+                        output.writeBytes(
+                            "\r\n"
+                        )
 
+                        /*
+                         * contentType
+                         */
                         output.writeBytes(
                             "--$boundary\r\n"
                         )
@@ -108,8 +157,13 @@ object SupabaseStorage {
                             mimeType
                         )
 
-                        output.writeBytes("\r\n")
+                        output.writeBytes(
+                            "\r\n"
+                        )
 
+                        /*
+                         * file
+                         */
                         output.writeBytes(
                             "--$boundary\r\n"
                         )
@@ -124,13 +178,16 @@ object SupabaseStorage {
 
                         inputStream.use { input ->
 
-                            val buffer = ByteArray(8192)
+                            val buffer =
+                                ByteArray(8192)
 
                             var bytesRead: Int
 
                             while (
                                 input.read(buffer)
-                                    .also { bytesRead = it } != -1
+                                    .also {
+                                        bytesRead = it
+                                    } != -1
                             ) {
 
                                 output.write(
@@ -141,7 +198,9 @@ object SupabaseStorage {
                             }
                         }
 
-                        output.writeBytes("\r\n")
+                        output.writeBytes(
+                            "\r\n"
+                        )
 
                         output.writeBytes(
                             "--$boundary--\r\n"
@@ -157,21 +216,28 @@ object SupabaseStorage {
                             try {
 
                                 val stream =
-                                    if (responseCode in 200..299) {
+                                    if (
+                                        responseCode in 200..299
+                                    ) {
                                         connection.inputStream
                                     } else {
                                         connection.errorStream
                                     }
 
-                                stream?.bufferedReader()
-                                    ?.use { it.readText() }
+                                stream
+                                    ?.bufferedReader()
+                                    ?.use {
+                                        it.readText()
+                                    }
                                     ?: ""
 
                             } catch (_: Exception) {
                                 ""
                             }
 
-                        if (responseCode in 200..299) {
+                        if (
+                            responseCode in 200..299
+                        ) {
 
                             onResult(
                                 true,
@@ -190,7 +256,7 @@ object SupabaseStorage {
 
                         onResult(
                             false,
-                            e.message ?: "خطای ناشناخته در آپلود"
+                            "خطای آپلود:\n${e.message ?: "خطای ناشناخته"}"
                         )
 
                     } finally {
@@ -200,11 +266,16 @@ object SupabaseStorage {
 
                 }.start()
             }
-            .addOnFailureListener {
 
+            .addOnFailureListener { error ->
+
+                /*
+                 * این بار علت واقعی خطای Firebase
+                 * را هم نمایش می‌دهیم.
+                 */
                 onResult(
                     false,
-                    "دریافت توکن Firebase انجام نشد"
+                    "دریافت توکن Firebase انجام نشد:\n${error.message ?: "خطای ناشناخته"}"
                 )
             }
     }
