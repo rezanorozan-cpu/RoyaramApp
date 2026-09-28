@@ -34,55 +34,75 @@ object SupabaseStorage {
         currentUser.getIdToken(true)
             .addOnSuccessListener { result ->
 
-                val firebaseToken = result.token
+                val firebaseToken =
+                    result.token
 
                 if (firebaseToken.isNullOrBlank()) {
+
                     onResult(
                         false,
-                        "Firebase توکن خالی برگرداند"
+                        "توکن Firebase خالی است"
                     )
+
                     return@addOnSuccessListener
                 }
 
                 Thread {
 
-                    var connection: HttpURLConnection? = null
+                    var connection:
+                            HttpURLConnection? = null
 
                     try {
 
-                        val contentResolver =
+                        val resolver =
                             context.contentResolver
 
                         val inputStream =
-                            contentResolver.openInputStream(fileUri)
+                            resolver.openInputStream(
+                                fileUri
+                            )
                                 ?: throw Exception(
                                     "فایل قابل خواندن نیست"
                                 )
 
                         val mimeType =
-                            contentResolver.getType(fileUri)
+                            resolver.getType(fileUri)
                                 ?: "application/octet-stream"
 
                         val fileName =
-                            fileUri.lastPathSegment
-                                ?: "upload_file"
+                            getFileName(
+                                context,
+                                fileUri
+                            )
 
                         val boundary =
-                            "----RoyaramBoundary${System.currentTimeMillis()}"
+                            "----RoyaramBoundary" +
+                                    System.currentTimeMillis()
 
                         val url =
                             URL(FUNCTION_URL)
 
                         connection =
-                            url.openConnection() as HttpURLConnection
+                            url.openConnection()
+                                    as HttpURLConnection
 
-                        connection.requestMethod = "POST"
-                        connection.doOutput = true
-                        connection.doInput = true
-                        connection.useCaches = false
+                        connection.requestMethod =
+                            "POST"
 
-                        connection.connectTimeout = 30000
-                        connection.readTimeout = 60000
+                        connection.doOutput =
+                            true
+
+                        connection.doInput =
+                            true
+
+                        connection.useCaches =
+                            false
+
+                        connection.connectTimeout =
+                            30000
+
+                        connection.readTimeout =
+                            120000
 
                         connection.setRequestProperty(
                             "Authorization",
@@ -107,8 +127,13 @@ object SupabaseStorage {
                             "Content-Disposition: form-data; name=\"filePath\"\r\n\r\n"
                         )
 
-                        output.writeBytes(filePath)
-                        output.writeBytes("\r\n")
+                        output.writeBytes(
+                            filePath
+                        )
+
+                        output.writeBytes(
+                            "\r\n"
+                        )
 
                         output.writeBytes(
                             "--$boundary\r\n"
@@ -118,8 +143,13 @@ object SupabaseStorage {
                             "Content-Disposition: form-data; name=\"contentType\"\r\n\r\n"
                         )
 
-                        output.writeBytes(mimeType)
-                        output.writeBytes("\r\n")
+                        output.writeBytes(
+                            mimeType
+                        )
+
+                        output.writeBytes(
+                            "\r\n"
+                        )
 
                         output.writeBytes(
                             "--$boundary\r\n"
@@ -136,16 +166,16 @@ object SupabaseStorage {
                         inputStream.use { input ->
 
                             val buffer =
-                                ByteArray(8192)
+                                ByteArray(16 * 1024)
 
-                            var bytesRead: Int
+                            while (true) {
 
-                            while (
-                                input.read(buffer)
-                                    .also {
-                                        bytesRead = it
-                                    } != -1
-                            ) {
+                                val bytesRead =
+                                    input.read(buffer)
+
+                                if (bytesRead == -1) {
+                                    break
+                                }
 
                                 output.write(
                                     buffer,
@@ -155,7 +185,9 @@ object SupabaseStorage {
                             }
                         }
 
-                        output.writeBytes("\r\n")
+                        output.writeBytes(
+                            "\r\n"
+                        )
 
                         output.writeBytes(
                             "--$boundary--\r\n"
@@ -171,7 +203,10 @@ object SupabaseStorage {
                             try {
 
                                 val stream =
-                                    if (responseCode in 200..299) {
+                                    if (
+                                        responseCode in
+                                        200..299
+                                    ) {
                                         connection.inputStream
                                     } else {
                                         connection.errorStream
@@ -188,18 +223,21 @@ object SupabaseStorage {
                                 ""
                             }
 
-                        if (responseCode in 200..299) {
+                        if (
+                            responseCode in
+                            200..299
+                        ) {
 
                             onResult(
                                 true,
-                                "فایل با موفقیت آپلود شد ❤️"
+                                responseText
                             )
 
                         } else {
 
                             onResult(
                                 false,
-                                "آپلود انجام نشد: HTTP $responseCode\n$responseText"
+                                "HTTP $responseCode\n$responseText"
                             )
                         }
 
@@ -207,7 +245,11 @@ object SupabaseStorage {
 
                         onResult(
                             false,
-                            "خطای آپلود:\n${e.message ?: "خطای ناشناخته"}"
+                            "خطای ارتباط با سرور:\n" +
+                                    (
+                                            e.message
+                                                ?: "خطای ناشناخته"
+                                            )
                         )
 
                     } finally {
@@ -216,12 +258,15 @@ object SupabaseStorage {
                     }
                 }.start()
             }
-
             .addOnFailureListener { error ->
 
                 onResult(
                     false,
-                    "دریافت توکن Firebase انجام نشد:\n${error.message ?: "خطای ناشناخته"}"
+                    "دریافت توکن Firebase ناموفق بود:\n" +
+                            (
+                                    error.message
+                                        ?: "خطای ناشناخته"
+                                    )
                 )
             }
     }
@@ -237,23 +282,26 @@ object SupabaseStorage {
             FirebaseAuth.getInstance().currentUser
 
         if (currentUser == null) {
+
             onResult(
                 false,
                 "کاربر وارد حساب نشده است"
             )
+
             return
         }
 
         currentUser.getIdToken(true)
             .addOnSuccessListener { result ->
 
-                val firebaseToken = result.token
+                val firebaseToken =
+                    result.token
 
                 if (firebaseToken.isNullOrBlank()) {
 
                     onResult(
                         false,
-                        "Firebase توکن خالی برگرداند"
+                        "توکن Firebase خالی است"
                     )
 
                     return@addOnSuccessListener
@@ -261,7 +309,8 @@ object SupabaseStorage {
 
                 Thread {
 
-                    var connection: HttpURLConnection? = null
+                    var connection:
+                            HttpURLConnection? = null
 
                     try {
 
@@ -269,15 +318,26 @@ object SupabaseStorage {
                             URL(FUNCTION_URL)
 
                         connection =
-                            url.openConnection() as HttpURLConnection
+                            url.openConnection()
+                                    as HttpURLConnection
 
-                        connection.requestMethod = "POST"
-                        connection.doOutput = true
-                        connection.doInput = true
-                        connection.useCaches = false
+                        connection.requestMethod =
+                            "POST"
 
-                        connection.connectTimeout = 30000
-                        connection.readTimeout = 30000
+                        connection.doOutput =
+                            true
+
+                        connection.doInput =
+                            true
+
+                        connection.useCaches =
+                            false
+
+                        connection.connectTimeout =
+                            30000
+
+                        connection.readTimeout =
+                            30000
 
                         connection.setRequestProperty(
                             "Authorization",
@@ -291,14 +351,17 @@ object SupabaseStorage {
 
                         val body =
                             JSONObject().apply {
+
                                 put(
                                     "action",
                                     "signedUrl"
                                 )
+
                                 put(
                                     "filePath",
                                     filePath
                                 )
+
                             }.toString()
 
                         connection.outputStream.use { output ->
@@ -319,7 +382,10 @@ object SupabaseStorage {
                             try {
 
                                 val stream =
-                                    if (responseCode in 200..299) {
+                                    if (
+                                        responseCode in
+                                        200..299
+                                    ) {
                                         connection.inputStream
                                     } else {
                                         connection.errorStream
@@ -336,12 +402,17 @@ object SupabaseStorage {
                                 ""
                             }
 
-                        if (responseCode in 200..299) {
+                        if (
+                            responseCode in
+                            200..299
+                        ) {
 
                             try {
 
                                 val json =
-                                    JSONObject(responseText)
+                                    JSONObject(
+                                        responseText
+                                    )
 
                                 val signedUrl =
                                     json.optString(
@@ -349,7 +420,9 @@ object SupabaseStorage {
                                         ""
                                     )
 
-                                if (signedUrl.isNotBlank()) {
+                                if (
+                                    signedUrl.isNotBlank()
+                                ) {
 
                                     onResult(
                                         true,
@@ -360,15 +433,15 @@ object SupabaseStorage {
 
                                     onResult(
                                         false,
-                                        "لینک امن عکس دریافت نشد"
+                                        "لینک امن فایل خالی است"
                                     )
                                 }
 
-                            } catch (e: Exception) {
+                            } catch (_: Exception) {
 
                                 onResult(
                                     false,
-                                    "پاسخ سرور نامعتبر است"
+                                    "پاسخ سرور قابل خواندن نیست"
                                 )
                             }
 
@@ -376,7 +449,7 @@ object SupabaseStorage {
 
                             onResult(
                                 false,
-                                "دریافت عکس انجام نشد: HTTP $responseCode\n$responseText"
+                                "HTTP $responseCode\n$responseText"
                             )
                         }
 
@@ -384,7 +457,11 @@ object SupabaseStorage {
 
                         onResult(
                             false,
-                            "خطای دریافت عکس:\n${e.message ?: "خطای ناشناخته"}"
+                            "خطا در دریافت لینک فایل:\n" +
+                                    (
+                                            e.message
+                                                ?: "خطای ناشناخته"
+                                            )
                         )
 
                     } finally {
@@ -394,13 +471,61 @@ object SupabaseStorage {
 
                 }.start()
             }
-
             .addOnFailureListener { error ->
 
                 onResult(
                     false,
-                    "دریافت توکن Firebase انجام نشد:\n${error.message ?: "خطای ناشناخته"}"
+                    "دریافت توکن Firebase ناموفق بود:\n" +
+                            (
+                                    error.message
+                                        ?: "خطای ناشناخته"
+                                    )
                 )
             }
+    }
+
+
+    private fun getFileName(
+        context: Context,
+        uri: Uri
+    ): String {
+
+        var fileName: String? = null
+
+        try {
+
+            context.contentResolver
+                .query(
+                    uri,
+                    arrayOf(
+                        "_display_name"
+                    ),
+                    null,
+                    null,
+                    null
+                )
+                ?.use { cursor ->
+
+                    if (cursor.moveToFirst()) {
+
+                        val index =
+                            cursor.getColumnIndex(
+                                "_display_name"
+                            )
+
+                        if (index >= 0) {
+
+                            fileName =
+                                cursor.getString(index)
+                        }
+                    }
+                }
+
+        } catch (_: Exception) {
+        }
+
+        return fileName
+            ?: uri.lastPathSegment
+            ?: "royaram_file"
     }
 }
