@@ -164,8 +164,14 @@ fun ChatScreen() {
         ) { uri ->
 
             if (uri == null) {
-                return@rememberLauncherForActivityResult
-            }
+    return@rememberLauncherForActivityResult
+}
+
+Toast.makeText(
+    context,
+    "عکس انتخاب شد 📸",
+    Toast.LENGTH_LONG
+).show()
 
 
             val user =
