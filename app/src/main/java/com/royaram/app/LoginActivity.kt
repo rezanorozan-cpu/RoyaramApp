@@ -66,6 +66,9 @@ import com.google.firebase.auth.FirebaseAuth
 
 class LoginActivity : FragmentActivity() {
 
+    private val PREFS_NAME = "royaram_security"
+    private val KEY_SECURE_LOGIN = "secure_login_enabled"
+
     private lateinit var auth: FirebaseAuth
 
     override fun onCreate(savedInstanceState: Bundle?) {
