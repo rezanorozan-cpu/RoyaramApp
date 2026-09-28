@@ -150,18 +150,6 @@ class LoginActivity : FragmentActivity() {
             return
         }
 
-        if (
-            !Patterns.EMAIL_ADDRESS
-                .matcher(email)
-                .matches()
-        ) {
-            onResult(
-                false,
-                "فرمت ایمیل درست نیست"
-            )
-            return
-        }
-
         if (password.isBlank()) {
             onResult(
                 false,
