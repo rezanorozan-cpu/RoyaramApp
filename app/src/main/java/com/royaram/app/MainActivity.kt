@@ -6,16 +6,14 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -138,15 +136,12 @@ fun RoyaramApp(
     }
 
     if (showMemories) {
-
         MemoriesScreen(
             onBack = {
                 showMemories = false
             }
         )
-
     } else {
-
         RoyaramHome(
             onMemoriesClick = {
                 showMemories = true
@@ -161,24 +156,26 @@ fun RoyaramHome(
     onMemoriesClick: () -> Unit,
     onChatClick: () -> Unit
 ) {
-
     val daysTogether = remember {
         calculateDaysTogether()
     }
 
-    val heartTransition = rememberInfiniteTransition(
-        label = "heart_transition"
-    )
+    var heartPulse by remember {
+        mutableStateOf(false)
+    }
 
-    val heartScale by heartTransition.animateFloat(
-        initialValue = 0.94f,
-        targetValue = 1.08f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(
-                durationMillis = 900,
-                easing = FastOutSlowInEasing
-            ),
-            repeatMode = RepeatMode.Reverse
+    LaunchedEffect(Unit) {
+        while (true) {
+            heartPulse = !heartPulse
+            kotlinx.coroutines.delay(900)
+        }
+    }
+
+    val heartScale by animateFloatAsState(
+        targetValue = if (heartPulse) 1.08f else 0.94f,
+        animationSpec = tween(
+            durationMillis = 900,
+            easing = FastOutSlowInEasing
         ),
         label = "heart_scale"
     )
@@ -234,9 +231,11 @@ fun RoyaramHome(
             .background(BackgroundGradient)
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp)
-            .padding(top = 18.dp, bottom = 30.dp)
+            .padding(
+                top = 18.dp,
+                bottom = 30.dp
+            )
     ) {
-
         TopHeader()
 
         Spacer(
@@ -276,26 +275,21 @@ fun RoyaramHome(
         Column(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-
             for (row in items.chunked(2)) {
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-
                     row.forEach { item ->
 
                         Box(
                             modifier = Modifier.weight(1f)
                         ) {
-
                             HomeCard(
                                 item = item,
                                 onClick = {
-
                                     when (item.title) {
-
                                         "خاطرات ما" -> {
                                             onMemoriesClick()
                                         }
@@ -356,16 +350,13 @@ fun RoyaramHome(
 
 @Composable
 fun TopHeader() {
-
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
-
         Column(
             modifier = Modifier.weight(1f)
         ) {
-
             Text(
                 text = "♡ رویارام",
                 color = DeepPink,
@@ -400,12 +391,10 @@ fun TopHeader() {
                 containerColor = Color.White.copy(alpha = 0.75f)
             )
         ) {
-
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-
                 Text(
                     text = "⚙️",
                     fontSize = 20.sp
@@ -420,7 +409,6 @@ fun HeroPhotoCard(
     daysTogether: Long,
     heartScale: Float
 ) {
-
     var animationStarted by remember {
         mutableStateOf(false)
     }
@@ -430,13 +418,10 @@ fun HeroPhotoCard(
     }
 
     LaunchedEffect(Unit) {
-
         kotlinx.coroutines.delay(400)
-
         animationStarted = true
 
         kotlinx.coroutines.delay(1800)
-
         showHearts = true
     }
 
@@ -471,7 +456,6 @@ fun HeroPhotoCard(
             containerColor = Color.White
         )
     ) {
-
         Box(
             modifier = Modifier.fillMaxSize()
         ) {
@@ -512,7 +496,6 @@ fun HeroPhotoCard(
                     containerColor = Color.White.copy(alpha = 0.88f)
                 )
             ) {
-
                 Text(
                     text = "❤️ $daysTogether روز",
                     color = DeepPink,
@@ -534,7 +517,6 @@ fun HeroPhotoCard(
                     ),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-
                 Text(
                     text = "رامین ❤️ رویا",
                     color = Color.White,
@@ -554,7 +536,6 @@ fun HeroPhotoCard(
             }
 
             if (showHearts) {
-
                 Box(
                     modifier = Modifier
                         .align(Alignment.Center)
@@ -564,7 +545,6 @@ fun HeroPhotoCard(
                             scaleY = heartScale
                         }
                 ) {
-
                     Text(
                         text = "❤️   ❤️",
                         color = Color.White,
@@ -580,7 +560,6 @@ fun HeroPhotoCard(
 fun RelationshipCounterCard(
     daysTogether: Long
 ) {
-
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -593,14 +572,12 @@ fun RelationshipCounterCard(
             containerColor = Color.White.copy(alpha = 0.84f)
         )
     ) {
-
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
             Text(
                 text = "داستان ما",
                 color = DeepPink,
@@ -655,7 +632,6 @@ fun HomeCard(
     item: HomeItem,
     onClick: () -> Unit
 ) {
-
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -672,7 +648,6 @@ fun HomeCard(
             containerColor = Color.White.copy(alpha = 0.78f)
         )
     ) {
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -680,7 +655,6 @@ fun HomeCard(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
             Text(
                 text = item.emoji,
                 fontSize = 36.sp
@@ -726,7 +700,6 @@ fun HomeCard(
 
 @Composable
 fun TodayMessageCard() {
-
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -739,14 +712,12 @@ fun TodayMessageCard() {
             containerColor = Color.White.copy(alpha = 0.84f)
         )
     ) {
-
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
             Text(
                 text = "حرف امروز ❤️",
                 color = DeepPink,
@@ -773,7 +744,6 @@ fun TodayMessageCard() {
 fun MemoriesScreen(
     onBack: () -> Unit
 ) {
-
     val firestore = remember {
         FirebaseFirestore.getInstance()
     }
@@ -791,7 +761,6 @@ fun MemoriesScreen(
     }
 
     LaunchedEffect(Unit) {
-
         firestore.collection("memories")
             .orderBy(
                 "createdAt",
@@ -805,7 +774,6 @@ fun MemoriesScreen(
                 }
 
                 memories = snapshot?.documents?.map { document ->
-
                     Memory(
                         id = document.id,
                         title = document.getString("title") ?: "",
@@ -813,7 +781,6 @@ fun MemoriesScreen(
                         description = document.getString("description") ?: "",
                         imageUrl = document.getString("imageUrl") ?: ""
                     )
-
                 } ?: emptyList()
 
                 loading = false
@@ -852,12 +819,10 @@ fun MemoriesScreen(
                         containerColor = Color.White.copy(alpha = 0.82f)
                     )
                 ) {
-
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-
                         Text(
                             text = "→",
                             fontSize = 25.sp,
@@ -873,7 +838,6 @@ fun MemoriesScreen(
                 Column(
                     horizontalAlignment = Alignment.End
                 ) {
-
                     Text(
                         text = "خاطرات ما 📸",
                         color = DeepPink,
@@ -899,7 +863,6 @@ fun MemoriesScreen(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-
                     CircularProgressIndicator(
                         color = Pink
                     )
@@ -918,11 +881,10 @@ fun MemoriesScreen(
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
-                    contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                    contentPadding = PaddingValues(
                         bottom = 100.dp
                     )
                 ) {
-
                     items(
                         items = memories,
                         key = {
@@ -954,7 +916,6 @@ fun MemoriesScreen(
                 containerColor = DeepPink
             )
         ) {
-
             Text(
                 text = "＋ افزودن خاطره",
                 color = Color.White,
@@ -969,7 +930,6 @@ fun MemoriesScreen(
     }
 
     if (showAddDialog) {
-
         AddMemoryDialog(
             onDismiss = {
                 showAddDialog = false
@@ -982,12 +942,10 @@ fun MemoriesScreen(
 fun EmptyMemories(
     onAdd: () -> Unit
 ) {
-
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-
         Column(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -1023,16 +981,14 @@ fun EmptyMemories(
             )
 
             Card(
-                modifier = Modifier
-                    .clickable {
-                        onAdd()
-                    },
+                modifier = Modifier.clickable {
+                    onAdd()
+                },
                 shape = RoundedCornerShape(18.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = DeepPink
                 )
             ) {
-
                 Text(
                     text = "ثبت اولین خاطره",
                     color = Color.White,
@@ -1051,7 +1007,6 @@ fun EmptyMemories(
 fun MemoryCard(
     memory: Memory
 ) {
-
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -1064,7 +1019,6 @@ fun MemoryCard(
             containerColor = Color.White.copy(alpha = 0.86f)
         )
     ) {
-
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -1079,7 +1033,10 @@ fun MemoryCard(
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(min = 160.dp, max = 260.dp)
+                        .heightIn(
+                            min = 160.dp,
+                            max = 260.dp
+                        )
                         .clip(
                             RoundedCornerShape(18.dp)
                         )
@@ -1145,7 +1102,6 @@ fun MemoryCard(
 fun AddMemoryDialog(
     onDismiss: () -> Unit
 ) {
-
     var title by remember {
         mutableStateOf("")
     }
@@ -1169,7 +1125,6 @@ fun AddMemoryDialog(
             }
         },
         title = {
-
             Text(
                 text = "ثبت خاطره جدید ❤️",
                 color = DeepPink,
@@ -1177,12 +1132,10 @@ fun AddMemoryDialog(
             )
         },
         text = {
-
             Column(
-                modifier = Modifier
-                    .verticalScroll(
-                        rememberScrollState()
-                    )
+                modifier = Modifier.verticalScroll(
+                    rememberScrollState()
+                )
             ) {
 
                 OutlinedTextField(
@@ -1231,7 +1184,6 @@ fun AddMemoryDialog(
             }
         },
         confirmButton = {
-
             TextButton(
                 enabled = !saving,
                 onClick = {
@@ -1263,7 +1215,6 @@ fun AddMemoryDialog(
                         }
                 }
             ) {
-
                 Text(
                     text = if (saving) {
                         "در حال ذخیره..."
@@ -1275,14 +1226,12 @@ fun AddMemoryDialog(
             }
         },
         dismissButton = {
-
             TextButton(
                 enabled = !saving,
                 onClick = {
                     onDismiss()
                 }
             ) {
-
                 Text(
                     text = "لغو",
                     color = SoftText
