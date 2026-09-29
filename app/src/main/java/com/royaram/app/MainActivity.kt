@@ -913,41 +913,26 @@ private fun HeroPhotoCard(
                 // قلب‌های انیمیشنی
                 // ------------------------------------------------
 
-                AnimatedVisibility(
+                if (showHearts) {
 
-                    visible = showHearts,
-
-                    modifier =
-                        Modifier.align(
-                            Alignment.Center
-                        ),
-
-                    enter =
-                        fadeIn(
-                            animationSpec =
-                                tween(700)
-                        ) +
-                            scaleIn(
-                                animationSpec =
-                                    tween(900)
-                            )
-                ) {
-
-                    Text(
-                        text = "♥  ♥",
-                        color = Color.White,
-                        fontSize = 28.sp,
-                        modifier =
-                            Modifier.graphicsLayer {
-
-                                scaleX =
-                                    heartScale
-
-                                scaleY =
-                                    heartScale
-                            }
-                    )
+    Box(
+        modifier =
+            Modifier
+                .align(Alignment.Center)
+                .graphicsLayer {
+                    alpha = 0.95f
+                    scaleX = heartScale
+                    scaleY = heartScale
                 }
+    ) {
+
+        Text(
+            text = "♥  ♥",
+            color = Color.White,
+            fontSize = 28.sp
+        )
+    }
+}
 
                 // ------------------------------------------------
                 // نوشته روی عکس
