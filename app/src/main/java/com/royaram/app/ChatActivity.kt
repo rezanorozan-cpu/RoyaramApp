@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+
 package com.royaram.app
 
 import android.content.ClipData
@@ -13,8 +15,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -43,7 +45,6 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.InsertDriveFile
-import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Reply
@@ -55,9 +56,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -89,23 +90,22 @@ import java.util.Locale
 import java.util.UUID
 
 class ChatActivity : ComponentActivity() {
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        setContent {
-            RoyaramChatScreen()
-        }
+        setContent { RoyaramChatScreen() }
     }
 }
 
 private const val CHAT_ROOM = "ramin_roya"
 
-private enum class LocalMessageStatus {
-    SENDING,
-    SENT,
-    FAILED
-}
+private val Pink = Color(0xFFE85D86)
+private val DeepPink = Color(0xFFB83D63)
+private val TextDark = Color(0xFF33252B)
+private val SoftText = Color(0xFF82747A)
+private val LightPink = Color(0xFFFFE7EF)
+private val Lavender = Color(0xFFF4EAFF)
+
+private enum class LocalMessageStatus { SENDING, SENT, FAILED }
 
 private data class ChatMessage(
     val id: String,
@@ -127,1018 +127,497 @@ private data class ChatMessage(
 
 @Composable
 private fun RoyaramChatScreen() {
-
     val context = LocalContext.current
+    val auth = remember { FirebaseAuth.getInstance() }
+    val firestore = remember { FirebaseFirestore.getInstance() }
+    val currentUserId = auth.currentUser?.uid ?: ""
 
-    val auth = remember {
-        FirebaseAuth.getInstance()
-    }
+    val messages = remember { mutableStateListOf<ChatMessage>() }
+    val listState = rememberLazyListState()
 
-    val firestore = remember {
-        FirebaseFirestore.getInstance()
-    }
+    var messageText by remember { mutableStateOf("") }
+    var showAttachmentMenu by remember { mutableStateOf(false) }
+    var selectedMessageIds by remember { mutableStateOf(setOf<String>()) }
+    var showMoreMenu by remember { mutableStateOf(false) }
+    var showEditDialog by remember { mutableStateOf(false) }
+    var editingMessage by remember { mutableStateOf<ChatMessage?>(null) }
+    var replyMessage by remember { mutableStateOf<ChatMessage?>(null) }
 
-    val currentUserId =
-        auth.currentUser?.uid ?: ""
+    val filePicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
 
-    val messages = remember {
-        mutableStateListOf<ChatMessage>()
-    }
-
-    var messageText by remember {
-        mutableStateOf("")
-    }
-
-    var showAttachmentMenu by remember {
-        mutableStateOf(false)
-    }
-
-    var selectedMessageIds by remember {
-        mutableStateOf(setOf<String>())
-    }
-
-    var showMoreMenu by remember {
-        mutableStateOf(false)
-    }
-
-    var showEditDialog by remember {
-        mutableStateOf(false)
-    }
-
-    var editingMessage by remember {
-        mutableStateOf<ChatMessage?>(null)
-    }
-
-    var replyMessage by remember {
-        mutableStateOf<ChatMessage?>(null)
-    }
-
-    val listState =
-        rememberLazyListState()
-
-    val filePicker =
-        rememberLauncherForActivityResult(
-            contract =
-                ActivityResultContracts.OpenDocument()
-        ) { uri ->
-
-            if (uri == null) {
-                return@rememberLauncherForActivityResult
-            }
-
-            try {
-
-                context.contentResolver
-                    .takePersistableUriPermission(
-                        uri,
-                        Intent.FLAG_GRANT_READ_URI_PERMISSION
-                    )
-
-            } catch (_: Exception) {
-            }
-
-            uploadFileToChat(
-                context = context,
-                firestore = firestore,
-                auth = auth,
-                uri = uri,
-                messages = messages
+        try {
+            context.contentResolver.takePersistableUriPermission(
+                uri,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION
             )
+        } catch (_: Exception) {
         }
 
-    /*
-     * دریافت پیام‌ها
-     */
+        uploadFileToChat(
+            context = context,
+            firestore = firestore,
+            auth = auth,
+            uri = uri,
+            messages = messages
+        )
+    }
+
     LaunchedEffect(Unit) {
-
         if (currentUserId.isBlank()) {
-
             Toast.makeText(
                 context,
                 "لطفاً ابتدا وارد حساب شوید",
                 Toast.LENGTH_LONG
             ).show()
-
             return@LaunchedEffect
         }
 
-        firestore
-            .collection("chatRooms")
+        firestore.collection("chatRooms")
             .document(CHAT_ROOM)
             .collection("messages")
-            .orderBy(
-                "createdAt",
-                Query.Direction.ASCENDING
-            )
+            .orderBy("createdAt", Query.Direction.ASCENDING)
             .addSnapshotListener { snapshot, error ->
-
-                if (error != null) {
-
+                if (error != null || snapshot == null) {
                     Toast.makeText(
                         context,
                         "خطا در دریافت پیام‌ها",
                         Toast.LENGTH_SHORT
                     ).show()
-
                     return@addSnapshotListener
                 }
 
-                if (snapshot == null) {
-                    return@addSnapshotListener
+                val remote = snapshot.documents.mapNotNull { doc ->
+                    val senderId = doc.getString("senderId")
+                        ?: return@mapNotNull null
+
+                    ChatMessage(
+                        id = doc.id,
+                        senderId = senderId,
+                        type = doc.getString("type") ?: "TEXT",
+                        text = doc.getString("text") ?: "",
+                        filePath = doc.getString("filePath") ?: "",
+                        fileName = doc.getString("fileName") ?: "",
+                        mimeType = doc.getString("mimeType") ?: "",
+                        fileSize = doc.getLong("fileSize") ?: 0L,
+                        createdAt = doc.getTimestamp("createdAt"),
+                        reaction = doc.getString("reaction") ?: "",
+                        replyToId = doc.getString("replyToId") ?: "",
+                        replyToText = doc.getString("replyToText") ?: "",
+                        edited = doc.getBoolean("edited") ?: false,
+                        localStatus = LocalMessageStatus.SENT
+                    )
                 }
 
-                val remoteMessages =
-                    snapshot.documents.mapNotNull { document ->
+                val pending = messages.filter {
+                    it.localStatus == LocalMessageStatus.SENDING ||
+                        it.localStatus == LocalMessageStatus.FAILED
+                }
 
-                        val senderId =
-                            document.getString("senderId")
-                                ?: return@mapNotNull null
-
-                        ChatMessage(
-                            id = document.id,
-
-                            senderId = senderId,
-
-                            type =
-                                document.getString("type")
-                                    ?: "TEXT",
-
-                            text =
-                                document.getString("text")
-                                    ?: "",
-
-                            filePath =
-                                document.getString("filePath")
-                                    ?: "",
-
-                            fileName =
-                                document.getString("fileName")
-                                    ?: "",
-
-                            mimeType =
-                                document.getString("mimeType")
-                                    ?: "",
-
-                            fileSize =
-                                document.getLong("fileSize")
-                                    ?: 0L,
-
-                            createdAt =
-                                document.getTimestamp(
-                                    "createdAt"
-                                ),
-
-                            reaction =
-                                document.getString(
-                                    "reaction"
-                                ) ?: "",
-
-                            replyToId =
-                                document.getString(
-                                    "replyToId"
-                                ) ?: "",
-
-                            replyToText =
-                                document.getString(
-                                    "replyToText"
-                                ) ?: "",
-
-                            edited =
-                                document.getBoolean(
-                                    "edited"
-                                ) ?: false,
-
-                            localStatus =
-                                LocalMessageStatus.SENT
-                        )
-                    }
-
-                val localPending =
-                    messages.filter {
-                        it.localStatus ==
-                                LocalMessageStatus.SENDING ||
-                                it.localStatus ==
-                                LocalMessageStatus.FAILED
-                    }
-
-                val merged =
-                    (remoteMessages + localPending)
-                        .distinctBy {
-                            it.id
-                        }
-                        .sortedBy {
-                            it.createdAt?.seconds ?: 0L
-                        }
+                val merged = (remote + pending)
+                    .distinctBy { it.id }
+                    .sortedBy { it.createdAt?.seconds ?: 0L }
 
                 messages.clear()
                 messages.addAll(merged)
 
-                /*
-                 * اگر پیامی که حذف شده بود
-                 * در حالت انتخاب باقی مانده بود
-                 * از انتخاب خارجش می‌کنیم.
-                 */
-                selectedMessageIds =
-                    selectedMessageIds.filter { id ->
-                        merged.any {
-                            it.id == id
-                        }
-                    }.toSet()
+                selectedMessageIds = selectedMessageIds
+                    .filter { id -> merged.any { it.id == id } }
+                    .toSet()
             }
     }
 
-    /*
-     * رفتن خودکار به آخر چت
-     */
     LaunchedEffect(messages.size) {
-
-        if (
-            messages.isNotEmpty() &&
-            selectedMessageIds.isEmpty()
-        ) {
-
-            listState.animateScrollToItem(
-                messages.lastIndex
-            )
+        if (messages.isNotEmpty() && selectedMessageIds.isEmpty()) {
+            listState.animateScrollToItem(messages.lastIndex)
         }
     }
 
     Scaffold(
-
+        containerColor = Color.Transparent,
         topBar = {
-
             if (selectedMessageIds.isNotEmpty()) {
-
                 SelectionTopBar(
-
-                    selectedCount =
-                        selectedMessageIds.size,
-
-                    onClose = {
-                        selectedMessageIds =
-                            emptySet()
-                    },
-
+                    selectedCount = selectedMessageIds.size,
+                    onClose = { selectedMessageIds = emptySet() },
                     onReply = {
-
-                        if (
-                            selectedMessageIds.size == 1
-                        ) {
-
-                            val selected =
-                                messages.firstOrNull {
-                                    it.id ==
-                                            selectedMessageIds.first()
-                                }
-
-                            if (selected != null) {
-
-                                replyMessage =
-                                    selected
-
-                                selectedMessageIds =
-                                    emptySet()
+                        if (selectedMessageIds.size == 1) {
+                            messages.firstOrNull {
+                                it.id == selectedMessageIds.first()
+                            }?.let {
+                                replyMessage = it
+                                selectedMessageIds = emptySet()
                             }
                         }
                     },
-
                     onDelete = {
-
                         deleteSelectedMessages(
-                            firestore = firestore,
-                            auth = auth,
-                            messages = messages,
-                            selectedIds =
-                                selectedMessageIds,
-                            context = context
+                            firestore,
+                            auth,
+                            messages,
+                            selectedMessageIds,
+                            context
                         )
-
-                        selectedMessageIds =
-                            emptySet()
+                        selectedMessageIds = emptySet()
                     },
-
-                    onMore = {
-                        showMoreMenu = true
-                    },
-
+                    onMore = { showMoreMenu = true },
                     onReaction = { reaction ->
-
                         setReactionForSelectedMessages(
-                            firestore = firestore,
-                            auth = auth,
-                            selectedIds =
-                                selectedMessageIds,
-                            reaction = reaction,
-                            messages = messages,
-                            context = context
+                            firestore,
+                            selectedMessageIds,
+                            reaction,
+                            messages,
+                            context
                         )
                     }
                 )
-
             } else {
-
-                NormalChatTopBar(
-                    onMoreClick = {}
-                )
+                NormalChatTopBar()
             }
         },
-
         bottomBar = {
-
             ChatInputBar(
-
                 text = messageText,
-
-                onTextChange = {
-                    messageText = it
-                },
-
-                onAttachClick = {
-                    showAttachmentMenu = true
-                },
-
+                replyMessage = replyMessage,
+                onTextChange = { messageText = it },
+                onCancelReply = { replyMessage = null },
+                onAttachClick = { showAttachmentMenu = true },
                 onSendClick = {
-
-                    val text =
-                        messageText.trim()
-
-                    if (text.isNotEmpty()) {
-
+                    val clean = messageText.trim()
+                    if (clean.isNotEmpty()) {
                         sendTextMessage(
-                            firestore = firestore,
-                            auth = auth,
-                            text = text,
-                            messages = messages,
-                            replyMessage = replyMessage
+                            firestore,
+                            auth,
+                            clean,
+                            messages,
+                            replyMessage
                         )
-
                         messageText = ""
-
                         replyMessage = null
                     }
                 }
             )
         }
-
-    ) { paddingValues ->
-
+    ) { padding ->
         Box(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(
-                                Color(0xFFFFF7F9),
-                                Color(0xFFFFEEF3),
-                                Color.White
-                            )
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .background(
+                    Brush.verticalGradient(
+                        listOf(
+                            Color(0xFFFFEAF2),
+                            Color(0xFFF7EEFF),
+                            Color(0xFFFFFBFD)
                         )
                     )
+                )
         ) {
-
             if (messages.isEmpty()) {
-
                 EmptyChat()
-
             } else {
-
                 LazyColumn(
-
                     state = listState,
-
-                    modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .padding(
-                                horizontal = 10.dp
-                            ),
-
-                    verticalArrangement =
-                        Arrangement.spacedBy(6.dp)
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 10.dp),
+                    verticalArrangement = Arrangement.spacedBy(7.dp)
                 ) {
+                    item { Spacer(Modifier.height(8.dp)) }
 
-                    item {
-
-                        Spacer(
-                            modifier =
-                                Modifier.height(8.dp)
-                        )
-                    }
-
-                    items(
-                        items = messages,
-                        key = {
-                            it.id
-                        }
-                    ) { message ->
-
-                        val isSelected =
-                            selectedMessageIds.contains(
-                                message.id
-                            )
+                    items(messages, key = { it.id }) { message ->
+                        val selected = selectedMessageIds.contains(message.id)
 
                         ChatMessageBubble(
-
                             message = message,
-
-                            currentUserId =
-                                currentUserId,
-
-                            context = context,
-
-                            isSelected =
-                                isSelected,
-
-                            selectionMode =
-                                selectedMessageIds.isNotEmpty(),
-
+                            currentUserId = currentUserId,
+                            isSelected = selected,
+                            selectionMode = selectedMessageIds.isNotEmpty(),
                             onLongPress = {
-
                                 selectedMessageIds =
-                                    selectedMessageIds +
-                                            message.id
+                                    selectedMessageIds + message.id
                             },
-
                             onClick = {
-
-                                if (
-                                    selectedMessageIds
-                                        .isNotEmpty()
-                                ) {
-
+                                if (selectedMessageIds.isNotEmpty()) {
                                     selectedMessageIds =
-                                        if (
-                                            isSelected
-                                        ) {
-                                            selectedMessageIds -
-                                                    message.id
+                                        if (selected) {
+                                            selectedMessageIds - message.id
                                         } else {
-                                            selectedMessageIds +
-                                                    message.id
+                                            selectedMessageIds + message.id
                                         }
                                 }
                             }
                         )
                     }
 
-                    item {
-
-                        Spacer(
-                            modifier =
-                                Modifier.height(8.dp)
-                        )
-                    }
+                    item { Spacer(Modifier.height(10.dp)) }
                 }
             }
         }
     }
 
-    /*
-     * منوی بیشتر
-     */
     if (showMoreMenu) {
-
-        val selectedMessages =
-            messages.filter {
-                selectedMessageIds.contains(
-                    it.id
-                )
-            }
+        val selected = messages.filter {
+            selectedMessageIds.contains(it.id)
+        }
 
         AlertDialog(
-
-            onDismissRequest = {
-                showMoreMenu = false
-            },
-
+            onDismissRequest = { showMoreMenu = false },
             title = {
                 Text(
-                    text = "عملیات پیام",
-                    fontWeight =
-                        FontWeight.Bold
+                    "عملیات پیام",
+                    fontWeight = FontWeight.Bold
                 )
             },
-
             text = {
-
                 Column {
-
-                    if (
-                        selectedMessages.size == 1 &&
-                        selectedMessages.first().type ==
-                        "TEXT"
-                    ) {
-
+                    if (selected.size == 1 && selected.first().type == "TEXT") {
                         TextButton(
-
                             onClick = {
-
-                                val message =
-                                    selectedMessages.first()
-
-                                copyText(
-                                    context,
-                                    message.text
-                                )
-
+                                copyText(context, selected.first().text)
                                 showMoreMenu = false
                             }
                         ) {
-
-                            Icon(
-                                imageVector =
-                                    Icons.Default.ContentCopy,
-                                contentDescription =
-                                    null
-                            )
-
-                            Spacer(
-                                modifier =
-                                    Modifier.width(8.dp)
-                            )
-
+                            Icon(Icons.Default.ContentCopy, null)
+                            Spacer(Modifier.width(8.dp))
                             Text("کپی متن")
                         }
 
-                        TextButton(
-
-                            onClick = {
-
-                                editingMessage =
-                                    selectedMessages.first()
-
-                                showEditDialog =
-                                    true
-
-                                showMoreMenu =
-                                    false
+                        if (selected.first().senderId == currentUserId) {
+                            TextButton(
+                                onClick = {
+                                    editingMessage = selected.first()
+                                    showEditDialog = true
+                                    showMoreMenu = false
+                                }
+                            ) {
+                                Icon(Icons.Default.Edit, null)
+                                Spacer(Modifier.width(8.dp))
+                                Text("ویرایش پیام")
                             }
-                        ) {
-
-                            Icon(
-                                imageVector =
-                                    Icons.Default.Edit,
-                                contentDescription =
-                                    null
-                            )
-
-                            Spacer(
-                                modifier =
-                                    Modifier.width(8.dp)
-                            )
-
-                            Text("ویرایش پیام")
                         }
-                    }
-
-                    if (
-                        selectedMessages.size == 1
-                    ) {
 
                         TextButton(
-
                             onClick = {
-
-                                replyMessage =
-                                    selectedMessages.first()
-
-                                selectedMessageIds =
-                                    emptySet()
-
-                                showMoreMenu =
-                                    false
+                                replyMessage = selected.first()
+                                selectedMessageIds = emptySet()
+                                showMoreMenu = false
                             }
                         ) {
-
-                            Icon(
-                                imageVector =
-                                    Icons.Default.Reply,
-                                contentDescription =
-                                    null
-                            )
-
-                            Spacer(
-                                modifier =
-                                    Modifier.width(8.dp)
-                            )
-
+                            Icon(Icons.Default.Reply, null)
+                            Spacer(Modifier.width(8.dp))
                             Text("پاسخ به پیام")
                         }
                     }
 
                     TextButton(
-
                         onClick = {
-
                             deleteSelectedMessages(
-                                firestore =
-                                    firestore,
-
-                                auth =
-                                    auth,
-
-                                messages =
-                                    messages,
-
-                                selectedIds =
-                                    selectedMessageIds,
-
-                                context =
-                                    context
+                                firestore,
+                                auth,
+                                messages,
+                                selectedMessageIds,
+                                context
                             )
-
-                            selectedMessageIds =
-                                emptySet()
-
-                            showMoreMenu =
-                                false
+                            selectedMessageIds = emptySet()
+                            showMoreMenu = false
                         }
                     ) {
-
-                        Icon(
-                            imageVector =
-                                Icons.Default.Delete,
-                            contentDescription =
-                                null
-                        )
-
-                        Spacer(
-                            modifier =
-                                Modifier.width(8.dp)
-                        )
-
+                        Icon(Icons.Default.Delete, null)
+                        Spacer(Modifier.width(8.dp))
                         Text("حذف پیام")
                     }
                 }
             },
-
             confirmButton = {
-
-                TextButton(
-                    onClick = {
-                        showMoreMenu = false
-                    }
-                ) {
+                TextButton(onClick = { showMoreMenu = false }) {
                     Text("بستن")
                 }
             }
         )
     }
 
-    /*
-     * ویرایش پیام
-     */
-    if (
-        showEditDialog &&
-        editingMessage != null
-    ) {
-
+    if (showEditDialog && editingMessage != null) {
         EditMessageDialog(
-
-            message =
-                editingMessage!!,
-
+            message = editingMessage!!,
             onDismiss = {
-
-                showEditDialog =
-                    false
-
-                editingMessage =
-                    null
+                showEditDialog = false
+                editingMessage = null
             },
-
             onSave = { newText ->
-
-                editMessage(
-                    firestore =
-                        firestore,
-
-                    auth =
-                        auth,
-
-                    message =
-                        editingMessage!!,
-
-                    newText =
-                        newText,
-
-                    messages =
-                        messages,
-
-                    context =
-                        context
+                editMessage(                    firestore,
+                    auth,
+                    editingMessage!!,
+                    newText,
+                    messages,
+                    context
                 )
-
-                showEditDialog =
-                    false
-
-                editingMessage =
-                    null
-
-                selectedMessageIds =
-                    emptySet()
+                showEditDialog = false
+                editingMessage = null
+                selectedMessageIds = emptySet()
             }
         )
     }
 
-    /*
-     * انتخاب فایل
-     */
     if (showAttachmentMenu) {
-
         AttachmentDialog(
-
-            onDismiss = {
-                showAttachmentMenu = false
-            },
-
+            onDismiss = { showAttachmentMenu = false },
             onSelect = {
-
                 showAttachmentMenu = false
-
-                filePicker.launch(
-                    arrayOf("*/*")
-                )
+                filePicker.launch(arrayOf("*/*"))
             }
         )
     }
 }
 
-/*
- * نوار بالای حالت انتخاب
- */
+@Composable
+private fun NormalChatTopBar() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                Brush.horizontalGradient(
+                    listOf(
+                        Color(0xFFFFDCE9),
+                        Color(0xFFF1E5FF),
+                        Color(0xFFFFF5F8)
+                    )
+                )
+            )
+            .padding(horizontal = 14.dp, vertical = 11.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(52.dp)
+                    .clip(CircleShape)
+                    .background(
+                        Brush.linearGradient(
+                            listOf(Pink, DeepPink)
+                        )
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("❤️", fontSize = 24.sp)
+            }
+
+            Spacer(Modifier.width(11.dp))
+
+            Column(Modifier.weight(1f)) {
+                Text(
+                    "رامین ❤️ رویا",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TextDark
+                )
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    "فضای خصوصیِ دونفره‌مون ✨",
+                    fontSize = 12.sp,
+                    color = SoftText
+                )
+            }
+
+            Surface(
+                shape = RoundedCornerShape(18.dp),
+                color = Color.White.copy(alpha = 0.62f)
+            ) {
+                Text(
+                    "خصوصی 🔐",
+                    modifier = Modifier.padding(
+                        horizontal = 10.dp,
+                        vertical = 7.dp
+                    ),
+                    fontSize = 11.sp,
+                    color = DeepPink,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+        }
+    }
+}
+
 @Composable
 private fun SelectionTopBar(
-
     selectedCount: Int,
-
     onClose: () -> Unit,
-
     onReply: () -> Unit,
-
     onDelete: () -> Unit,
-
     onMore: () -> Unit,
-
     onReaction: (String) -> Unit
 ) {
-
-    Column {
-
-        Surface(
-            modifier =
-                Modifier.fillMaxWidth(),
-
-            color =
-                Color.White,
-
-            shadowElevation =
-                4.dp
-        ) {
-
-            Row(
-
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(
-                            horizontal = 4.dp,
-                            vertical = 6.dp
-                        ),
-
-                verticalAlignment =
-                    Alignment.CenterVertically
-            ) {
-
-                IconButton(
-                    onClick = onClose
-                ) {
-
-                    Text(
-                        text = "✕",
-                        fontSize = 24.sp
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(
+                Brush.horizontalGradient(
+                    listOf(
+                        Color(0xFFFFDCE9),
+                        Color(0xFFF2E8FF)
                     )
-                }
-
-                Text(
-                    text =
-                        "$selectedCount انتخاب شد",
-                    modifier =
-                        Modifier.weight(1f),
-                    fontSize = 18.sp,
-                    fontWeight =
-                        FontWeight.Bold
                 )
-
-                if (selectedCount == 1) {
-
-                    IconButton(
-                        onClick = onReply
-                    ) {
-
-                        Icon(
-                            imageVector =
-                                Icons.Default.Reply,
-                            contentDescription =
-                                "پاسخ"
-                        )
-                    }
-                }
-
-                IconButton(
-                    onClick = onDelete
-                ) {
-
-                    Icon(
-                        imageVector =
-                            Icons.Default.Delete,
-                        contentDescription =
-                            "حذف"
-                    )
-                }
-
-                IconButton(
-                    onClick = onMore
-                ) {
-
-                    Icon(
-                        imageVector =
-                            Icons.Default.MoreVert,
-                        contentDescription =
-                            "بیشتر"
-                    )
-                }
-            }
-        }
-
-        /*
-         * واکنش‌های سریع
-         */
-        Surface(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        horizontal = 16.dp,
-                        vertical = 4.dp
-                    )
-                    .clip(
-                        RoundedCornerShape(
-                            24.dp
-                        )
-                    ),
-
-            color =
-                Color.White,
-
-            shadowElevation =
-                3.dp
-        ) {
-
-            Row(
-
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(
-                            horizontal = 8.dp,
-                            vertical = 4.dp
-                        ),
-
-                horizontalArrangement =
-                    Arrangement.SpaceEvenly
-            ) {
-
-                ReactionButton(
-                    emoji = "❤️",
-                    onClick = {
-                        onReaction("❤️")
-                    }
-                )
-
-                ReactionButton(
-                    emoji = "👍",
-                    onClick = {
-                        onReaction("👍")
-                    }
-                )
-
-                ReactionButton(
-                    emoji = "👎",
-                    onClick = {
-                        onReaction("👎")
-                    }
-                )
-
-                ReactionButton(
-                    emoji = "🔥",
-                    onClick = {
-                        onReaction("🔥")
-                    }
-                )
-
-                ReactionButton(
-                    emoji = "🥰",
-                    onClick = {
-                        onReaction("🥰")
-                    }
-                )
-
-                ReactionButton(
-                    emoji = "😂",
-                    onClick = {
-                        onReaction("😂")
-                    }
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun ReactionButton(
-    emoji: String,
-    onClick: () -> Unit
-) {
-
-    Text(
-        text = emoji,
-        fontSize = 25.sp,
-        modifier =
-            Modifier
-                .clip(CircleShape)
-                .clickable(
-                    onClick = onClick
-                )
-                .padding(5.dp)
-    )
-}
-
-/*
- * نوار عادی بالای چت
- */
-@Composable
-private fun NormalChatTopBar(
-    onMoreClick: () -> Unit
-) {
-
-    Surface(
-        modifier =
-            Modifier.fillMaxWidth(),
-
-        color =
-            Color.White,
-
-        shadowElevation =
-            2.dp
+            )
     ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 4.dp, vertical = 5.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onClose) {
+                Text("✕", fontSize = 22.sp, color = TextDark)
+            }
+
+            Column(Modifier.weight(1f)) {
+                Text(
+                    "$selectedCount پیام",
+                    fontWeight = FontWeight.Bold,
+                    color = TextDark
+                )
+                Text(
+                    "عملیات روی پیام انتخاب‌شده",
+                    fontSize = 10.sp,
+                    color = SoftText
+                )
+            }
+
+            if (selectedCount == 1) {
+                IconButton(onClick = onReply) {
+                    Icon(Icons.Default.Reply, "پاسخ", tint = DeepPink)
+                }
+            }
+
+            IconButton(onClick = onDelete) {
+                Icon(Icons.Default.Delete, "حذف", tint = DeepPink)
+            }
+
+            IconButton(onClick = onMore) {
+                Icon(Icons.Default.MoreVert, "بیشتر", tint = TextDark)
+            }
+        }
 
         Row(
-
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        horizontal = 12.dp,
-                        vertical = 8.dp
-                    ),
-
-            verticalAlignment =
-                Alignment.CenterVertically
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 14.dp, vertical = 5.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-
-            Column(
-                modifier =
-                    Modifier.weight(1f)
-            ) {
-
+            listOf("❤️", "🥰", "🔥", "😂", "👍", "✨").forEach { emoji ->
                 Text(
-                    text = "رامین ❤️ رویا",
-                    fontWeight =
-                        FontWeight.Bold,
-                    fontSize = 20.sp
-                )
-
-                Text(
-                    text =
-                        "گفت‌وگوی دونفره",
-                    fontSize = 12.sp,
-                    color =
-                        Color.Gray
-                )
-            }
-
-            IconButton(
-                onClick = onMoreClick
-            ) {
-
-                Icon(
-                    imageVector =
-                        Icons.Default.MoreVert,
-                    contentDescription =
-                        "بیشتر"
+                    emoji,
+                    fontSize = 23.sp,
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .combinedClickable(
+                            onClick = { onReaction(emoji) },
+                            onLongClick = {}
+                        )
+                        .padding(5.dp)
                 )
             }
         }
@@ -1147,46 +626,40 @@ private fun NormalChatTopBar(
 
 @Composable
 private fun EmptyChat() {
-
     Box(
-        modifier =
-            Modifier.fillMaxSize(),
-        contentAlignment =
-            Alignment.Center
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
     ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Box(
+                modifier = Modifier
+                    .size(88.dp)
+                    .clip(CircleShape)
+                    .background(
+                        Brush.linearGradient(
+                            listOf(Pink, DeepPink)
+                        )
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("❤️", fontSize = 42.sp)
+            }
 
-        Column(
-            horizontalAlignment =
-                Alignment.CenterHorizontally
-        ) {
-
-            Text(
-                text = "❤️",
-                fontSize = 54.sp
-            )
-
-            Spacer(
-                modifier =
-                    Modifier.height(12.dp)
-            )
-
-            Text(
-                text =
-                    "اینجا جای حرف‌های من و توئه",
-                fontSize = 18.sp,
-                fontWeight =
-                    FontWeight.Bold
-            )
-
-            Spacer(
-                modifier =
-                    Modifier.height(6.dp)
-            )
+            Spacer(Modifier.height(16.dp))
 
             Text(
-                text =
-                    "اولین پیام رو بفرست 🌹",
-                color = Color.Gray
+                "اینجا جای حرف‌های من و توئه",
+                fontSize = 19.sp,
+                fontWeight = FontWeight.Bold,
+                color = TextDark
+            )
+
+            Spacer(Modifier.height(6.dp))
+
+            Text(
+                "اولین پیام رو بفرست 🌹",
+                fontSize = 13.sp,
+                color = SoftText
             )
         }
     }
@@ -1194,447 +667,299 @@ private fun EmptyChat() {
 
 @Composable
 private fun ChatInputBar(
-
     text: String,
-
+    replyMessage: ChatMessage?,
     onTextChange: (String) -> Unit,
-
+    onCancelReply: () -> Unit,
     onAttachClick: () -> Unit,
-
     onSendClick: () -> Unit
 ) {
-
-    Row(
-
-        modifier =
-            Modifier
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = Color.White.copy(alpha = 0.96f),
+        shadowElevation = 8.dp
+    ) {
+        Column(
+            modifier = Modifier
                 .fillMaxWidth()
                 .navigationBarsPadding()
-                .background(
-                    Color.White
-                )
-                .padding(
-                    horizontal = 8.dp,
-                    vertical = 8.dp
-                ),
-
-        verticalAlignment =
-            Alignment.CenterVertically
-    ) {
-
-        IconButton(
-            onClick = onAttachClick
+                .padding(horizontal = 10.dp, vertical = 8.dp)
         ) {
+            if (replyMessage != null) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(15.dp))
+                        .background(LightPink)
+                        .padding(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        Modifier
+                            .width(3.dp)
+                            .height(34.dp)
+                            .background(Pink)
+                    )
 
-            Icon(
-                imageVector =
-                    Icons.Default.AttachFile,
-                contentDescription =
-                    "پیوست"
-            )
-        }
+                    Spacer(Modifier.width(8.dp))
 
-        OutlinedTextField(
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            "پاسخ به پیام",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = DeepPink
+                        )
+                        Text(
+                            replyMessage.text.ifBlank {
+                                replyMessage.fileName.ifBlank { "فایل" }
+                            },
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            fontSize = 12.sp,
+                            color = TextDark
+                        )
+                    }
 
-            value = text,
+                    IconButton(onClick = onCancelReply) {
+                        Text("✕", color = SoftText)
+                    }
+                }
 
-            onValueChange =
-                onTextChange,
+                Spacer(Modifier.height(7.dp))
+            }
 
-            modifier =
-                Modifier.weight(1f),
-
-            placeholder = {
-                Text(
-                    text =
-                        "پیامت رو بنویس..."
-                )
-            },
-
-            maxLines = 4,
-
-            shape =
-                RoundedCornerShape(24.dp)
-        )
-
-        Spacer(
-            modifier =
-                Modifier.width(6.dp)
-        )
-
-        IconButton(
-            onClick = onSendClick
-        ) {
-
-            Box(
-                modifier =
-                    Modifier
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.Bottom
+            ) {
+                Box(
+                    modifier = Modifier
                         .size(46.dp)
                         .clip(CircleShape)
-                        .background(
-                            Color(0xFFE91E63)
+                        .background(LightPink)
+                        .combinedClickable(
+                            onClick = onAttachClick,
+                            onLongClick = {}
                         ),
-                contentAlignment =
-                    Alignment.Center
-            ) {
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.Default.AttachFile,
+                        "پیوست",
+                        tint = DeepPink
+                    )
+                }
 
-                Icon(
-                    imageVector =
-                        Icons.Default.Send,
-                    contentDescription =
-                        "ارسال",
-                    tint =
-                        Color.White
+                Spacer(Modifier.width(7.dp))
+
+                OutlinedTextField(
+                    value = text,
+                    onValueChange = onTextChange,
+                    modifier = Modifier.weight(1f),
+                    placeholder = {
+                        Text(
+                            "پیامت رو بنویس...",
+                            color = SoftText
+                        )
+                    },
+                    maxLines = 4,
+                    shape = RoundedCornerShape(22.dp)
                 )
+
+                Spacer(Modifier.width(7.dp))
+
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(
+                            Brush.linearGradient(
+                                listOf(Pink, DeepPink)
+                            )
+                        )
+                        .combinedClickable(
+                            onClick = onSendClick,
+                            onLongClick = {}
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.Default.Send,
+                        "ارسال",
+                        tint = Color.White
+                    )
+                }
             }
         }
     }
 }
 
-/*
- * حباب پیام
- */
-@OptIn(
-    androidx.compose.foundation.ExperimentalFoundationApi::class
-)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun ChatMessageBubble(
-
     message: ChatMessage,
-
     currentUserId: String,
-
-    context: Context,
-
     isSelected: Boolean,
-
     selectionMode: Boolean,
-
     onLongPress: () -> Unit,
-
     onClick: () -> Unit
 ) {
+    val isMine = message.senderId == currentUserId
 
-    val isMine =
-        message.senderId ==
-                currentUserId
-
-    val bubbleColor =
-        when {
-
-            isSelected ->
-                Color(0xFFFFB6CB)
-
-            isMine ->
-                Color(0xFFFFD9E5)
-
-            else ->
-                Color.White
-        }
+    val bubbleBrush = when {
+        isSelected -> Brush.linearGradient(
+            listOf(Color(0xFFFFB8CC), Color(0xFFFFD9E5))
+        )
+        isMine -> Brush.linearGradient(
+            listOf(Color(0xFFFFD7E4), Color(0xFFFFEAF1))
+        )
+        else -> Brush.linearGradient(
+            listOf(Color.White, Color(0xFFFFF9FC))
+        )
+    }
 
     Row(
-
-        modifier =
-            Modifier.fillMaxWidth(),
-
+        modifier = Modifier.fillMaxWidth(),
         horizontalArrangement =
-            if (isMine)
-                Arrangement.End
-            else
-                Arrangement.Start
+            if (isMine) Arrangement.End else Arrangement.Start
     ) {
-
         Column(
-
             horizontalAlignment =
-                if (isMine)
-                    Alignment.End
-                else
-                    Alignment.Start
+                if (isMine) Alignment.End else Alignment.Start
         ) {
-
             Box(
-
-                modifier =
-                    Modifier
-                        .clip(
-                            RoundedCornerShape(
-                                topStart = 18.dp,
-                                topEnd = 18.dp,
-                                bottomStart =
-                                    if (isMine)
-                                        18.dp
-                                    else
-                                        4.dp,
-                                bottomEnd =
-                                    if (isMine)
-                                        4.dp
-                                    else
-                                        18.dp
-                            )
+                modifier = Modifier
+                    .widthInSafe(min = 0.dp, max = 300.dp)
+                    .clip(
+                        RoundedCornerShape(
+                            topStart = 20.dp,
+                            topEnd = 20.dp,
+                            bottomStart = if (isMine) 20.dp else 5.dp,
+                            bottomEnd = if (isMine) 5.dp else 20.dp
                         )
-                        .background(
-                            bubbleColor
-                        )
-                        .combinedClickable(
-
-                            onClick = {
-                                onClick()
-                            },
-
-                            onLongClick = {
-                                onLongPress()
-                            }
-                        )
-                        .padding(10.dp)
+                    )
+                    .background(bubbleBrush)
+                    .combinedClickable(
+                        onClick = onClick,
+                        onLongClick = onLongPress
+                    )
+                    .padding(10.dp)
             ) {
-
                 Column {
-
-                    /*
-                     * پیام پاسخ داده شده
-                     */
-                    if (
-                        message.replyToText
-                            .isNotBlank()
-                    ) {
-
+                    if (message.replyToText.isNotBlank()) {
                         Row(
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .clip(
-                                        RoundedCornerShape(
-                                            8.dp
-                                        )
-                                    )
-                                    .background(
-                                        Color.White.copy(
-                                            alpha =
-                                                0.65f
-                                        )
-                                    )
-                                    .padding(
-                                        7.dp
-                                    )
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(
+                                    Color.White.copy(alpha = 0.58f)
+                                )
+                                .padding(7.dp)
                         ) {
-
                             Box(
-                                modifier =
-                                    Modifier
-                                        .width(3.dp)
-                                        .height(
-                                            35.dp
-                                        )
-                                        .background(
-                                            Color(
-                                                0xFFE91E63
-                                            )
-                                        )
+                                Modifier
+                                    .width(3.dp)
+                                    .height(34.dp)
+                                    .background(Pink)
                             )
-
-                            Spacer(
-                                modifier =
-                                    Modifier.width(
-                                        6.dp
-                                    )
-                            )
-
+                            Spacer(Modifier.width(6.dp))
                             Text(
-                                text =
-                                    message.replyToText,
+                                message.replyToText,
                                 maxLines = 2,
-                                overflow =
-                                    TextOverflow.Ellipsis,
-                                fontSize = 12.sp,
-                                color =
-                                    Color.DarkGray
+                                overflow = TextOverflow.Ellipsis,
+                                fontSize = 11.sp,
+                                color = SoftText
                             )
                         }
-
-                        Spacer(
-                            modifier =
-                                Modifier.height(6.dp)
-                        )
+                        Spacer(Modifier.height(7.dp))
                     }
 
-                    when (
-                        message.type.uppercase()
-                    ) {
-
+                    when (message.type.uppercase()) {
                         "TEXT" -> {
-
                             Text(
-                                text =
-                                    message.text,
-                                fontSize =
-                                    16.sp
+                                message.text,
+                                fontSize = 16.sp,
+                                color = TextDark
                             )
 
-                            if (
-                                message.edited
-                            ) {
-
+                            if (message.edited) {
                                 Text(
-                                    text =
-                                        "ویرایش شد",
-                                    fontSize =
-                                        9.sp,
-                                    color =
-                                        Color.Gray
+                                    "ویرایش شد",
+                                    fontSize = 9.sp,
+                                    color = SoftText
                                 )
                             }
                         }
 
-                        "IMAGE" -> {
+                        "IMAGE" -> ImageMessageContent(message)
 
-                            ImageMessageContent(
-                                message =
-                                    message
-                            )
-                        }
-
-                        "VIDEO" -> {
-
-                            FileMessageContent(
-                                message =
-                                    message,
-
-                                icon =
-                                    Icons.Default.Videocam
-                            )
-                        }
-
-                        "AUDIO" -> {
-
-                            FileMessageContent(
-                                message =
-                                    message,
-
-                                icon =
-                                    Icons.Default.Mic
-                            )
-                        }
-
-                        else -> {
-
-                            FileMessageContent(
-                                message =
-                                    message,
-
-                                icon =
-                                    Icons.Default.InsertDriveFile
-                            )
-                        }
-                    }
-
-                    if (
-                        message.reaction
-                            .isNotBlank()
-                    ) {
-
-                        Spacer(
-                            modifier =
-                                Modifier.height(4.dp)
+                        "VIDEO" -> FileMessageContent(
+                            message,
+                            Icons.Default.Videocam
+                        )                        "AUDIO" -> FileMessageContent(
+                            message,
+                            Icons.Default.Mic
                         )
 
+                        else -> FileMessageContent(
+                            message,
+                            Icons.Default.InsertDriveFile
+                        )
+                    }
+
+                    if (message.reaction.isNotBlank()) {
+                        Spacer(Modifier.height(4.dp))
                         Surface(
-                            shape =
-                                CircleShape,
-
-                            color =
-                                Color.White,
-
-                            shadowElevation =
-                                1.dp
+                            shape = CircleShape,
+                            color = Color.White,
+                            shadowElevation = 2.dp
                         ) {
-
                             Text(
-                                text =
-                                    message.reaction,
-                                fontSize =
-                                    16.sp,
-                                modifier =
-                                    Modifier.padding(
-                                        horizontal = 7.dp,
-                                        vertical = 2.dp
-                                    )
+                                message.reaction,
+                                modifier = Modifier.padding(
+                                    horizontal = 7.dp,
+                                    vertical = 2.dp
+                                ),
+                                fontSize = 15.sp
                             )
                         }
                     }
 
-                    Spacer(
-                        modifier =
-                            Modifier.height(4.dp)
-                    )
+                    Spacer(Modifier.height(4.dp))
 
-                    Row(
-                        verticalAlignment =
-                            Alignment.CenterVertically
-                    ) {
-
+                    Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            text =
-                                formatMessageTime(
-                                    message.createdAt
-                                ),
-                            fontSize = 10.sp,
-                            color =
-                                Color.Gray
+                            formatMessageTime(message.createdAt),
+                            fontSize = 9.sp,
+                            color = SoftText
                         )
 
                         if (isMine) {
+                            Spacer(Modifier.width(4.dp))
 
-                            Spacer(
-                                modifier =
-                                    Modifier.width(
-                                        4.dp
-                                    )
-                            )
-
-                            when (
-                                message.localStatus
-                            ) {
-
+                            when (message.localStatus) {
                                 LocalMessageStatus.SENDING -> {
-
                                     CircularProgressIndicator(
-                                        modifier =
-                                            Modifier.size(
-                                                11.dp
-                                            ),
-                                        strokeWidth =
-                                            1.5.dp
+                                        Modifier.size(11.dp),
+                                        strokeWidth = 1.5.dp
                                     )
                                 }
 
                                 LocalMessageStatus.FAILED -> {
-
                                     Icon(
-                                        imageVector =
-                                            Icons.Default.ErrorOutline,
-                                        contentDescription =
-                                            "خطا",
-                                        modifier =
-                                            Modifier.size(
-                                                14.dp
-                                            ),
-                                        tint =
-                                            Color.Red
+                                        Icons.Default.ErrorOutline,
+                                        "خطا",
+                                        Modifier.size(14.dp),
+                                        tint = Color.Red
                                     )
                                 }
 
                                 else -> {
-
                                     Text(
-                                        text =
-                                            "✓✓",
-                                        fontSize =
-                                            10.sp,
-                                        color =
-                                            Color(
-                                                0xFF4CAF50
-                                            )
+                                        "✓✓",
+                                        fontSize = 9.sp,
+                                        color = Color(0xFF4CAF50)
                                     )
                                 }
                             }
@@ -1643,96 +968,56 @@ private fun ChatMessageBubble(
                 }
             }
 
-            if (
-                message.localStatus ==
-                LocalMessageStatus.FAILED
-            ) {
-
+            if (message.localStatus == LocalMessageStatus.FAILED) {
                 Text(
-                    text =
-                        "ارسال نشد",
-                    color =
-                        Color.Red,
-                    fontSize =
-                        11.sp,
-                    modifier =
-                        Modifier.padding(
-                            top = 2.dp
-                        )
+                    "ارسال نشد",
+                    color = Color.Red,
+                    fontSize = 10.sp,
+                    modifier = Modifier.padding(top = 2.dp)
                 )
             }
         }
     }
 }
 
-@Composable
-private fun ImageMessageContent(
-    message: ChatMessage
-) {
-
-    if (
-        message.localUri.isNotBlank()
-    ) {
-
-        AsyncImage(
-
-            model =
-                message.localUri.toUri(),
-
-            contentDescription =
-                message.fileName,
-
-            modifier =
-                Modifier
-                    .size(
-                        width = 230.dp,
-                        height = 230.dp
-                    )
-                    .clip(
-                        RoundedCornerShape(
-                            14.dp
-                        )
-                    ),
-
-            contentScale =
-                ContentScale.Crop
-        )
-
-    } else {
-
-        Column(
-            horizontalAlignment =
-                Alignment.CenterHorizontally
-        ) {
-
-            Icon(
-                imageVector =
-                    Icons.Default.Image,
-
-                contentDescription =
-                    null,
-
-                modifier =
-                    Modifier.size(
-                        60.dp
-                    ),
-
-                tint =
-                    Color(0xFFE91E63)
+private fun Modifier.widthInSafe(
+    min: androidx.compose.ui.unit.Dp,
+    max: androidx.compose.ui.unit.Dp
+): Modifier = this.then(
+    Modifier
+        .then(
+            androidx.compose.foundation.layout.widthIn(
+                min = min,
+                max = max
             )
+        )
+)
 
+@Composable
+private fun ImageMessageContent(message: ChatMessage) {
+    if (message.localUri.isNotBlank()) {
+        AsyncImage(
+            model = message.localUri.toUri(),
+            contentDescription = message.fileName,
+            modifier = Modifier
+                .size(width = 240.dp, height = 240.dp)
+                .clip(RoundedCornerShape(15.dp)),
+            contentScale = ContentScale.Crop
+        )
+    } else {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Icon(
+                Icons.Default.Image,
+                null,
+                Modifier.size(58.dp),
+                tint = Pink
+            )
             Text(
-                text =
-                    message.fileName.ifBlank {
-                        "عکس"
-                    },
-
+                message.fileName.ifBlank { "عکس" },
                 maxLines = 1,
-
-                overflow =
-                    TextOverflow.Ellipsis,
-
-                fontSize = 12.sp
+                overflow = TextOverflow.Ellipsis,
+                fontSize = 12.sp,
+                color = TextDark
             )
         }
     }
@@ -1740,500 +1025,219 @@ private fun ImageMessageContent(
 
 @Composable
 private fun FileMessageContent(
-
     message: ChatMessage,
-
     icon: ImageVector
 ) {
-
     Row(
-
-        modifier =
-            Modifier.width(240.dp),
-
-        verticalAlignment =
-            Alignment.CenterVertically
+        modifier = Modifier.width(245.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-
         Box(
-
-            modifier =
-                Modifier
-                    .size(48.dp)
-                    .clip(
-                        RoundedCornerShape(
-                            12.dp
-                        )
-                    )
-                    .background(
-                        Color(0xFFFFE4EC)
-                    ),
-
-            contentAlignment =
-                Alignment.Center
+            modifier = Modifier
+                .size(48.dp)
+                .clip(RoundedCornerShape(13.dp))
+                .background(LightPink),
+            contentAlignment = Alignment.Center
         ) {
-
-            Icon(
-                imageVector =
-                    icon,
-
-                contentDescription =
-                    null,
-
-                tint =
-                    Color(0xFFE91E63)
-            )
+            Icon(icon, null, tint = DeepPink)
         }
 
-        Spacer(
-            modifier =
-                Modifier.width(10.dp)
-        )
+        Spacer(Modifier.width(10.dp))
 
-        Column(
-            modifier =
-                Modifier.weight(1f)
-        ) {
-
+        Column(Modifier.weight(1f)) {
             Text(
-                text =
-                    message.fileName.ifBlank {
-                        "فایل"
-                    },
-
-                fontWeight =
-                    FontWeight.Bold,
-
+                message.fileName.ifBlank { "فایل" },
+                fontWeight = FontWeight.Bold,
                 maxLines = 1,
-
-                overflow =
-                    TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
+                color = TextDark
             )
-
             Text(
-                text =
-                    formatFileSize(
-                        message.fileSize
-                    ),
-
-                fontSize = 11.sp,
-
-                color =
-                    Color.Gray
+                formatFileSize(message.fileSize),
+                fontSize = 10.sp,
+                color = SoftText
             )
         }
 
         Icon(
-            imageVector =
-                Icons.Default.Download,
-
-            contentDescription =
-                "دانلود",
-
-            modifier =
-                Modifier.size(
-                    22.dp
-                )
+            Icons.Default.Download,
+            "دانلود",
+            tint = DeepPink
         )
     }
 }
 
 @Composable
 private fun AttachmentDialog(
-
     onDismiss: () -> Unit,
-
     onSelect: () -> Unit
 ) {
-
     AlertDialog(
-
-        onDismissRequest =
-            onDismiss,
-
+        onDismissRequest = onDismiss,
         title = {
-
             Text(
-                text =
-                    "ارسال فایل",
-
-                fontWeight =
-                    FontWeight.Bold
+                "ارسال فایل",
+                fontWeight = FontWeight.Bold
             )
         },
-
         text = {
-
             Column {
-
-                AttachmentItem(
-                    icon =
-                        Icons.Default.Image,
-
-                    title =
-                        "عکس یا تصویر",
-
-                    onClick =
-                        onSelect
-                )
-
-                AttachmentItem(
-                    icon =
-                        Icons.Default.Videocam,
-
-                    title =
-                        "ویدیو",
-
-                    onClick =
-                        onSelect
-                )
-
-                AttachmentItem(
-                    icon =
-                        Icons.Default.Mic,
-
-                    title =
-                        "فایل صوتی",
-
-                    onClick =
-                        onSelect
-                )
-
-                AttachmentItem(
-                    icon =
-                        Icons.Default.Description,
-
-                    title =
-                        "سند و فایل",
-
-                    onClick =
-                        onSelect
-                )
+                AttachmentItem(Icons.Default.Image, "عکس یا تصویر", onSelect)
+                AttachmentItem(Icons.Default.Videocam, "ویدیو", onSelect)
+                AttachmentItem(Icons.Default.Mic, "فایل صوتی", onSelect)
+                AttachmentItem(Icons.Default.Description, "سند و فایل", onSelect)
             }
         },
-
         confirmButton = {},
-
         dismissButton = {
-
-            TextButton(
-                onClick =
-                    onDismiss
-            ) {
-
-                Text("بستن")
-            }
+            TextButton(onClick = onDismiss) { Text("بستن") }
         }
     )
 }
 
 @Composable
 private fun AttachmentItem(
-
     icon: ImageVector,
-
     title: String,
-
     onClick: () -> Unit
 ) {
-
     Row(
-
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clickable(
-                    onClick = onClick
-                )
-                .padding(
-                    vertical = 12.dp
-                ),
-
-        verticalAlignment =
-            Alignment.CenterVertically
+        modifier = Modifier
+            .fillMaxWidth()
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = {}
+            )
+            .padding(vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-
-        Icon(
-            imageVector =
-                icon,
-
-            contentDescription =
-                null,
-
-            tint =
-                Color(0xFFE91E63)
-        )
-
-        Spacer(
-            modifier =
-                Modifier.width(12.dp)
-        )
-
-        Text(
-            text =
-                title,
-
-            fontSize =
-                16.sp
-        )
+        Icon(icon, null, tint = DeepPink)
+        Spacer(Modifier.width(12.dp))
+        Text(title, fontSize = 16.sp, color = TextDark)
     }
 }
 
 @Composable
 private fun EditMessageDialog(
-
     message: ChatMessage,
-
     onDismiss: () -> Unit,
-
     onSave: (String) -> Unit
 ) {
-
-    var text by remember {
-        mutableStateOf(
-            message.text
-        )
-    }
+    var text by remember { mutableStateOf(message.text) }
 
     AlertDialog(
-
-        onDismissRequest =
-            onDismiss,
-
+        onDismissRequest = onDismiss,
         title = {
-
             Text(
-                text =
-                    "ویرایش پیام",
-
-                fontWeight =
-                    FontWeight.Bold
+                "ویرایش پیام",
+                fontWeight = FontWeight.Bold
             )
         },
-
         text = {
-
             OutlinedTextField(
-
                 value = text,
-
-                onValueChange = {
-                    text = it
-                },
-
-                modifier =
-                    Modifier.fillMaxWidth(),
-
+                onValueChange = { text = it },
+                modifier = Modifier.fillMaxWidth(),
                 maxLines = 5,
-
-                label = {
-                    Text(
-                        "متن پیام"
-                    )
-                }
+                label = { Text("متن پیام") },
+                shape = RoundedCornerShape(18.dp)
             )
         },
-
         confirmButton = {
-
             TextButton(
-
                 onClick = {
-
-                    val clean =
-                        text.trim()
-
-                    if (
-                        clean.isNotEmpty()
-                    ) {
-                        onSave(clean)
-                    }
+                    text.trim()
+                        .takeIf { it.isNotEmpty() }
+                        ?.let(onSave)
                 }
             ) {
-
                 Text("ذخیره")
             }
         },
-
         dismissButton = {
-
-            TextButton(
-                onClick =
-                    onDismiss
-            ) {
-
+            TextButton(onClick = onDismiss) {
                 Text("انصراف")
             }
         }
     )
 }
 
-/*
- * ارسال پیام متنی
- */
 private fun sendTextMessage(
-
     firestore: FirebaseFirestore,
-
     auth: FirebaseAuth,
-
     text: String,
-
     messages: MutableList<ChatMessage>,
-
     replyMessage: ChatMessage?
 ) {
+    val user = auth.currentUser ?: return
+    val messageId = UUID.randomUUID().toString()
+    val createdAt = Timestamp.now()
 
-    val user =
-        auth.currentUser
-            ?: return
-
-    val messageId =
-        UUID.randomUUID().toString()
-
-    val createdAt =
-        Timestamp.now()
-
-    val localMessage =
-        ChatMessage(
-
-            id =
-                messageId,
-
-            senderId =
-                user.uid,
-
-            type =
-                "TEXT",
-
-            text =
-                text,
-
-            createdAt =
-                createdAt,
-
-            replyToId =
-                replyMessage?.id
-                    ?: "",
-
-            replyToText =
-                replyMessage?.text
-                    ?: "",
-
-            localStatus =
-                LocalMessageStatus.SENDING
-        )
-
-    messages.add(
-        localMessage
+    val local = ChatMessage(
+        id = messageId,
+        senderId = user.uid,
+        type = "TEXT",
+        text = text,
+        createdAt = createdAt,
+        replyToId = replyMessage?.id ?: "",
+        replyToText = replyMessage?.text ?: "",
+        localStatus = LocalMessageStatus.SENDING
     )
 
-    val data =
-        hashMapOf<String, Any>(
+    messages.add(local)
 
-            "senderId" to
-                    user.uid,
+    val data = hashMapOf<String, Any>(
+        "senderId" to user.uid,
+        "type" to "TEXT",
+        "text" to text,
+        "createdAt" to createdAt,
+        "replyToId" to (replyMessage?.id ?: ""),
+        "replyToText" to (replyMessage?.text ?: "")
+    )
 
-            "type" to
-                    "TEXT",
-
-            "text" to
-                    text,
-
-            "createdAt" to
-                    createdAt,
-
-            "replyToId" to
-                    (replyMessage?.id
-                        ?: ""),
-
-            "replyToText" to
-                    (replyMessage?.text
-                        ?: "")
-        )
-
-    firestore
-        .collection("chatRooms")
+    firestore.collection("chatRooms")
         .document(CHAT_ROOM)
         .collection("messages")
         .document(messageId)
         .set(data)
-
         .addOnSuccessListener {
-
-            val index =
-                messages.indexOfFirst {
-                    it.id ==
-                            messageId
-                }
-
+            val index = messages.indexOfFirst { it.id == messageId }
             if (index >= 0) {
-
-                messages[index] =
-                    localMessage.copy(
-                        localStatus =
-                            LocalMessageStatus.SENT
-                    )
+                messages[index] = local.copy(
+                    localStatus = LocalMessageStatus.SENT
+                )
             }
         }
-
         .addOnFailureListener {
-
-            val index =
-                messages.indexOfFirst {
-                    it.id ==
-                            messageId
-                }
-
+            val index = messages.indexOfFirst { it.id == messageId }
             if (index >= 0) {
-
-                messages[index] =
-                    localMessage.copy(
-                        localStatus =
-                            LocalMessageStatus.FAILED
-                    )
+                messages[index] = local.copy(
+                    localStatus = LocalMessageStatus.FAILED
+                )
             }
         }
 }
 
-/*
- * ویرایش پیام
- */
 private fun editMessage(
-
     firestore: FirebaseFirestore,
-
     auth: FirebaseAuth,
-
     message: ChatMessage,
-
     newText: String,
-
     messages: MutableList<ChatMessage>,
-
     context: Context
 ) {
+    val user = auth.currentUser ?: return
 
-    val user =
-        auth.currentUser
-            ?: return
-
-    if (
-        message.senderId !=
-        user.uid
-    ) {
-
+    if (message.senderId != user.uid) {
         Toast.makeText(
             context,
             "فقط پیام خودت را می‌توانی ویرایش کنی",
             Toast.LENGTH_SHORT
         ).show()
-
         return
     }
 
-    firestore
-        .collection("chatRooms")
+    firestore.collection("chatRooms")
         .document(CHAT_ROOM)
         .collection("messages")
         .document(message.id)
@@ -2245,25 +1249,13 @@ private fun editMessage(
             )
         )
         .addOnSuccessListener {
-
-            val index =
-                messages.indexOfFirst {
-                    it.id ==
-                            message.id
-                }
-
+            val index = messages.indexOfFirst { it.id == message.id }
             if (index >= 0) {
-
-                messages[index] =
-                    message.copy(
-                        text =
-                            newText,
-
-                        edited =
-                            true
-                    )
+                messages[index] = message.copy(
+                    text = newText,
+                    edited = true
+                )
             }
-
             Toast.makeText(
                 context,
                 "پیام ویرایش شد ✏️",
@@ -2271,7 +1263,6 @@ private fun editMessage(
             ).show()
         }
         .addOnFailureListener {
-
             Toast.makeText(
                 context,
                 "ویرایش پیام ناموفق بود",
@@ -2280,79 +1271,45 @@ private fun editMessage(
         }
 }
 
-/*
- * حذف پیام‌های انتخاب شده
- */
 private fun deleteSelectedMessages(
-
     firestore: FirebaseFirestore,
-
     auth: FirebaseAuth,
-
     messages: MutableList<ChatMessage>,
-
     selectedIds: Set<String>,
-
     context: Context
 ) {
+    val user = auth.currentUser ?: return
 
-    val user =
-        auth.currentUser
-            ?: return
+    val mine = messages.filter {
+        selectedIds.contains(it.id) &&
+            it.senderId == user.uid
+    }
 
-    val selected =
-        messages.filter {
-            selectedIds.contains(
-                it.id
-            )
-        }
-
-    val mine =
-        selected.filter {
-            it.senderId ==
-                    user.uid
-        }
-
-    if (
-        mine.isEmpty()
-    ) {
-
+    if (mine.isEmpty()) {
         Toast.makeText(
             context,
             "فقط پیام‌های خودت را می‌توانی حذف کنی",
             Toast.LENGTH_SHORT
         ).show()
-
         return
     }
 
-    val batch =
-        firestore.batch()
+    val batch = firestore.batch()
 
     mine.forEach { message ->
-
-        val reference =
-            firestore
-                .collection("chatRooms")
+        batch.delete(
+            firestore.collection("chatRooms")
                 .document(CHAT_ROOM)
                 .collection("messages")
                 .document(message.id)
-
-        batch.delete(
-            reference
         )
     }
 
     batch.commit()
         .addOnSuccessListener {
-
-            messages.removeAll {
-                mine.any { item ->
-                    item.id ==
-                            it.id
-                }
+            messages.removeAll { current ->
+                mine.any { it.id == current.id }
             }
-
             Toast.makeText(
                 context,
                 "پیام حذف شد 🗑️",
@@ -2360,7 +1317,6 @@ private fun deleteSelectedMessages(
             ).show()
         }
         .addOnFailureListener {
-
             Toast.makeText(
                 context,
                 "حذف پیام ناموفق بود",
@@ -2369,66 +1325,34 @@ private fun deleteSelectedMessages(
         }
 }
 
-/*
- * واکنش
- */
 private fun setReactionForSelectedMessages(
-
     firestore: FirebaseFirestore,
-
-    auth: FirebaseAuth,
-
     selectedIds: Set<String>,
-
     reaction: String,
-
     messages: MutableList<ChatMessage>,
-
     context: Context
 ) {
+    if (selectedIds.isEmpty()) return
 
-    if (
-        selectedIds.isEmpty()
-    ) {
-        return
-    }
-
-    val batch =
-        firestore.batch()
+    val batch = firestore.batch()
 
     selectedIds.forEach { id ->
-
-        val reference =
-            firestore
-                .collection("chatRooms")
+        batch.update(
+            firestore.collection("chatRooms")
                 .document(CHAT_ROOM)
                 .collection("messages")
-                .document(id)
-
-        batch.update(
-            reference,
+                .document(id),
             "reaction",
             reaction
-        )
-    }
+        )    }
 
     batch.commit()
         .addOnSuccessListener {
-
             selectedIds.forEach { id ->
-
-                val index =
-                    messages.indexOfFirst {
-                        it.id == id
-                    }
-
+                val index = messages.indexOfFirst { it.id == id }
                 if (index >= 0) {
-
                     messages[index] =
-                        messages[index].copy(
-                            reaction =
-                                reaction
-                        )
+                        messages[index].copy(reaction = reaction)
                 }
             }
 
@@ -2439,7 +1363,6 @@ private fun setReactionForSelectedMessages(
             ).show()
         }
         .addOnFailureListener {
-
             Toast.makeText(
                 context,
                 "ثبت واکنش ناموفق بود",
@@ -2448,24 +1371,13 @@ private fun setReactionForSelectedMessages(
         }
 }
 
-/*
- * کپی متن
- */
-private fun copyText(
-    context: Context,
-    text: String
-) {
-
+private fun copyText(context: Context, text: String) {
     val clipboard =
-        context.getSystemService(
-            Context.CLIPBOARD_SERVICE
-        ) as ClipboardManager
+        context.getSystemService(Context.CLIPBOARD_SERVICE)
+            as ClipboardManager
 
     clipboard.setPrimaryClip(
-        ClipData.newPlainText(
-            "Royaram",
-            text
-        )
+        ClipData.newPlainText("Royaram", text)
     )
 
     Toast.makeText(
@@ -2475,111 +1387,46 @@ private fun copyText(
     ).show()
 }
 
-/*
- * آپلود فایل
- */
 private fun uploadFileToChat(
-
     context: Context,
-
     firestore: FirebaseFirestore,
-
     auth: FirebaseAuth,
-
     uri: Uri,
-
     messages: MutableList<ChatMessage>
 ) {
+    val user = auth.currentUser ?: return
 
-    val user =
-        auth.currentUser
-            ?: return
-
-    val fileName =
-        getFileName(
-            context,
-            uri
-        )
-
+    val fileName = getFileName(context, uri)
     val mimeType =
-        context.contentResolver
-            .getType(uri)
+        context.contentResolver.getType(uri)
             ?: "application/octet-stream"
+    val fileSize = getFileSize(context, uri)
+    val messageId = UUID.randomUUID().toString()
 
-    val fileSize =
-        getFileSize(
-            context,
-            uri
-        )
+    val type = when {
+        mimeType.startsWith("image/") -> "IMAGE"
+        mimeType.startsWith("video/") -> "VIDEO"
+        mimeType.startsWith("audio/") -> "AUDIO"
+        else -> "FILE"
+    }
 
-    val messageId =
-        UUID.randomUUID().toString()
+    val filePath = "chat/ramin_roya/$messageId-$fileName"
+    val createdAt = Timestamp.now()
 
-    val type =
-        when {
-
-            mimeType.startsWith(
-                "image/"
-            ) ->
-                "IMAGE"
-
-            mimeType.startsWith(
-                "video/"
-            ) ->
-                "VIDEO"
-
-            mimeType.startsWith(
-                "audio/"
-            ) ->
-                "AUDIO"
-
-            else ->
-                "FILE"
-        }
-
-    val filePath =
-        "chat/ramin_roya/$messageId-$fileName"
-
-    val createdAt =
-        Timestamp.now()
-
-    val localMessage =
-        ChatMessage(
-
-            id =
-                messageId,
-
-            senderId =
-                user.uid,
-
-            type =
-                type,
-
-            filePath =
-                filePath,
-
-            fileName =
-                fileName,
-
-            mimeType =
-                mimeType,
-
-            fileSize =
-                fileSize,
-
-            localUri =
-                uri.toString(),
-
-            createdAt =
-                createdAt,
-
-            localStatus =
-                LocalMessageStatus.SENDING
-        )
-
-    messages.add(
-        localMessage
+    val local = ChatMessage(
+        id = messageId,
+        senderId = user.uid,
+        type = type,
+        filePath = filePath,
+        fileName = fileName,
+        mimeType = mimeType,
+        fileSize = fileSize,
+        localUri = uri.toString(),
+        createdAt = createdAt,
+        localStatus = LocalMessageStatus.SENDING
     )
+
+    messages.add(local)
 
     Toast.makeText(
         context,
@@ -2588,127 +1435,16 @@ private fun uploadFileToChat(
     ).show()
 
     SupabaseStorage.uploadFile(
-
-        context =
-            context,
-
-        fileUri =
-            uri,
-
-        filePath =
-            filePath
-
+        context = context,
+        fileUri = uri,
+        filePath = filePath
     ) { success, result ->
-
-        Handler(
-            Looper.getMainLooper()
-        ).post {
-
-            if (success) {
-
-                val data =
-                    hashMapOf<String, Any>(
-
-                        "senderId" to
-                                user.uid,
-
-                        "type" to
-                                type,
-
-                        "text" to
-                                "",
-
-                        "filePath" to
-                                filePath,
-
-                        "fileName" to
-                                fileName,
-
-                        "mimeType" to
-                                mimeType,
-
-                        "fileSize" to
-                                fileSize,
-
-                        "createdAt" to
-                                createdAt
-                    )
-
-                firestore
-                    .collection(
-                        "chatRooms"
-                    )
-                    .document(
-                        CHAT_ROOM
-                    )
-                    .collection(
-                        "messages"
-                    )
-                    .document(
-                        messageId
-                    )
-                    .set(data)
-
-                    .addOnSuccessListener {
-
-                        val index =
-                            messages.indexOfFirst {
-                                it.id ==
-                                        messageId
-                            }
-
-                        if (index >= 0) {
-
-                            messages[index] =
-                                localMessage.copy(
-                                    localStatus =
-                                        LocalMessageStatus.SENT
-                                )
-                        }
-
-                        Toast.makeText(
-                            context,
-                            "فایل ارسال شد ❤️",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
-
-                    .addOnFailureListener {
-
-                        val index =
-                            messages.indexOfFirst {
-                                it.id ==
-                                        messageId
-                            }
-
-                        if (index >= 0) {
-
-                            messages[index] =
-                                localMessage.copy(
-                                    localStatus =
-                                        LocalMessageStatus.FAILED
-                                )
-                        }
-
-                        Toast.makeText(
-                            context,
-                            "آپلود شد ولی ثبت پیام ناموفق بود",
-                            Toast.LENGTH_LONG
-                        ).show()
-                    }
-
-            } else {
-
-                val index =
-                    messages.indexOfFirst {
-                        it.id ==
-                                messageId
-                    }
-
+        Handler(Looper.getMainLooper()).post {
+            if (!success) {
+                val index = messages.indexOfFirst { it.id == messageId }
                 if (index >= 0) {
-
                     messages[index] =
-                        localMessage.copy(
+                        local.copy(
                             localStatus =
                                 LocalMessageStatus.FAILED
                         )
@@ -2719,54 +1455,90 @@ private fun uploadFileToChat(
                     "ارسال فایل ناموفق بود:\n$result",
                     Toast.LENGTH_LONG
                 ).show()
+                return@post
             }
+
+            val data = hashMapOf<String, Any>(
+                "senderId" to user.uid,
+                "type" to type,
+                "text" to "",
+                "filePath" to filePath,
+                "fileName" to fileName,
+                "mimeType" to mimeType,
+                "fileSize" to fileSize,
+                "createdAt" to createdAt
+            )
+
+            firestore.collection("chatRooms")
+                .document(CHAT_ROOM)
+                .collection("messages")
+                .document(messageId)
+                .set(data)
+                .addOnSuccessListener {
+                    val index =
+                        messages.indexOfFirst { it.id == messageId }
+
+                    if (index >= 0) {
+                        messages[index] =
+                            local.copy(
+                                localStatus =
+                                    LocalMessageStatus.SENT
+                            )
+                    }
+
+                    Toast.makeText(
+                        context,
+                        "فایل ارسال شد ❤️",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+                .addOnFailureListener {
+                    val index =
+                        messages.indexOfFirst { it.id == messageId }
+
+                    if (index >= 0) {
+                        messages[index] =
+                            local.copy(
+                                localStatus =
+                                    LocalMessageStatus.FAILED
+                            )
+                    }
+
+                    Toast.makeText(
+                        context,
+                        "آپلود شد ولی ثبت پیام ناموفق بود",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
         }
     }
 }
 
-/*
- * نام فایل
- */
 private fun getFileName(
     context: Context,
     uri: Uri
 ): String {
-
     var result: String? = null
 
     try {
-
-        context.contentResolver
-            .query(
-                uri,
-                arrayOf(
+        context.contentResolver.query(
+            uri,
+            arrayOf(
+                android.provider.OpenableColumns.DISPLAY_NAME
+            ),
+            null,
+            null,
+            null
+        )?.use { cursor ->
+            if (cursor.moveToFirst()) {
+                val index = cursor.getColumnIndex(
                     android.provider.OpenableColumns.DISPLAY_NAME
-                ),
-                null,
-                null,
-                null
-            )
-            ?.use { cursor ->
-
-                if (
-                    cursor.moveToFirst()
-                ) {
-
-                    val index =
-                        cursor.getColumnIndex(
-                            android.provider.OpenableColumns.DISPLAY_NAME
-                        )
-
-                    if (index >= 0) {
-
-                        result =
-                            cursor.getString(
-                                index
-                            )
-                    }
+                )
+                if (index >= 0) {
+                    result = cursor.getString(index)
                 }
             }
-
+        }
     } catch (_: Exception) {
     }
 
@@ -2775,70 +1547,35 @@ private fun getFileName(
         ?: "royaram_file"
 }
 
-/*
- * حجم فایل
- */
 private fun getFileSize(
     context: Context,
     uri: Uri
 ): Long {
-
     return try {
-
-        context.contentResolver
-            .query(
-                uri,
-                arrayOf(
+        context.contentResolver.query(
+            uri,
+            arrayOf(android.provider.OpenableColumns.SIZE),
+            null,
+            null,
+            null
+        )?.use { cursor ->
+            if (cursor.moveToFirst()) {
+                val index = cursor.getColumnIndex(
                     android.provider.OpenableColumns.SIZE
-                ),
-                null,
-                null,
-                null
-            )
-            ?.use { cursor ->
-
-                if (
-                    cursor.moveToFirst()
-                ) {
-
-                    val index =
-                        cursor.getColumnIndex(
-                            android.provider.OpenableColumns.SIZE
-                        )
-
-                    if (index >= 0) {
-
-                        return cursor.getLong(
-                            index
-                        )
-                    }
-                }
+                )
+                if (index >= 0) return cursor.getLong(index)
             }
-
+        }
         0L
-
     } catch (_: Exception) {
-
         0L
     }
 }
 
-/*
- * نمایش حجم فایل
- */
-private fun formatFileSize(
-    bytes: Long
-): String {
-
-    if (
-        bytes <= 0
-    ) {
-
-        return "اندازه نامشخص"
-    }
+private fun formatFileSize(bytes: Long): String {
+    if (bytes <= 0) return "اندازه نامشخص"
 
     return when {
-
         bytes < 1024 ->
             "$bytes B"
 
@@ -2849,62 +1586,35 @@ private fun formatFileSize(
                 bytes / 1024.0
             )
 
-        bytes <
-                1024 *
-                1024 *
-                1024 ->
-
+        bytes < 1024 * 1024 * 1024 ->
             String.format(
                 Locale.US,
                 "%.1f MB",
-                bytes /
-                        (1024.0 *
-                                1024.0)
+                bytes / (1024.0 * 1024.0)
             )
 
         else ->
-
             String.format(
                 Locale.US,
                 "%.1f GB",
-                bytes /
-                        (
-                            1024.0 *
-                                    1024.0 *
-                                    1024.0
-                            )
+                bytes / (1024.0 * 1024.0 * 1024.0)
             )
     }
 }
 
-/*
- * ساعت پیام
- */
 private fun formatMessageTime(
     timestamp: Timestamp?
 ): String {
-
-    if (
-        timestamp == null
-    ) {
-
-        return ""
-    }
+    if (timestamp == null) return ""
 
     return try {
-
         SimpleDateFormat(
             "HH:mm",
             Locale.getDefault()
         ).format(
-            Date(
-                timestamp.seconds *
-                        1000
-            )
+            Date(timestamp.seconds * 1000)
         )
-
     } catch (_: Exception) {
-
         ""
     }
 }
