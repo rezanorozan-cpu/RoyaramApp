@@ -983,15 +983,7 @@ private fun ChatMessageBubble(
 private fun Modifier.widthInSafe(
     min: androidx.compose.ui.unit.Dp,
     max: androidx.compose.ui.unit.Dp
-): Modifier = this.then(
-    Modifier
-        .then(
-            androidx.compose.foundation.layout.widthIn(
-                min = min,
-                max = max
-            )
-        )
-)
+): Modifier = this.fillMaxWidth(0.82f)
 
 @Composable
 private fun ImageMessageContent(message: ChatMessage) {
