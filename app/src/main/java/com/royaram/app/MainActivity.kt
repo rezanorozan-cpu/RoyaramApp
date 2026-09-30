@@ -634,29 +634,55 @@ fun HeroCoupleCard(
                 Modifier.fillMaxSize()
         ) {
 
-            AsyncImage(
-
-                model =
-                    R.drawable.couple_main,
-
-                contentDescription =
-                    "رامین و رویا",
-
-                contentScale =
-                    ContentScale.Crop,
-
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .graphicsLayer {
-
-                            scaleX =
-                                photoScale
-
-                            scaleY =
-                                photoScale
-                        }
+            Box(
+    modifier = Modifier
+        .fillMaxSize()
+        .graphicsLayer {
+            scaleX = photoScale
+            scaleY = photoScale
+        }
+        .background(
+            Brush.radialGradient(
+                colors = listOf(
+                    Color(0xFFFFDCE9),
+                    Color(0xFFF4E8FF),
+                    Color(0xFFFFF5F8)
+                )
             )
+        ),
+    contentAlignment = Alignment.Center
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "رامین ❤️ رویا",
+            fontSize = 32.sp,
+            fontWeight = FontWeight.ExtraBold,
+            color = Color.White
+        )
+
+        Spacer(
+            modifier = Modifier.height(10.dp)
+        )
+
+        Text(
+            text = "قصه‌ی من و تو، برای همیشه",
+            fontSize = 14.sp,
+            color = Color.White.copy(alpha = 0.92f)
+        )
+
+        Spacer(
+            modifier = Modifier.height(18.dp)
+        )
+
+        Text(
+            text = "♥",
+            fontSize = 72.sp,
+            color = Rose
+        )
+    }
+}
 
             Box(
                 modifier =
