@@ -43,6 +43,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -63,6 +64,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
@@ -70,7 +72,7 @@ import java.util.Calendar
 import java.util.Date
 
 // ============================================================
-// COLORS
+// ROYARAM COLORS
 // ============================================================
 
 private val Rose = Color(0xFFE85D86)
@@ -88,13 +90,14 @@ private val Cream = Color(0xFFFFFBFC)
 private val TextDark = Color(0xFF30252A)
 private val SoftText = Color(0xFF8A737C)
 
-private val MainBackground = Brush.verticalGradient(
-    colors = listOf(
-        Color(0xFFFFE9F1),
-        Color(0xFFF8F0FF),
-        Color(0xFFFFF9FB)
+private val MainBackground =
+    Brush.verticalGradient(
+        colors = listOf(
+            Color(0xFFFFE8F0),
+            Color(0xFFF7F0FF),
+            Color(0xFFFFFAFC)
+        )
     )
-)
 
 // ============================================================
 // DATA
@@ -125,7 +128,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
 
-            androidx.compose.runtime.CompositionLocalProvider(
+            CompositionLocalProvider(
                 LocalLayoutDirection provides LayoutDirection.Rtl
             ) {
 
@@ -143,7 +146,7 @@ class MainActivity : ComponentActivity() {
                                     )
                                 )
 
-                            } catch (e: Exception) {
+                            } catch (_: Exception) {
 
                                 Toast.makeText(
                                     this@MainActivity,
@@ -160,7 +163,7 @@ class MainActivity : ComponentActivity() {
 }
 
 // ============================================================
-// ROOT APP
+// ROOT
 // ============================================================
 
 @Composable
@@ -208,9 +211,10 @@ fun HomeScreen(
     onChatClick: () -> Unit
 ) {
 
-    val daysTogether = remember {
-        calculateDaysTogether()
-    }
+    val daysTogether =
+        remember {
+            calculateDaysTogether()
+        }
 
     var showContent by remember {
         mutableStateOf(false)
@@ -232,7 +236,7 @@ fun HomeScreen(
 
             heartPulse = !heartPulse
 
-            kotlinx.coroutines.delay(1000)
+            kotlinx.coroutines.delay(1200)
         }
     }
 
@@ -242,13 +246,14 @@ fun HomeScreen(
             if (heartPulse) {
                 1.08f
             } else {
-                0.94f
+                0.96f
             },
 
-        animationSpec = tween(
-            durationMillis = 1000,
-            easing = FastOutSlowInEasing
-        ),
+        animationSpec =
+            tween(
+                durationMillis = 1200,
+                easing = FastOutSlowInEasing
+            ),
 
         label = "heart_pulse"
     )
@@ -261,35 +266,36 @@ fun HomeScreen(
 
         LazyColumn(
 
-            modifier = Modifier
-                .fillMaxSize(),
+            modifier = Modifier.fillMaxSize(),
 
-            contentPadding = PaddingValues(
-                start = 18.dp,
-                end = 18.dp,
-                top = 18.dp,
-                bottom = 125.dp
-            ),
+            contentPadding =
+                PaddingValues(
+                    start = 18.dp,
+                    end = 18.dp,
+                    top = 14.dp,
+                    bottom = 135.dp
+                ),
 
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement =
+                Arrangement.spacedBy(16.dp)
         ) {
-
-            // ------------------------------------------------
-            // HEADER
-            // ------------------------------------------------
 
             item {
 
                 AnimatedVisibility(
+
                     visible = showContent,
 
                     enter =
                         fadeIn(
-                            animationSpec = tween(500)
+                            tween(450)
                         ) +
                                 slideInVertically(
-                                    initialOffsetY = { -30 },
-                                    animationSpec = tween(500)
+                                    initialOffsetY = {
+                                        -25
+                                    },
+                                    animationSpec =
+                                        tween(450)
                                 )
                 ) {
 
@@ -297,22 +303,22 @@ fun HomeScreen(
                 }
             }
 
-            // ------------------------------------------------
-            // HERO
-            // ------------------------------------------------
-
             item {
 
                 AnimatedVisibility(
+
                     visible = showContent,
 
                     enter =
                         fadeIn(
-                            animationSpec = tween(700)
+                            tween(650)
                         ) +
                                 slideInVertically(
-                                    initialOffsetY = { 50 },
-                                    animationSpec = tween(700)
+                                    initialOffsetY = {
+                                        45
+                                    },
+                                    animationSpec =
+                                        tween(650)
                                 )
                 ) {
 
@@ -323,22 +329,22 @@ fun HomeScreen(
                 }
             }
 
-            // ------------------------------------------------
-            // COUNTER
-            // ------------------------------------------------
-
             item {
 
                 AnimatedVisibility(
+
                     visible = showContent,
 
                     enter =
                         fadeIn(
-                            animationSpec = tween(850)
+                            tween(800)
                         ) +
                                 slideInVertically(
-                                    initialOffsetY = { 60 },
-                                    animationSpec = tween(850)
+                                    initialOffsetY = {
+                                        50
+                                    },
+                                    animationSpec =
+                                        tween(800)
                                 )
                 ) {
 
@@ -348,22 +354,22 @@ fun HomeScreen(
                 }
             }
 
-            // ------------------------------------------------
-            // TODAY MESSAGE
-            // ------------------------------------------------
-
             item {
 
                 AnimatedVisibility(
+
                     visible = showContent,
 
                     enter =
                         fadeIn(
-                            animationSpec = tween(1000)
+                            tween(950)
                         ) +
                                 slideInVertically(
-                                    initialOffsetY = { 70 },
-                                    animationSpec = tween(1000)
+                                    initialOffsetY = {
+                                        55
+                                    },
+                                    animationSpec =
+                                        tween(950)
                                 )
                 ) {
 
@@ -371,48 +377,65 @@ fun HomeScreen(
                 }
             }
 
-            // ------------------------------------------------
-            // SECTION TITLE
-            // ------------------------------------------------
-
             item {
 
-                Text(
-                    text = "دنیای دونفره‌مون",
-                    fontSize = 21.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = TextDark,
-                    modifier = Modifier.padding(
-                        top = 3.dp
-                    )
-                )
-            }
+                Row(
+                    modifier =
+                        Modifier.fillMaxWidth(),
 
-            // ------------------------------------------------
-            // FEATURES
-            // ------------------------------------------------
+                    verticalAlignment =
+                        Alignment.CenterVertically
+                ) {
+
+                    Column(
+                        modifier =
+                            Modifier.weight(1f)
+                    ) {
+
+                        Text(
+                            text = "دنیای دونفره‌مون",
+                            fontSize = 22.sp,
+                            fontWeight =
+                                FontWeight.ExtraBold,
+                            color = TextDark
+                        )
+
+                        Text(
+                            text =
+                                "همه‌چیز برای من و تو، همین‌جاست ❤️",
+                            fontSize = 11.sp,
+                            color = SoftText,
+                            modifier =
+                                Modifier.padding(
+                                    top = 3.dp
+                                )
+                        )
+                    }
+
+                    Text(
+                        text = "✦",
+                        fontSize = 25.sp,
+                        color = Rose
+                    )
+                }
+            }
 
             item {
 
                 FeatureGrid(
-                    onMemoriesClick = onMemoriesClick,
-                    onChatClick = onChatClick
+                    onMemoriesClick =
+                        onMemoriesClick,
+
+                    onChatClick =
+                        onChatClick
                 )
             }
-
-            // ------------------------------------------------
-            // FOOTER
-            // ------------------------------------------------
 
             item {
 
                 RomanticFooter()
             }
         }
-
-        // ====================================================
-        // BOTTOM NAVIGATION
-        // ====================================================
 
         PremiumBottomBar(
 
@@ -423,96 +446,123 @@ fun HomeScreen(
             },
 
             onMemoriesClick = {
+
                 selectedTab = 1
+
                 onMemoriesClick()
             },
 
             onChatClick = {
+
                 selectedTab = 2
+
                 onChatClick()
             },
 
             onMoreClick = {
+
                 selectedTab = 3
             },
 
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .navigationBarsPadding()
+            modifier =
+                Modifier
+                    .align(
+                        Alignment.BottomCenter
+                    )
+                    .navigationBarsPadding()
         )
     }
 }
 
 // ============================================================
-// PREMIUM HEADER
+// HEADER
 // ============================================================
 
 @Composable
 fun PremiumHeader() {
 
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(
-                horizontal = 2.dp,
-                vertical = 4.dp
-            ),
 
-        verticalAlignment = Alignment.CenterVertically
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(
+                    horizontal = 2.dp,
+                    vertical = 5.dp
+                ),
+
+        verticalAlignment =
+            Alignment.CenterVertically
     ) {
 
         Column(
-            modifier = Modifier.weight(1f)
+            modifier =
+                Modifier.weight(1f)
         ) {
 
             Text(
                 text = "رویـارام",
-                fontSize = 29.sp,
-                fontWeight = FontWeight.ExtraBold,
+                fontSize = 30.sp,
+                fontWeight =
+                    FontWeight.ExtraBold,
                 color = DeepRose
             )
 
             Text(
-                text = "جایی برای من و تو ❤️",
-                fontSize = 13.sp,
+                text =
+                    "قصه‌ی من و تو، برای همیشه",
+                fontSize = 12.sp,
                 color = SoftText,
-                modifier = Modifier.padding(top = 2.dp)
+                modifier =
+                    Modifier.padding(
+                        top = 2.dp
+                    )
             )
         }
 
         Box(
-            modifier = Modifier
-                .size(48.dp)
-                .shadow(
-                    elevation = 8.dp,
-                    shape = CircleShape,
-                    ambientColor = Rose.copy(alpha = 0.18f),
-                    spotColor = Rose.copy(alpha = 0.18f)
-                )
-                .clip(CircleShape)
-                .background(
-                    Brush.linearGradient(
-                        colors = listOf(
-                            Rose,
-                            DeepRose
-                        )
-                    )
-                ),
 
-            contentAlignment = Alignment.Center
+            modifier =
+                Modifier
+                    .size(49.dp)
+                    .shadow(
+                        elevation = 12.dp,
+                        shape = CircleShape,
+                        ambientColor =
+                            Rose.copy(
+                                alpha = 0.18f
+                            ),
+                        spotColor =
+                            Rose.copy(
+                                alpha = 0.22f
+                            )
+                    )
+                    .clip(CircleShape)
+                    .background(
+                        Brush.linearGradient(
+                            colors =
+                                listOf(
+                                    Rose,
+                                    DeepRose
+                                )
+                        )
+                    ),
+
+            contentAlignment =
+                Alignment.Center
         ) {
 
             Text(
-                text = "♡",
+                text = "♥",
                 color = Color.White,
-                fontSize = 27.sp
+                fontSize = 25.sp
             )
         }
     }
 }
 
 // ============================================================
-// HERO COUPLE CARD
+// HERO
 // ============================================================
 
 @Composable
@@ -527,7 +577,7 @@ fun HeroCoupleCard(
 
     LaunchedEffect(Unit) {
 
-        kotlinx.coroutines.delay(400)
+        kotlinx.coroutines.delay(350)
 
         imageStarted = true
     }
@@ -536,143 +586,194 @@ fun HeroCoupleCard(
 
         targetValue =
             if (imageStarted) {
-                1.055f
+                1.045f
             } else {
                 1f
             },
 
-        animationSpec = tween(
-            durationMillis = 2600,
-            easing = FastOutSlowInEasing
-        ),
+        animationSpec =
+            tween(
+                durationMillis = 3000,
+                easing = FastOutSlowInEasing
+            ),
 
         label = "photo_scale"
     )
 
     Card(
 
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(350.dp)
-            .shadow(
-                elevation = 18.dp,
-                shape = RoundedCornerShape(30.dp),
-                ambientColor = Rose.copy(alpha = 0.20f),
-                spotColor = Rose.copy(alpha = 0.20f)
-            ),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .height(365.dp)
+                .shadow(
+                    elevation = 22.dp,
+                    shape =
+                        RoundedCornerShape(32.dp),
+                    ambientColor =
+                        Rose.copy(
+                            alpha = 0.20f
+                        ),
+                    spotColor =
+                        Rose.copy(
+                            alpha = 0.20f
+                        )
+                ),
 
-        shape = RoundedCornerShape(30.dp),
+        shape =
+            RoundedCornerShape(32.dp),
 
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White
-        )
+        colors =
+            CardDefaults.cardColors(
+                containerColor = Color.White
+            )
     ) {
 
         Box(
-            modifier = Modifier.fillMaxSize()
+            modifier =
+                Modifier.fillMaxSize()
         ) {
 
             AsyncImage(
 
-                model = R.drawable.couple_main,
+                model =
+                    R.drawable.couple_main,
 
-                contentDescription = "رامین و رویا",
+                contentDescription =
+                    "رامین و رویا",
 
-                contentScale = ContentScale.Crop,
+                contentScale =
+                    ContentScale.Crop,
 
-                modifier = Modifier
-                    .fillMaxSize()
-                    .graphicsLayer {
-                        scaleX = photoScale
-                        scaleY = photoScale
-                    }
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .graphicsLayer {
+
+                            scaleX =
+                                photoScale
+
+                            scaleY =
+                                photoScale
+                        }
             )
 
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(
-                                Color.Black.copy(alpha = 0.03f),
-                                Color.Transparent,
-                                Color.Black.copy(alpha = 0.68f)
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.verticalGradient(
+                                colors =
+                                    listOf(
+                                        Color.Black.copy(
+                                            alpha = 0.04f
+                                        ),
+                                        Color.Transparent,
+                                        Color.Black.copy(
+                                            alpha = 0.72f
+                                        )
+                                    )
                             )
                         )
-                    )
             )
 
-            // Days pill
-
             Box(
-                modifier = Modifier
-                    .padding(16.dp)
-                    .align(Alignment.TopEnd)
-                    .clip(
-                        RoundedCornerShape(50.dp)
-                    )
-                    .background(
-                        Color.White.copy(alpha = 0.90f)
-                    )
-                    .padding(
-                        horizontal = 13.dp,
-                        vertical = 8.dp
-                    )
+                modifier =
+                    Modifier
+                        .align(
+                            Alignment.TopEnd
+                        )
+                        .padding(15.dp)
+                        .clip(
+                            RoundedCornerShape(
+                                50.dp
+                            )
+                        )
+                        .background(
+                            Color.White.copy(
+                                alpha = 0.90f
+                            )
+                        )
+                        .padding(
+                            horizontal = 14.dp,
+                            vertical = 8.dp
+                        )
             ) {
 
                 Text(
-                    text = "❤️ $daysTogether روز",
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold,
+                    text =
+                        "❤️ $daysTogether روز",
+                    fontSize = 12.sp,
+                    fontWeight =
+                        FontWeight.Bold,
                     color = DeepRose
                 )
             }
 
-            // Center heart
-
             Box(
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .graphicsLayer {
-                        scaleX = heartScale
-                        scaleY = heartScale
-                    }
+
+                modifier =
+                    Modifier
+                        .align(Alignment.Center)
+                        .graphicsLayer {
+
+                            scaleX =
+                                heartScale
+
+                            scaleY =
+                                heartScale
+                        }
             ) {
 
                 Text(
                     text = "♥",
-                    color = Color.White.copy(alpha = 0.90f),
-                    fontSize = 42.sp
+                    color =
+                        Color.White.copy(
+                            alpha = 0.92f
+                        ),
+                    fontSize = 44.sp
                 )
             }
 
-            // Bottom text
-
             Column(
 
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .padding(20.dp),
+                modifier =
+                    Modifier
+                        .align(
+                            Alignment.BottomCenter
+                        )
+                        .fillMaxWidth()
+                        .padding(21.dp),
 
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment =
+                    Alignment.CenterHorizontally
             ) {
 
                 Text(
-                    text = "رامین  ❤️  رویا",
-                    fontSize = 26.sp,
-                    fontWeight = FontWeight.ExtraBold,
+                    text =
+                        "رامین  ❤️  رویا",
+                    fontSize = 27.sp,
+                    fontWeight =
+                        FontWeight.ExtraBold,
                     color = Color.White
                 )
 
                 Spacer(
-                    modifier = Modifier.height(5.dp)
+                    modifier =
+                        Modifier.height(5.dp)
                 )
 
                 Text(
-                    text = "هر لحظه کنار هم، یک خاطره قشنگ‌تر",
-                    fontSize = 13.sp,
-                    color = Color.White.copy(alpha = 0.92f)
+                    text =
+                        "هر روز، یک صفحه‌ی تازه از قصه‌ی ما",
+                    fontSize = 12.sp,
+                    color =
+                        Color.White.copy(
+                            alpha = 0.92f
+                        ),
+                    textAlign =
+                        TextAlign.Center
                 )
             }
         }
@@ -690,82 +791,120 @@ fun RelationshipCard(
 
     Card(
 
-        modifier = Modifier
-            .fillMaxWidth()
-            .shadow(
-                elevation = 10.dp,
-                shape = RoundedCornerShape(26.dp),
-                ambientColor = Lavender.copy(alpha = 0.15f),
-                spotColor = Lavender.copy(alpha = 0.15f)
-            ),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .shadow(
+                    elevation = 10.dp,
+                    shape =
+                        RoundedCornerShape(27.dp),
+                    ambientColor =
+                        Lavender.copy(
+                            alpha = 0.13f
+                        ),
+                    spotColor =
+                        Lavender.copy(
+                            alpha = 0.13f
+                        )
+                ),
 
-        shape = RoundedCornerShape(26.dp),
+        shape =
+            RoundedCornerShape(27.dp),
 
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White.copy(alpha = 0.84f)
-        )
+        colors =
+            CardDefaults.cardColors(
+                containerColor =
+                    Color.White.copy(
+                        alpha = 0.86f
+                    )
+            )
     ) {
 
         Row(
 
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(19.dp),
 
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment =
+                Alignment.CenterVertically
         ) {
 
             Box(
-                modifier = Modifier
-                    .size(62.dp)
-                    .clip(CircleShape)
-                    .background(PalePink),
 
-                contentAlignment = Alignment.Center
+                modifier =
+                    Modifier
+                        .size(60.dp)
+                        .clip(CircleShape)
+                        .background(
+                            Brush.linearGradient(
+                                colors =
+                                    listOf(
+                                        PalePink,
+                                        PaleLavender
+                                    )
+                            )
+                        ),
+
+                contentAlignment =
+                    Alignment.Center
             ) {
 
                 Text(
                     text = "💕",
-                    fontSize = 30.sp
+                    fontSize = 29.sp
                 )
             }
 
             Spacer(
-                modifier = Modifier.width(14.dp)
+                modifier =
+                    Modifier.width(14.dp)
             )
 
             Column(
-                modifier = Modifier.weight(1f)
+                modifier =
+                    Modifier.weight(1f)
             ) {
 
                 Text(
-                    text = "داستان قشنگمون",
+                    text =
+                        "داستان قشنگمون",
                     fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight =
+                        FontWeight.Bold,
                     color = TextDark
                 )
 
                 Text(
-                    text = "از ۲۰ خرداد ۱۴۰۵",
-                    fontSize = 12.sp,
+                    text =
+                        "شروع قصه: ۲۰ خرداد ۱۴۰۵",
+                    fontSize = 11.sp,
                     color = SoftText,
-                    modifier = Modifier.padding(top = 3.dp)
+                    modifier =
+                        Modifier.padding(
+                            top = 4.dp
+                        )
                 )
             }
 
             Column(
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment =
+                    Alignment.CenterHorizontally
             ) {
 
                 Text(
-                    text = daysTogether.toString(),
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.ExtraBold,
+                    text =
+                        daysTogether.toString(),
+                    fontSize = 27.sp,
+                    fontWeight =
+                        FontWeight.ExtraBold,
                     color = DeepRose
                 )
 
                 Text(
-                    text = "روز کنار هم",
+                    text =
+                        "روز کنار هم",
                     fontSize = 10.sp,
                     color = SoftText
                 )
@@ -783,60 +922,79 @@ fun TodayMessageCard() {
 
     Card(
 
-        modifier = Modifier.fillMaxWidth(),
+        modifier =
+            Modifier.fillMaxWidth(),
 
-        shape = RoundedCornerShape(26.dp),
+        shape =
+            RoundedCornerShape(27.dp),
 
-        colors = CardDefaults.cardColors(
-            containerColor = Color.Transparent
-        )
+        colors =
+            CardDefaults.cardColors(
+                containerColor =
+                    Color.Transparent
+            )
     ) {
 
         Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    Brush.horizontalGradient(
-                        colors = listOf(
-                            DeepRose,
-                            Rose,
-                            Lavender
-                        )
-                    ),
-                    RoundedCornerShape(26.dp)
-                )
-                .padding(22.dp)
+
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .background(
+                        Brush.linearGradient(
+                            colors =
+                                listOf(
+                                    DeepRose,
+                                    Rose,
+                                    Lavender
+                                )
+                        ),
+                        RoundedCornerShape(27.dp)
+                    )
+                    .padding(22.dp)
         ) {
 
             Column {
 
                 Text(
-                    text = "پیام امروز برای تو 💌",
-                    color = Color.White.copy(alpha = 0.90f),
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold
+                    text =
+                        "پیام امروز برای تو 💌",
+                    color =
+                        Color.White.copy(
+                            alpha = 0.88f
+                        ),
+                    fontSize = 12.sp,
+                    fontWeight =
+                        FontWeight.Bold
                 )
 
                 Spacer(
-                    modifier = Modifier.height(9.dp)
+                    modifier =
+                        Modifier.height(9.dp)
                 )
 
                 Text(
-                    text = "«کنار تو، حتی روزهای معمولی هم قشنگ می‌شن.»",
+                    text =
+                        "«کنار تو، حتی روزهای معمولی هم قشنگ می‌شن.»",
                     color = Color.White,
                     fontSize = 17.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    fontWeight =
+                        FontWeight.SemiBold,
                     lineHeight = 27.sp
                 )
 
                 Spacer(
-                    modifier = Modifier.height(8.dp)
+                    modifier =
+                        Modifier.height(8.dp)
                 )
 
                 Text(
                     text = "برای تو ❤️",
-                    color = Color.White.copy(alpha = 0.85f),
-                    fontSize = 12.sp
+                    color =
+                        Color.White.copy(
+                            alpha = 0.82f
+                        ),
+                    fontSize = 11.sp
                 )
             }
         }
@@ -853,111 +1011,122 @@ fun FeatureGrid(
     onChatClick: () -> Unit
 ) {
 
-    val items = listOf(
+    val items =
+        listOf(
 
-        HomeItem(
-            "خاطرات ما",
-            "عکس‌ها و لحظه‌های ما",
-            "📸"
-        ),
+            HomeItem(
+                "خاطرات ما",
+                "عکس‌ها و لحظه‌های ما",
+                "📸"
+            ),
 
-        HomeItem(
-            "نامه‌های عاشقانه",
-            "حرف‌هایی از قلبمون",
-            "💌"
-        ),
+            HomeItem(
+                "نامه‌های عاشقانه",
+                "حرف‌هایی از قلبمون",
+                "💌"
+            ),
 
-        HomeItem(
-            "آهنگ ما",
-            "صدای خاطره‌هامون",
-            "🎵"
-        ),
+            HomeItem(
+                "آهنگ ما",
+                "صدای خاطره‌هامون",
+                "🎵"
+            ),
 
-        HomeItem(
-            "وقتی دلمون گرفت",
-            "اینجا همیشه کنار همیم",
-            "🧸"
-        ),
+            HomeItem(
+                "وقتی دلمون گرفت",
+                "اینجا همیشه کنار همیم",
+                "🧸"
+            ),
 
-        HomeItem(
-            "چت دونفره",
-            "حرف‌های من و تو",
-            "💬"
-        ),
+            HomeItem(
+                "چت دونفره",
+                "حرف‌های من و تو ❤️",
+                "💬"
+            ),
 
-        HomeItem(
-            "بخش خصوصی",
-            "فقط برای خودمون",
-            "🔐"
-        ),
+            HomeItem(
+                "بخش خصوصی",
+                "فقط برای خودمون",
+                "🔐"
+            ),
 
-        HomeItem(
-            "لحظه‌های ویژه",
-            "تولد، سالگرد و قرارها",
-            "🎁"
-        ),
+            HomeItem(
+                "لحظه‌های ویژه",
+                "تولد، سالگرد و قرارها",
+                "🎁"
+            ),
 
-        HomeItem(
-            "تنظیمات",
-            "شخصی‌سازی رویارام",
-            "⚙️"
+            HomeItem(
+                "تنظیمات",
+                "شخصی‌سازی رویارام",
+                "⚙️"
+            )
         )
-    )
 
     Column(
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement =
+            Arrangement.spacedBy(12.dp)
     ) {
 
         for (rowIndex in 0 until 4) {
 
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+
+                modifier =
+                    Modifier.fillMaxWidth(),
+
+                horizontalArrangement =
+                    Arrangement.spacedBy(12.dp)
             ) {
 
-                val firstIndex = rowIndex * 2
-                val secondIndex = firstIndex + 1
+                val firstIndex =
+                    rowIndex * 2
+
+                val secondIndex =
+                    firstIndex + 1
 
                 FeatureCard(
-                    item = items[firstIndex],
-                    modifier = Modifier.weight(1f),
+
+                    item =
+                        items[firstIndex],
+
+                    modifier =
+                        Modifier.weight(1f),
+
                     onClick = {
 
-                        when (items[firstIndex].title) {
+                        when (
+                            items[firstIndex].title
+                        ) {
 
-                            "خاطرات ما" -> {
+                            "خاطرات ما" ->
                                 onMemoriesClick()
-                            }
 
-                            "چت دونفره" -> {
+                            "چت دونفره" ->
                                 onChatClick()
-                            }
-
-                            else -> {
-                                // آماده‌سازی برای قابلیت‌های آینده
-                            }
                         }
                     }
                 )
 
                 FeatureCard(
-                    item = items[secondIndex],
-                    modifier = Modifier.weight(1f),
+
+                    item =
+                        items[secondIndex],
+
+                    modifier =
+                        Modifier.weight(1f),
+
                     onClick = {
 
-                        when (items[secondIndex].title) {
+                        when (
+                            items[secondIndex].title
+                        ) {
 
-                            "خاطرات ما" -> {
+                            "خاطرات ما" ->
                                 onMemoriesClick()
-                            }
 
-                            "چت دونفره" -> {
+                            "چت دونفره" ->
                                 onChatClick()
-                            }
-
-                            else -> {
-                                // آماده‌سازی برای قابلیت‌های آینده
-                            }
                         }
                     }
                 )
@@ -979,79 +1148,107 @@ fun FeatureCard(
 
     Card(
 
-        modifier = modifier
-            .aspectRatio(0.95f)
-            .shadow(
-                elevation = 7.dp,
-                shape = RoundedCornerShape(24.dp),
-                ambientColor = Rose.copy(alpha = 0.10f),
-                spotColor = Rose.copy(alpha = 0.10f)
+        modifier =
+            modifier
+                .aspectRatio(0.96f)
+                .shadow(
+                    elevation = 8.dp,
+                    shape =
+                        RoundedCornerShape(25.dp),
+                    ambientColor =
+                        Rose.copy(
+                            alpha = 0.09f
+                        ),
+                    spotColor =
+                        Rose.copy(
+                            alpha = 0.09f
+                        )
+                )
+                .clickable {
+                    onClick()
+                },
+
+        shape =
+            RoundedCornerShape(25.dp),
+
+        colors =
+            CardDefaults.cardColors(
+                containerColor =
+                    Color.White.copy(
+                        alpha = 0.90f
+                    )
             )
-            .clickable {
-                onClick()
-            },
-
-        shape = RoundedCornerShape(24.dp),
-
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White.copy(alpha = 0.88f)
-        )
     ) {
 
         Column(
 
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(15.dp),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(14.dp),
 
-            verticalArrangement = Arrangement.Center,
+            verticalArrangement =
+                Arrangement.Center,
 
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment =
+                Alignment.CenterHorizontally
         ) {
 
             Box(
-                modifier = Modifier
-                    .size(58.dp)
-                    .clip(CircleShape)
-                    .background(
-                        Brush.linearGradient(
-                            colors = listOf(
-                                PalePink,
-                                PaleLavender
-                            )
-                        )
-                    ),
 
-                contentAlignment = Alignment.Center
+                modifier =
+                    Modifier
+                        .size(57.dp)
+                        .clip(CircleShape)
+                        .background(
+                            Brush.linearGradient(
+                                colors =
+                                    listOf(
+                                        PalePink,
+                                        PaleLavender
+                                    )
+                            )
+                        ),
+
+                contentAlignment =
+                    Alignment.Center
             ) {
 
                 Text(
-                    text = item.emoji,
-                    fontSize = 28.sp
+                    text =
+                        item.emoji,
+                    fontSize = 27.sp
                 )
             }
 
             Spacer(
-                modifier = Modifier.height(10.dp)
+                modifier =
+                    Modifier.height(10.dp)
             )
 
             Text(
-                text = item.title,
+                text =
+                    item.title,
                 fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
+                fontWeight =
+                    FontWeight.Bold,
                 color = TextDark,
-                textAlign = TextAlign.Center
+                textAlign =
+                    TextAlign.Center
             )
 
             Spacer(
-                modifier = Modifier.height(4.dp)
+                modifier =
+                    Modifier.height(4.dp)
             )
 
             Text(
-                text = item.subtitle,
+                text =
+                    item.subtitle,
                 fontSize = 10.sp,
                 color = SoftText,
-                textAlign = TextAlign.Center,
+                textAlign =
+                    TextAlign.Center,
                 lineHeight = 15.sp
             )
         }
@@ -1059,54 +1256,7 @@ fun FeatureCard(
 }
 
 // ============================================================
-// FOOTER
-// ============================================================
-
-@Composable
-fun RomanticFooter() {
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(
-                top = 10.dp,
-                bottom = 10.dp
-            ),
-
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-
-        Text(
-            text = "رامین ❤️ رویا",
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
-            color = DeepRose
-        )
-
-        Spacer(
-            modifier = Modifier.height(5.dp)
-        )
-
-        Text(
-            text = "یک دنیای کوچک، فقط برای دو نفر",
-            fontSize = 12.sp,
-            color = SoftText
-        )
-
-        Spacer(
-            modifier = Modifier.height(8.dp)
-        )
-
-        Text(
-            text = "♡  رویارام  ♡",
-            fontSize = 11.sp,
-            color = Rose.copy(alpha = 0.75f)
-        )
-    }
-}
-
-// ============================================================
-// PREMIUM BOTTOM BAR
+// BOTTOM NAVIGATION
 // ============================================================
 
 @Composable
@@ -1121,72 +1271,96 @@ fun PremiumBottomBar(
 
     Card(
 
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(
-                start = 14.dp,
-                end = 14.dp,
-                bottom = 8.dp
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .padding(
+                    start = 14.dp,
+                    end = 14.dp,
+                    bottom = 8.dp
+                )
+                .shadow(
+                    elevation = 20.dp,
+                    shape =
+                        RoundedCornerShape(31.dp),
+                    ambientColor =
+                        Rose.copy(
+                            alpha = 0.18f
+                        ),
+                    spotColor =
+                        Rose.copy(
+                            alpha = 0.20f
+                        )
+                ),
+
+        shape =
+            RoundedCornerShape(31.dp),
+
+        colors =
+            CardDefaults.cardColors(
+                containerColor =
+                    Color.White.copy(
+                        alpha = 0.96f
+                    )
             )
-            .shadow(
-                elevation = 18.dp,
-                shape = RoundedCornerShape(30.dp),
-                ambientColor = Rose.copy(alpha = 0.18f),
-                spotColor = Rose.copy(alpha = 0.18f)
-            ),
-
-        shape = RoundedCornerShape(30.dp),
-
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White.copy(alpha = 0.95f)
-        )
     ) {
 
         Row(
 
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(
-                    horizontal = 8.dp,
-                    vertical = 8.dp
-                ),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        horizontal = 7.dp,
+                        vertical = 8.dp
+                    ),
 
-            horizontalArrangement = Arrangement.SpaceEvenly,
+            horizontalArrangement =
+                Arrangement.SpaceEvenly,
 
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment =
+                Alignment.CenterVertically
         ) {
 
             BottomBarItem(
-                selected = selectedTab == 0,
+                selected =
+                    selectedTab == 0,
                 icon = "⌂",
                 title = "خانه",
-                onClick = onHomeClick
+                onClick =
+                    onHomeClick
             )
 
             BottomBarItem(
-                selected = selectedTab == 1,
+                selected =
+                    selectedTab == 1,
                 icon = "♡",
                 title = "خاطرات",
-                onClick = onMemoriesClick
+                onClick =
+                    onMemoriesClick
             )
 
             BottomBarCenterButton(
-                selected = selectedTab == 2,
-                onClick = onChatClick
+                selected =
+                    selectedTab == 2,
+                onClick =
+                    onChatClick
             )
 
             BottomBarItem(
-                selected = selectedTab == 3,
+                selected =
+                    selectedTab == 3,
                 icon = "✦",
                 title = "بیشتر",
-                onClick = onMoreClick
+                onClick =
+                    onMoreClick
             )
         }
     }
 }
 
 // ============================================================
-// BOTTOM BAR ITEM
+// BOTTOM ITEM
 // ============================================================
 
 @Composable
@@ -1201,60 +1375,67 @@ fun BottomBarItem(
 
         targetValue =
             if (selected) {
-                1.06f
+                1.05f
             } else {
                 1f
             },
 
-        animationSpec = tween(250),
+        animationSpec =
+            tween(250),
 
-        label = "bottom_item_scale"
+        label =
+            "bottom_item_scale"
     )
 
     Column(
 
-        modifier = Modifier
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-            }
-            .clip(
-                RoundedCornerShape(20.dp)
-            )
-            .clickable {
-                onClick()
-            }
-            .padding(
-                horizontal = 13.dp,
-                vertical = 7.dp
-            ),
+        modifier =
+            Modifier
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                }
+                .clip(
+                    RoundedCornerShape(20.dp)
+                )
+                .clickable {
+                    onClick()
+                }
+                .padding(
+                    horizontal = 13.dp,
+                    vertical = 7.dp
+                ),
 
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment =
+            Alignment.CenterHorizontally
     ) {
 
         Box(
 
-            modifier = Modifier
-                .size(
-                    if (selected) {
-                        38.dp
-                    } else {
-                        32.dp
-                    }
-                )
-                .clip(CircleShape)
-                .background(
-                    if (selected) {
-                        SoftPink
-                    } else {
-                        Color.Transparent
-                    }
-                ),
+            modifier =
+                Modifier
+                    .size(
+                        if (selected) {
+                            39.dp
+                        } else {
+                            33.dp
+                        }
+                    )
+                    .clip(CircleShape)
+                    .background(
+                        if (selected) {
+                            SoftPink
+                        } else {
+                            Color.Transparent
+                        }
+                    ),
 
-            contentAlignment = Alignment.Center
+            contentAlignment =
+                Alignment.Center
         ) {
 
             Text(
+
                 text = icon,
 
                 fontSize =
@@ -1274,10 +1455,12 @@ fun BottomBarItem(
         }
 
         Spacer(
-            modifier = Modifier.height(2.dp)
+            modifier =
+                Modifier.height(2.dp)
         )
 
         Text(
+
             text = title,
 
             fontSize = 10.sp,
@@ -1300,7 +1483,7 @@ fun BottomBarItem(
 }
 
 // ============================================================
-// CENTER CHAT BUTTON
+// CENTER CHAT
 // ============================================================
 
 @Composable
@@ -1318,42 +1501,55 @@ fun BottomBarCenterButton(
                 1f
             },
 
-        animationSpec = tween(250),
+        animationSpec =
+            tween(250),
 
-        label = "center_button_scale"
+        label =
+            "center_button_scale"
     )
 
     Box(
-        modifier = Modifier
-            .size(62.dp)
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-            }
-            .shadow(
-                elevation = 10.dp,
-                shape = CircleShape,
-                ambientColor = Rose.copy(alpha = 0.25f),
-                spotColor = Rose.copy(alpha = 0.25f)
-            )
-            .clip(CircleShape)
-            .background(
-                Brush.linearGradient(
-                    colors = listOf(
-                        Rose,
-                        DeepRose
+
+        modifier =
+            Modifier
+                .size(62.dp)
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                }
+                .shadow(
+                    elevation = 12.dp,
+                    shape = CircleShape,
+                    ambientColor =
+                        Rose.copy(
+                            alpha = 0.25f
+                        ),
+                    spotColor =
+                        Rose.copy(
+                            alpha = 0.28f
+                        )
+                )
+                .clip(CircleShape)
+                .background(
+                    Brush.linearGradient(
+                        colors =
+                            listOf(
+                                Rose,
+                                DeepRose
+                            )
                     )
                 )
-            )
-            .clickable {
-                onClick()
-            },
+                .clickable {
+                    onClick()
+                },
 
-        contentAlignment = Alignment.Center
+        contentAlignment =
+            Alignment.Center
     ) {
 
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment =
+                Alignment.CenterHorizontally
         ) {
 
             Text(
@@ -1364,10 +1560,70 @@ fun BottomBarCenterButton(
             Text(
                 text = "چت",
                 fontSize = 9.sp,
-                fontWeight = FontWeight.Bold,
+                fontWeight =
+                    FontWeight.Bold,
                 color = Color.White
             )
         }
+    }
+}
+
+// ============================================================
+// FOOTER
+// ============================================================
+
+@Composable
+fun RomanticFooter() {
+
+    Column(
+
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(
+                    top = 10.dp,
+                    bottom = 10.dp
+                ),
+
+        horizontalAlignment =
+            Alignment.CenterHorizontally
+    ) {
+
+        Text(
+            text =
+                "رامین ❤️ رویا",
+            fontSize = 18.sp,
+            fontWeight =
+                FontWeight.Bold,
+            color = DeepRose
+        )
+
+        Spacer(
+            modifier =
+                Modifier.height(5.dp)
+        )
+
+        Text(
+            text =
+                "یک دنیای کوچک، فقط برای دو نفر",
+            fontSize = 12.sp,
+            color = SoftText
+        )
+
+        Spacer(
+            modifier =
+                Modifier.height(8.dp)
+        )
+
+        Text(
+            text =
+                "♡  رویارام  ♡",
+            fontSize = 11.sp,
+            color =
+                Rose.copy(
+                    alpha = 0.75f
+                )
+        )
     }
 }
 
@@ -1380,12 +1636,15 @@ fun MemoriesScreen(
     onBack: () -> Unit
 ) {
 
-    val firestore = remember {
-        FirebaseFirestore.getInstance()
-    }
+    val firestore =
+        remember {
+            FirebaseFirestore.getInstance()
+        }
 
     var memories by remember {
-        mutableStateOf<List<Memory>>(emptyList())
+        mutableStateOf<List<Memory>>(
+            emptyList()
+        )
     }
 
     var loading by remember {
@@ -1404,33 +1663,52 @@ fun MemoriesScreen(
                 "createdAt",
                 Query.Direction.DESCENDING
             )
-            .addSnapshotListener { snapshot, error ->
+            .addSnapshotListener {
+                    snapshot,
+                    error ->
 
                 loading = false
 
-                if (error == null && snapshot != null) {
+                if (
+                    error == null &&
+                    snapshot != null
+                ) {
 
                     memories =
-                        snapshot.documents.map { document ->
+                        snapshot.documents.map {
+                                document ->
 
                             Memory(
 
-                                id = document.id,
+                                id =
+                                    document.id,
 
                                 title =
-                                    document.getString("title")
+                                    document
+                                        .getString(
+                                            "title"
+                                        )
                                         ?: "خاطره ما",
 
                                 date =
-                                    document.getString("date")
+                                    document
+                                        .getString(
+                                            "date"
+                                        )
                                         ?: "",
 
                                 description =
-                                    document.getString("description")
+                                    document
+                                        .getString(
+                                            "description"
+                                        )
                                         ?: "",
 
                                 imageUrl =
-                                    document.getString("imageUrl")
+                                    document
+                                        .getString(
+                                            "imageUrl"
+                                        )
                                         ?: ""
                             )
                         }
@@ -1439,15 +1717,19 @@ fun MemoriesScreen(
     }
 
     Box(
-        modifier = Modifier.fillMaxSize()
+        modifier =
+            Modifier.fillMaxSize()
     ) {
 
         Column(
-            modifier = Modifier.fillMaxSize()
+            modifier =
+                Modifier.fillMaxSize()
         ) {
 
             MemoriesHeader(
-                onBack = onBack,
+
+                onBack =
+                    onBack,
 
                 onAdd = {
                     showAddDialog = true
@@ -1459,8 +1741,10 @@ fun MemoriesScreen(
                 loading -> {
 
                     Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
+                        modifier =
+                            Modifier.fillMaxSize(),
+                        contentAlignment =
+                            Alignment.Center
                     ) {
 
                         CircularProgressIndicator(
@@ -1482,15 +1766,19 @@ fun MemoriesScreen(
 
                     LazyColumn(
 
-                        modifier = Modifier.fillMaxSize(),
+                        modifier =
+                            Modifier.fillMaxSize(),
 
-                        contentPadding = PaddingValues(
-                            horizontal = 18.dp,
-                            vertical = 16.dp
-                        ),
+                        contentPadding =
+                            PaddingValues(
+                                horizontal = 18.dp,
+                                vertical = 16.dp
+                            ),
 
                         verticalArrangement =
-                            Arrangement.spacedBy(14.dp)
+                            Arrangement.spacedBy(
+                                14.dp
+                            )
                     ) {
 
                         items(
@@ -1512,6 +1800,7 @@ fun MemoriesScreen(
         if (showAddDialog) {
 
             AddMemoryDialog(
+
                 onDismiss = {
                     showAddDialog = false
                 }
@@ -1532,28 +1821,35 @@ fun MemoriesHeader(
 
     Row(
 
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(
-                horizontal = 18.dp,
-                vertical = 16.dp
-            ),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(
+                    horizontal = 18.dp,
+                    vertical = 16.dp
+                ),
 
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment =
+            Alignment.CenterVertically
     ) {
 
         Box(
-            modifier = Modifier
-                .size(44.dp)
-                .clip(CircleShape)
-                .background(
-                    Color.White.copy(alpha = 0.85f)
-                )
-                .clickable {
-                    onBack()
-                },
 
-            contentAlignment = Alignment.Center
+            modifier =
+                Modifier
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .background(
+                        Color.White.copy(
+                            alpha = 0.88f
+                        )
+                    )
+                    .clickable {
+                        onBack()
+                    },
+
+            contentAlignment =
+                Alignment.Center
         ) {
 
             Text(
@@ -1564,44 +1860,53 @@ fun MemoriesHeader(
         }
 
         Spacer(
-            modifier = Modifier.width(12.dp)
+            modifier =
+                Modifier.width(12.dp)
         )
 
         Column(
-            modifier = Modifier.weight(1f)
+            modifier =
+                Modifier.weight(1f)
         ) {
 
             Text(
-                text = "خاطرات ما 📸",
+                text =
+                    "خاطرات ما 📸",
                 fontSize = 23.sp,
-                fontWeight = FontWeight.ExtraBold,
+                fontWeight =
+                    FontWeight.ExtraBold,
                 color = TextDark
             )
 
             Text(
-                text = "لحظه‌هایی که نباید فراموش شوند",
+                text =
+                    "لحظه‌هایی که نباید فراموش شوند",
                 fontSize = 11.sp,
                 color = SoftText
             )
         }
 
         Box(
-            modifier = Modifier
-                .size(44.dp)
-                .clip(CircleShape)
-                .background(
-                    Brush.linearGradient(
-                        colors = listOf(
-                            Rose,
-                            DeepRose
+
+            modifier =
+                Modifier
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .background(
+                        Brush.linearGradient(
+                            colors =
+                                listOf(
+                                    Rose,
+                                    DeepRose
+                                )
                         )
                     )
-                )
-                .clickable {
-                    onAdd()
-                },
+                    .clickable {
+                        onAdd()
+                    },
 
-            contentAlignment = Alignment.Center
+            contentAlignment =
+                Alignment.Center
         ) {
 
             Text(
@@ -1623,15 +1928,19 @@ fun EmptyMemories(
 ) {
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(30.dp),
 
-        contentAlignment = Alignment.Center
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .padding(30.dp),
+
+        contentAlignment =
+            Alignment.Center
     ) {
 
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment =
+                Alignment.CenterHorizontally
         ) {
 
             Text(
@@ -1640,53 +1949,65 @@ fun EmptyMemories(
             )
 
             Spacer(
-                modifier = Modifier.height(14.dp)
+                modifier =
+                    Modifier.height(14.dp)
             )
 
             Text(
-                text = "هنوز خاطره‌ای ثبت نشده",
+                text =
+                    "هنوز خاطره‌ای ثبت نشده",
                 fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
+                fontWeight =
+                    FontWeight.Bold,
                 color = TextDark
             )
 
             Spacer(
-                modifier = Modifier.height(7.dp)
+                modifier =
+                    Modifier.height(7.dp)
             )
 
             Text(
-                text = "اولین لحظه قشنگتون رو اینجا ثبت کنید",
+                text =
+                    "اولین لحظه قشنگتون رو اینجا ثبت کنید",
                 fontSize = 13.sp,
                 color = SoftText,
-                textAlign = TextAlign.Center
+                textAlign =
+                    TextAlign.Center
             )
 
             Spacer(
-                modifier = Modifier.height(20.dp)
+                modifier =
+                    Modifier.height(20.dp)
             )
 
             Card(
 
-                modifier = Modifier
-                    .clickable {
+                modifier =
+                    Modifier.clickable {
                         onAdd()
                     },
 
-                shape = RoundedCornerShape(18.dp),
+                shape =
+                    RoundedCornerShape(18.dp),
 
-                colors = CardDefaults.cardColors(
-                    containerColor = Rose
-                )
+                colors =
+                    CardDefaults.cardColors(
+                        containerColor = Rose
+                    )
             ) {
 
                 Text(
-                    text = "ثبت اولین خاطره ❤️",
+                    text =
+                        "ثبت اولین خاطره ❤️",
                     color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(
-                        horizontal = 22.dp,
-                        vertical = 13.dp
-                    )
+                    fontWeight =
+                        FontWeight.Bold,
+                    modifier =
+                        Modifier.padding(
+                            horizontal = 22.dp,
+                            vertical = 13.dp
+                        )
                 )
             }
         }
@@ -1704,70 +2025,98 @@ fun MemoryCard(
 
     Card(
 
-        modifier = Modifier.fillMaxWidth(),
+        modifier =
+            Modifier.fillMaxWidth(),
 
-        shape = RoundedCornerShape(25.dp),
+        shape =
+            RoundedCornerShape(25.dp),
 
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White.copy(alpha = 0.90f)
-        )
+        colors =
+            CardDefaults.cardColors(
+                containerColor =
+                    Color.White.copy(
+                        alpha = 0.90f
+                    )
+            )
     ) {
 
         Column(
-            modifier = Modifier.fillMaxWidth()
+            modifier =
+                Modifier.fillMaxWidth()
         ) {
 
-            if (memory.imageUrl.isNotBlank()) {
+            if (
+                memory.imageUrl.isNotBlank()
+            ) {
 
                 AsyncImage(
 
-                    model = memory.imageUrl,
+                    model =
+                        memory.imageUrl,
 
-                    contentDescription = memory.title,
+                    contentDescription =
+                        memory.title,
 
-                    contentScale = ContentScale.Crop,
+                    contentScale =
+                        ContentScale.Crop,
 
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(220.dp)
-                        .clip(
-                            RoundedCornerShape(
-                                topStart = 25.dp,
-                                topEnd = 25.dp
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .height(220.dp)
+                            .clip(
+                                RoundedCornerShape(
+                                    topStart = 25.dp,
+                                    topEnd = 25.dp
+                                )
                             )
-                        )
                 )
             }
 
             Column(
-                modifier = Modifier.padding(17.dp)
+                modifier =
+                    Modifier.padding(17.dp)
             ) {
 
                 Text(
-                    text = memory.title,
+                    text =
+                        memory.title,
                     fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
+                    fontWeight =
+                        FontWeight.Bold,
                     color = TextDark
                 )
 
-                if (memory.date.isNotBlank()) {
+                if (
+                    memory.date.isNotBlank()
+                ) {
 
                     Text(
-                        text = "📅 ${memory.date}",
+                        text =
+                            "📅 ${memory.date}",
                         fontSize = 11.sp,
                         color = Rose,
-                        modifier = Modifier.padding(top = 5.dp)
+                        modifier =
+                            Modifier.padding(
+                                top = 5.dp
+                            )
                     )
                 }
 
-                if (memory.description.isNotBlank()) {
+                if (
+                    memory.description.isNotBlank()
+                ) {
 
                     Text(
-                        text = memory.description,
+                        text =
+                            memory.description,
                         fontSize = 13.sp,
                         color = SoftText,
                         lineHeight = 22.sp,
-                        modifier = Modifier.padding(top = 9.dp)
+                        modifier =
+                            Modifier.padding(
+                                top = 9.dp
+                            )
                     )
                 }
             }
@@ -1776,7 +2125,7 @@ fun MemoryCard(
 }
 
 // ============================================================
-// ADD MEMORY DIALOG
+// ADD MEMORY
 // ============================================================
 
 @Composable
@@ -1812,22 +2161,30 @@ fun AddMemoryDialog(
         title = {
 
             Text(
-                text = "ثبت یک خاطره ❤️",
-                fontWeight = FontWeight.Bold
+                text =
+                    "ثبت یک خاطره ❤️",
+                fontWeight =
+                    FontWeight.Bold
             )
         },
 
         text = {
 
             Column(
-                modifier = Modifier
-                    .heightIn(max = 430.dp)
-                    .verticalScroll(
-                        rememberScrollState()
-                    ),
+
+                modifier =
+                    Modifier
+                        .heightIn(
+                            max = 430.dp
+                        )
+                        .verticalScroll(
+                            rememberScrollState()
+                        ),
 
                 verticalArrangement =
-                    Arrangement.spacedBy(10.dp)
+                    Arrangement.spacedBy(
+                        10.dp
+                    )
             ) {
 
                 OutlinedTextField(
@@ -1844,7 +2201,8 @@ fun AddMemoryDialog(
 
                     singleLine = true,
 
-                    modifier = Modifier.fillMaxWidth()
+                    modifier =
+                        Modifier.fillMaxWidth()
                 )
 
                 OutlinedTextField(
@@ -1860,12 +2218,15 @@ fun AddMemoryDialog(
                     },
 
                     placeholder = {
-                        Text("مثلاً ۱۴۰۵/۰۳/۲۰")
+                        Text(
+                            "مثلاً ۱۴۰۵/۰۳/۲۰"
+                        )
                     },
 
                     singleLine = true,
 
-                    modifier = Modifier.fillMaxWidth()
+                    modifier =
+                        Modifier.fillMaxWidth()
                 )
 
                 OutlinedTextField(
@@ -1882,7 +2243,8 @@ fun AddMemoryDialog(
 
                     minLines = 4,
 
-                    modifier = Modifier.fillMaxWidth()
+                    modifier =
+                        Modifier.fillMaxWidth()
                 )
             }
         },
@@ -1897,21 +2259,36 @@ fun AddMemoryDialog(
 
                 onClick = {
 
+                    val user =
+                        FirebaseAuth
+                            .getInstance()
+                            .currentUser
+
+                    if (user == null) {
+
+                        return@TextButton
+                    }
+
                     saving = true
 
                     val memory =
                         hashMapOf<String, Any>(
 
-                            "title" to title.trim(),
+                            "title" to
+                                    title.trim(),
 
-                            "date" to date.trim(),
+                            "date" to
+                                    date.trim(),
 
-                            "description" to description.trim(),
+                            "description" to
+                                    description.trim(),
 
-                            "createdBy" to "رامین و رویا",
+                            "createdBy" to
+                                    user.uid,
 
                             "createdAt" to
-                                    FieldValue.serverTimestamp()
+                                    FieldValue
+                                        .serverTimestamp()
                         )
 
                     FirebaseFirestore
@@ -1948,7 +2325,8 @@ fun AddMemoryDialog(
 
             TextButton(
 
-                enabled = !saving,
+                enabled =
+                    !saving,
 
                 onClick = {
                     onDismiss()
@@ -1967,7 +2345,8 @@ fun AddMemoryDialog(
 
 fun calculateDaysTogether(): Long {
 
-    val calendar = Calendar.getInstance()
+    val calendar =
+        Calendar.getInstance()
 
     calendar.set(
         2026,
@@ -1983,20 +2362,24 @@ fun calculateDaysTogether(): Long {
         0
     )
 
-    val startDate = calendar.time
+    val startDate =
+        calendar.time
 
-    val today = Date()
+    val today =
+        Date()
 
     val difference =
-        today.time - startDate.time
+        today.time -
+                startDate.time
 
     val days =
-        difference / (
-                1000L *
-                        60L *
-                        60L *
-                        24L
-                )
+        difference /
+                (
+                        1000L *
+                                60L *
+                                60L *
+                                24L
+                        )
 
     return if (days < 0) {
         0L
