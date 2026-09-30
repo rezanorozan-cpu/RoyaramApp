@@ -88,14 +88,13 @@ private val Cream = Color(0xFFFFFBFC)
 private val TextDark = Color(0xFF30252A)
 private val SoftText = Color(0xFF8A737C)
 
-private val PageBackground =
-    Brush.verticalGradient(
-        colors = listOf(
-            Color(0xFFFFE3ED),
-            Color(0xFFF6ECFF),
-            Color(0xFFFFF8FB)
-        )
+private val PageBackground = Brush.verticalGradient(
+    colors = listOf(
+        Color(0xFFFFE3ED),
+        Color(0xFFF6ECFF),
+        Color(0xFFFFF8FB)
     )
+)
 
 // ============================================================
 // DATA
@@ -174,8 +173,8 @@ fun RoyaramApp(
     onToast: (String) -> Unit
 ) {
 
-    var showMemories by remember {
-        mutableStateOf(false)
+    var currentPage by remember {
+        mutableStateOf("home")
     }
 
     Box(
@@ -184,26 +183,43 @@ fun RoyaramApp(
             .background(PageBackground)
     ) {
 
-        if (showMemories) {
+        when (currentPage) {
 
-            MemoriesScreen(
-                onBack = {
-                    showMemories = false
-                }
-            )
+            "memories" -> {
 
-        } else {
+                MemoriesScreen(
+                    onBack = {
+                        currentPage = "home"
+                    }
+                )
+            }
 
-            HomeScreen(
+            "special" -> {
 
-                onMemoriesClick = {
-                    showMemories = true
-                },
+                SpecialDatesScreen(
+                    onBack = {
+                        currentPage = "home"
+                    }
+                )
+            }
 
-                onChatClick = onChatClick,
+            else -> {
 
-                onToast = onToast
-            )
+                HomeScreen(
+
+                    onMemoriesClick = {
+                        currentPage = "memories"
+                    },
+
+                    onSpecialClick = {
+                        currentPage = "special"
+                    },
+
+                    onChatClick = onChatClick,
+
+                    onToast = onToast
+                )
+            }
         }
     }
 }
@@ -215,6 +231,7 @@ fun RoyaramApp(
 @Composable
 fun HomeScreen(
     onMemoriesClick: () -> Unit,
+    onSpecialClick: () -> Unit,
     onChatClick: () -> Unit,
     onToast: (String) -> Unit
 ) {
@@ -230,17 +247,17 @@ fun HomeScreen(
             .background(PageBackground),
 
         contentPadding = PaddingValues(
-            start = 15.dp,
-            end = 15.dp,
-            top = 10.dp,
-            bottom = 30.dp
+            start = 11.dp,
+            end = 11.dp,
+            top = 5.dp,
+            bottom = 14.dp
         ),
 
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
 
         // --------------------------------------------------------
-        // TOP HEADER
+        // TOP
         // --------------------------------------------------------
 
         item {
@@ -253,7 +270,7 @@ fun HomeScreen(
         }
 
         // --------------------------------------------------------
-        // HERO PHOTO
+        // HERO
         // --------------------------------------------------------
 
         item {
@@ -264,7 +281,7 @@ fun HomeScreen(
         }
 
         // --------------------------------------------------------
-        // RELATIONSHIP CARD
+        // RELATIONSHIP
         // --------------------------------------------------------
 
         item {
@@ -272,15 +289,6 @@ fun HomeScreen(
             RelationshipGlassCard(
                 daysTogether = daysTogether
             )
-        }
-
-        // --------------------------------------------------------
-        // SMALL LOVE MESSAGE
-        // --------------------------------------------------------
-
-        item {
-
-            LoveQuoteCard()
         }
 
         // --------------------------------------------------------
@@ -293,7 +301,7 @@ fun HomeScreen(
         }
 
         // --------------------------------------------------------
-        // FEATURE GRID
+        // ALL FEATURES
         // --------------------------------------------------------
 
         item {
@@ -302,6 +310,8 @@ fun HomeScreen(
 
                 onMemoriesClick = onMemoriesClick,
 
+                onSpecialClick = onSpecialClick,
+
                 onChatClick = onChatClick,
 
                 onToast = onToast
@@ -309,21 +319,12 @@ fun HomeScreen(
         }
 
         // --------------------------------------------------------
-        // FINAL LOVE CARD
+        // SMALL FOOTER
         // --------------------------------------------------------
 
         item {
 
-            FinalLoveCard()
-        }
-
-        // --------------------------------------------------------
-        // FOOTER
-        // --------------------------------------------------------
-
-        item {
-
-            PremiumFooter()
+            CompactLoveFooter()
         }
     }
 }
@@ -343,7 +344,7 @@ fun PremiumTopBar(
             .fillMaxWidth()
             .padding(
                 horizontal = 3.dp,
-                vertical = 5.dp
+                vertical = 3.dp
             ),
 
         verticalAlignment = Alignment.CenterVertically
@@ -355,28 +356,27 @@ fun PremiumTopBar(
 
             Text(
                 text = "رویـارام",
-                fontSize = 30.sp,
+                fontSize = 28.sp,
                 fontWeight = FontWeight.ExtraBold,
                 color = DeepRose
             )
 
             Text(
                 text = "قصه‌ی من و تو، برای همیشه",
-                fontSize = 12.sp,
-                color = SoftText,
-                modifier = Modifier.padding(top = 1.dp)
+                fontSize = 10.sp,
+                color = SoftText
             )
         }
 
         Box(
 
             modifier = Modifier
-                .size(48.dp)
+                .size(43.dp)
                 .shadow(
-                    elevation = 12.dp,
+                    elevation = 10.dp,
                     shape = CircleShape,
                     ambientColor = Rose.copy(alpha = 0.20f),
-                    spotColor = Rose.copy(alpha = 0.25f)
+                    spotColor = Rose.copy(alpha = 0.22f)
                 )
                 .clip(CircleShape)
                 .background(
@@ -397,7 +397,7 @@ fun PremiumTopBar(
             Text(
                 text = "♡",
                 color = Color.White,
-                fontSize = 27.sp
+                fontSize = 25.sp
             )
         }
     }
@@ -421,7 +421,7 @@ fun PremiumHero(
 
         initialValue = 1.00f,
 
-        targetValue = 1.045f,
+        targetValue = 1.035f,
 
         animationSpec =
             infiniteRepeatable(
@@ -438,15 +438,15 @@ fun PremiumHero(
 
         modifier = Modifier
             .fillMaxWidth()
-            .height(350.dp)
+            .height(285.dp)
             .shadow(
-                elevation = 24.dp,
-                shape = RoundedCornerShape(32.dp),
-                ambientColor = Rose.copy(alpha = 0.20f),
-                spotColor = Rose.copy(alpha = 0.22f)
+                elevation = 18.dp,
+                shape = RoundedCornerShape(28.dp),
+                ambientColor = Rose.copy(alpha = 0.18f),
+                spotColor = Rose.copy(alpha = 0.20f)
             ),
 
-        shape = RoundedCornerShape(32.dp),
+        shape = RoundedCornerShape(28.dp),
 
         colors = CardDefaults.cardColors(
             containerColor = Color.White
@@ -456,10 +456,6 @@ fun PremiumHero(
         Box(
             modifier = Modifier.fillMaxSize()
         ) {
-
-            // ----------------------------------------------------
-            // REAL COUPLE PHOTO
-            // ----------------------------------------------------
 
             Image(
 
@@ -479,10 +475,6 @@ fun PremiumHero(
                     }
             )
 
-            // ----------------------------------------------------
-            // DARK ROMANTIC GRADIENT
-            // ----------------------------------------------------
-
             Box(
 
                 modifier = Modifier
@@ -490,46 +482,42 @@ fun PremiumHero(
                     .background(
                         Brush.verticalGradient(
                             colors = listOf(
-                                Color.Black.copy(alpha = 0.08f),
+                                Color.Black.copy(alpha = 0.04f),
                                 Color.Transparent,
-                                Color.Black.copy(alpha = 0.74f)
+                                Color.Black.copy(alpha = 0.78f)
                             )
                         )
                     )
             )
 
-            // ----------------------------------------------------
-            // TOP GLASS BADGE
-            // ----------------------------------------------------
+            // TOP GLASS LABEL
 
             Box(
 
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .padding(14.dp)
+                    .padding(11.dp)
                     .clip(
                         RoundedCornerShape(50.dp)
                     )
                     .background(
-                        Color.White.copy(alpha = 0.20f)
+                        Color.White.copy(alpha = 0.22f)
                     )
                     .padding(
-                        horizontal = 13.dp,
-                        vertical = 8.dp
+                        horizontal = 11.dp,
+                        vertical = 6.dp
                     )
             ) {
 
                 Text(
                     text = "برای همیشه ♡",
                     color = Color.White,
-                    fontSize = 11.sp,
+                    fontSize = 9.sp,
                     fontWeight = FontWeight.Bold
                 )
             }
 
-            // ----------------------------------------------------
             // HERO TEXT
-            // ----------------------------------------------------
 
             Column(
 
@@ -537,35 +525,36 @@ fun PremiumHero(
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
                     .padding(
-                        start = 22.dp,
-                        end = 22.dp,
-                        bottom = 22.dp
+                        start = 18.dp,
+                        end = 18.dp,
+                        bottom = 17.dp
                     ),
 
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment =
+                    Alignment.CenterHorizontally
             ) {
 
                 Text(
                     text = "رامین ❤️ رویا",
-                    fontSize = 30.sp,
+                    fontSize = 27.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = Color.White,
                     textAlign = TextAlign.Center
                 )
 
                 Spacer(
-                    modifier = Modifier.height(5.dp)
+                    modifier = Modifier.height(3.dp)
                 )
 
                 Text(
                     text = "هر روز یک صفحه‌ی تازه از قصه‌ی ما",
-                    fontSize = 12.sp,
+                    fontSize = 10.sp,
                     color = Color.White.copy(alpha = 0.94f),
                     textAlign = TextAlign.Center
                 )
 
                 Spacer(
-                    modifier = Modifier.height(13.dp)
+                    modifier = Modifier.height(9.dp)
                 )
 
                 Row(
@@ -575,28 +564,29 @@ fun PremiumHero(
                             RoundedCornerShape(50.dp)
                         )
                         .background(
-                            Color.White.copy(alpha = 0.20f)
+                            Color.White.copy(alpha = 0.22f)
                         )
                         .padding(
-                            horizontal = 16.dp,
-                            vertical = 8.dp
+                            horizontal = 14.dp,
+                            vertical = 6.dp
                         ),
 
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment =
+                        Alignment.CenterVertically
                 ) {
 
                     Text(
                         text = "❤️",
-                        fontSize = 14.sp
+                        fontSize = 12.sp
                     )
 
                     Spacer(
-                        modifier = Modifier.width(6.dp)
+                        modifier = Modifier.width(5.dp)
                     )
 
                     Text(
                         text = "$daysTogether روز کنار هم",
-                        fontSize = 12.sp,
+                        fontSize = 10.sp,
                         color = Color.White,
                         fontWeight = FontWeight.Bold
                     )
@@ -620,16 +610,16 @@ fun RelationshipGlassCard(
         modifier = Modifier
             .fillMaxWidth()
             .shadow(
-                elevation = 14.dp,
-                shape = RoundedCornerShape(28.dp),
-                ambientColor = Lavender.copy(alpha = 0.16f)
+                elevation = 8.dp,
+                shape = RoundedCornerShape(22.dp),
+                ambientColor = Lavender.copy(alpha = 0.13f)
             ),
 
-        shape = RoundedCornerShape(28.dp),
+        shape = RoundedCornerShape(22.dp),
 
         colors = CardDefaults.cardColors(
             containerColor = Color.White.copy(
-                alpha = 0.72f
+                alpha = 0.78f
             )
         )
     ) {
@@ -639,148 +629,96 @@ fun RelationshipGlassCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(
-                    horizontal = 14.dp,
-                    vertical = 17.dp
+                    horizontal = 10.dp,
+                    vertical = 11.dp
                 ),
 
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment =
+                Alignment.CenterVertically
         ) {
-
-            // DATE
 
             Column(
                 modifier = Modifier.weight(1f),
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment =
+                    Alignment.CenterHorizontally
             ) {
 
                 Text(
-                    text = "تاریخ آشنایی ما",
-                    fontSize = 10.sp,
+                    text = "تاریخ آشنایی",
+                    fontSize = 8.sp,
                     color = SoftText
                 )
 
                 Spacer(
-                    modifier = Modifier.height(5.dp)
+                    modifier = Modifier.height(2.dp)
                 )
 
                 Text(
                     text = "۱۴۰۵/۰۳/۲۰",
-                    fontSize = 15.sp,
+                    fontSize = 13.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = DeepRose
                 )
             }
 
-            // CENTER DAYS
+            Box(
+                modifier = Modifier
+                    .width(1.dp)
+                    .height(38.dp)
+                    .background(
+                        Rose.copy(alpha = 0.18f)
+                    )
+            )
 
             Column(
                 modifier = Modifier.weight(1f),
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment =
+                    Alignment.CenterHorizontally
             ) {
 
                 Text(
                     text = "$daysTogether",
-                    fontSize = 31.sp,
+                    fontSize = 25.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = Rose
                 )
 
                 Text(
                     text = "روز کنار هم",
-                    fontSize = 10.sp,
+                    fontSize = 8.sp,
                     color = SoftText
                 )
             }
 
-            // LOVE TEXT
+            Box(
+                modifier = Modifier
+                    .width(1.dp)
+                    .height(38.dp)
+                    .background(
+                        Rose.copy(alpha = 0.18f)
+                    )
+            )
 
             Column(
-                modifier = Modifier.weight(1.15f),
-                horizontalAlignment = Alignment.CenterHorizontally
+                modifier = Modifier.weight(1.2f),
+                horizontalAlignment =
+                    Alignment.CenterHorizontally
             ) {
 
                 Text(
-                    text = "✦",
-                    fontSize = 20.sp,
-                    color = Lavender
+                    text = "هر روز ❤️",
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = DeepRose
                 )
 
                 Text(
-                    text = "هر روز بهانه‌ای",
-                    fontSize = 10.sp,
+                    text = "بهانه‌ای برای عاشق‌تر شدن",
+                    fontSize = 7.sp,
                     color = SoftText,
                     textAlign = TextAlign.Center
                 )
-
-                Text(
-                    text = "برای عاشق‌تر شدن...",
-                    fontSize = 10.sp,
-                    color = DeepRose,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center
-                )
             }
-        }
-    }
-}
-
-// ============================================================
-// LOVE QUOTE
-// ============================================================
-
-@Composable
-fun LoveQuoteCard() {
-
-    Box(
-
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(
-                RoundedCornerShape(23.dp)
-            )
-            .background(
-                Brush.horizontalGradient(
-                    colors = listOf(
-                        Color.White.copy(alpha = 0.78f),
-                        PaleLavender.copy(alpha = 0.70f),
-                        SoftPink.copy(alpha = 0.68f)
-                    )
-                )
-            )
-            .padding(
-                horizontal = 17.dp,
-                vertical = 14.dp
-            )
-    ) {
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-
-            Text(
-                text = "❝",
-                fontSize = 30.sp,
-                color = Rose
-            )
-
-            Spacer(
-                modifier = Modifier.width(8.dp)
-            )
-
-            Text(
-                text = "کنار تو، حتی روزهای معمولی هم قشنگ می‌شن. ❤️",
-                fontSize = 12.sp,
-                color = TextDark,
-                fontWeight = FontWeight.SemiBold,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.weight(1f)
-            )
-
-            Text(
-                text = "❞",
-                fontSize = 30.sp,
-                color = Rose
-            )
         }
     }
 }
@@ -798,10 +736,11 @@ fun SectionTitle() {
             .fillMaxWidth()
             .padding(
                 horizontal = 3.dp,
-                vertical = 2.dp
+                vertical = 1.dp
             ),
 
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment =
+            Alignment.CenterVertically
     ) {
 
         Column(
@@ -810,22 +749,21 @@ fun SectionTitle() {
 
             Text(
                 text = "دنیای دونفره‌مون",
-                fontSize = 21.sp,
+                fontSize = 18.sp,
                 fontWeight = FontWeight.ExtraBold,
                 color = TextDark
             )
 
             Text(
                 text = "همه‌چیز برای من و تو، همین‌جاست ❤️",
-                fontSize = 10.sp,
-                color = SoftText,
-                modifier = Modifier.padding(top = 2.dp)
+                fontSize = 8.sp,
+                color = SoftText
             )
         }
 
         Text(
             text = "✦",
-            fontSize = 24.sp,
+            fontSize = 20.sp,
             color = Rose
         )
     }
@@ -838,170 +776,257 @@ fun SectionTitle() {
 @Composable
 fun FeatureGrid(
     onMemoriesClick: () -> Unit,
+    onSpecialClick: () -> Unit,
     onChatClick: () -> Unit,
     onToast: (String) -> Unit
 ) {
 
     Column(
-        verticalArrangement = Arrangement.spacedBy(11.dp)
+        verticalArrangement =
+            Arrangement.spacedBy(7.dp)
     ) {
 
+        // --------------------------------------------------------
+        // PHOTO ROW 1
+        // --------------------------------------------------------
+
         Row(
+
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(11.dp)
+
+            horizontalArrangement =
+                Arrangement.spacedBy(7.dp)
         ) {
 
             PhotoFeatureCard(
-                modifier = Modifier.weight(1f),
-                image = R.drawable.royaram_photo_2,
-                title = "خاطرات ما",
-                subtitle = "لحظه‌های قشنگمون",
-                emoji = "📸",
-                onClick = onMemoriesClick
+
+                modifier =
+                    Modifier.weight(1f),
+
+                image =
+                    R.drawable.royaram_photo_2,
+
+                title =
+                    "خاطرات ما",
+
+                subtitle =
+                    "لحظه‌های قشنگمون",
+
+                emoji =
+                    "📸",
+
+                onClick =
+                    onMemoriesClick
             )
 
             PhotoFeatureCard(
-                modifier = Modifier.weight(1f),
-                image = R.drawable.royaram_photo_3,
-                title = "نامه‌های عاشقانه",
-                subtitle = "حرف‌هایی از قلبمون",
-                emoji = "💌",
+
+                modifier =
+                    Modifier.weight(1f),
+
+                image =
+                    R.drawable.royaram_photo_3,
+
+                title =
+                    "نامه‌های عاشقانه",
+
+                subtitle =
+                    "حرف‌هایی از قلبمون",
+
+                emoji =
+                    "💌",
+
                 onClick = {
-                    onToast("نامه‌های عاشقانه به‌زودی آماده می‌شه 💌")
+
+                    onToast(
+                        "نامه‌های عاشقانه به‌زودی آماده می‌شه 💌"
+                    )
                 }
             )
 
             PhotoFeatureCard(
-                modifier = Modifier.weight(1f),
-                image = R.drawable.royaram_photo_4,
-                title = "آهنگ ما",
-                subtitle = "صدای خاطره‌هامون",
-                emoji = "🎵",
+
+                modifier =
+                    Modifier.weight(1f),
+
+                image =
+                    R.drawable.royaram_photo_4,
+
+                title =
+                    "آهنگ ما",
+
+                subtitle =
+                    "صدای خاطره‌هامون",
+
+                emoji =
+                    "🎵",
+
                 onClick = {
-                    onToast("آهنگ ما به‌زودی اضافه می‌شه 🎵")
+
+                    onToast(
+                        "آهنگ ما به‌زودی اضافه می‌شه 🎵"
+                    )
                 }
             )
         }
 
+        // --------------------------------------------------------
+        // PHOTO ROW 2
+        // --------------------------------------------------------
+
         Row(
+
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(11.dp)
+
+            horizontalArrangement =
+                Arrangement.spacedBy(7.dp)
         ) {
 
             PhotoFeatureCard(
-                modifier = Modifier.weight(1f),
-                image = R.drawable.royaram_photo_5,
-                title = "وقتی دلمون گرفت",
-                subtitle = "اینجا همیشه کنار همیم",
-                emoji = "🤍",
+
+                modifier =
+                    Modifier.weight(1f),
+
+                image =
+                    R.drawable.royaram_photo_5,
+
+                title =
+                    "وقتی دلمون گرفت",
+
+                subtitle =
+                    "اینجا امنِ ماست",
+
+                emoji =
+                    "🤍",
+
                 onClick = {
-                    onToast("اینجا همیشه جای امنِ من و توئه 🤍")
+
+                    onToast(
+                        "اینجا همیشه جای امنِ من و توئه 🤍"
+                    )
                 }
             )
 
             PhotoFeatureCard(
-                modifier = Modifier.weight(1f),
-                image = R.drawable.royaram_photo_6,
-                title = "چت دونفره",
-                subtitle = "حرف‌های من و تو ❤️",
-                emoji = "💬",
-                onClick = onChatClick
+
+                modifier =
+                    Modifier.weight(1f),
+
+                image =
+                    R.drawable.royaram_photo_6,
+
+                title =
+                    "چت دونفره",
+
+                subtitle =
+                    "حرف‌های من و تو",
+
+                emoji =
+                    "💬",
+
+                onClick =
+                    onChatClick
             )
 
             PhotoFeatureCard(
-                modifier = Modifier.weight(1f),
-                image = R.drawable.royaram_photo_7,
-                title = "بخش خصوصی",
-                subtitle = "فقط برای من و تو 🔐",
-                emoji = "🔐",
+
+                modifier =
+                    Modifier.weight(1f),
+
+                image =
+                    R.drawable.royaram_photo_7,
+
+                title =
+                    "بخش خصوصی",
+
+                subtitle =
+                    "فقط برای ما 🔐",
+
+                emoji =
+                    "🔐",
+
                 onClick = {
-                    onToast("بخش خصوصی رویارام به‌زودی فعال می‌شه 🔐")
+
+                    onToast(
+                        "بخش خصوصی رویارام به‌زودی فعال می‌شه 🔐"
+                    )
                 }
             )
         }
 
-        // SETTINGS / SPECIAL WIDE CARD
+        // --------------------------------------------------------
+        // SMALL FUNCTION ROW
+        // --------------------------------------------------------
 
-        Card(
+        Row(
 
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable {
-                    onToast("شخصی‌سازی رویارام 💗")
-                },
+            modifier = Modifier.fillMaxWidth(),
 
-            shape = RoundedCornerShape(24.dp),
-
-            colors = CardDefaults.cardColors(
-                containerColor = Color.White.copy(
-                    alpha = 0.76f
-                )
-            )
+            horizontalArrangement =
+                Arrangement.spacedBy(7.dp)
         ) {
 
-            Row(
+            CompactFeatureCard(
 
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(15.dp),
+                modifier =
+                    Modifier.weight(1f),
 
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+                icon =
+                    "✨",
 
-                Box(
+                title =
+                    "لحظه‌های خاص",
 
-                    modifier = Modifier
-                        .size(54.dp)
-                        .clip(
-                            RoundedCornerShape(18.dp)
-                        )
-                        .background(
-                            Brush.linearGradient(
-                                colors = listOf(
-                                    Rose,
-                                    Lavender
-                                )
-                            )
-                        ),
+                subtitle =
+                    "تاریخ‌های مهم",
 
-                    contentAlignment = Alignment.Center
-                ) {
+                onClick =
+                    onSpecialClick
+            )
 
-                    Text(
-                        text = "⚙️",
-                        fontSize = 23.sp
+            CompactFeatureCard(
+
+                modifier =
+                    Modifier.weight(1f),
+
+                icon =
+                    "⚙️",
+
+                title =
+                    "تنظیمات",
+
+                subtitle =
+                    "شخصی‌سازی",
+
+                onClick = {
+
+                    onToast(
+                        "تنظیمات رویارام 💗"
                     )
                 }
+            )
 
-                Spacer(
-                    modifier = Modifier.width(12.dp)
-                )
+            CompactFeatureCard(
 
-                Column(
-                    modifier = Modifier.weight(1f)
-                ) {
+                modifier =
+                    Modifier.weight(1f),
 
-                    Text(
-                        text = "لحظه‌های خاص",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = TextDark
-                    )
+                icon =
+                    "❤️",
 
-                    Text(
-                        text = "تاریخ‌های مهم ما ✨",
-                        fontSize = 10.sp,
-                        color = SoftText,
-                        modifier = Modifier.padding(top = 3.dp)
+                title =
+                    "برای همیشه",
+
+                subtitle =
+                    "رامین ♡ رویا",
+
+                onClick = {
+
+                    onToast(
+                        "قصه‌ی ما ادامه دارد... ❤️"
                     )
                 }
-
-                Text(
-                    text = "♡",
-                    fontSize = 27.sp,
-                    color = Rose
-                )
-            }
+            )
         }
     }
 }
@@ -1023,17 +1048,18 @@ fun PhotoFeatureCard(
     Card(
 
         modifier = modifier
-            .aspectRatio(0.78f)
+            .aspectRatio(0.96f)
             .clickable {
                 onClick()
             }
             .shadow(
-                elevation = 8.dp,
-                shape = RoundedCornerShape(22.dp),
-                ambientColor = Rose.copy(alpha = 0.10f)
+                elevation = 5.dp,
+                shape = RoundedCornerShape(18.dp),
+                ambientColor =
+                    Rose.copy(alpha = 0.10f)
             ),
 
-        shape = RoundedCornerShape(22.dp),
+        shape = RoundedCornerShape(18.dp),
 
         colors = CardDefaults.cardColors(
             containerColor = Color.White
@@ -1052,12 +1078,12 @@ fun PhotoFeatureCard(
 
                 contentDescription = title,
 
-                contentScale = ContentScale.Crop,
+                contentScale =
+                    ContentScale.Crop,
 
-                modifier = Modifier.fillMaxSize()
+                modifier =
+                    Modifier.fillMaxSize()
             )
-
-            // IMAGE OVERLAY
 
             Box(
 
@@ -1067,62 +1093,69 @@ fun PhotoFeatureCard(
                         Brush.verticalGradient(
                             colors = listOf(
                                 Color.Transparent,
-                                Color.Black.copy(alpha = 0.08f),
-                                Color.Black.copy(alpha = 0.80f)
+                                Color.Black.copy(
+                                    alpha = 0.03f
+                                ),
+                                Color.Black.copy(
+                                    alpha = 0.80f
+                                )
                             )
                         )
                     )
             )
 
-            // EMOJI
-
             Box(
 
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .padding(8.dp)
+                    .padding(6.dp)
                     .clip(CircleShape)
                     .background(
-                        Color.White.copy(alpha = 0.78f)
+                        Color.White.copy(
+                            alpha = 0.82f
+                        )
                     )
-                    .padding(7.dp)
+                    .padding(5.dp)
             ) {
 
                 Text(
                     text = emoji,
-                    fontSize = 14.sp
+                    fontSize = 12.sp
                 )
             }
-
-            // TEXT
 
             Column(
 
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
-                    .padding(9.dp),
+                    .padding(
+                        horizontal = 5.dp,
+                        vertical = 7.dp
+                    ),
 
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment =
+                    Alignment.CenterHorizontally
             ) {
 
                 Text(
                     text = title,
-                    fontSize = 12.sp,
+                    fontSize = 10.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = Color.White,
-                    textAlign = TextAlign.Center
-                )
-
-                Spacer(
-                    modifier = Modifier.height(2.dp)
+                    textAlign = TextAlign.Center,
+                    maxLines = 1
                 )
 
                 Text(
                     text = subtitle,
-                    fontSize = 8.sp,
-                    color = Color.White.copy(alpha = 0.90f),
-                    textAlign = TextAlign.Center
+                    fontSize = 7.sp,
+                    color =
+                        Color.White.copy(
+                            alpha = 0.92f
+                        ),
+                    textAlign = TextAlign.Center,
+                    maxLines = 1
                 )
             }
         }
@@ -1130,148 +1163,604 @@ fun PhotoFeatureCard(
 }
 
 // ============================================================
-// FINAL LOVE CARD
+// COMPACT FEATURE CARD
 // ============================================================
 
 @Composable
-fun FinalLoveCard() {
+fun CompactFeatureCard(
+    modifier: Modifier,
+    icon: String,
+    title: String,
+    subtitle: String,
+    onClick: () -> Unit
+) {
 
     Card(
 
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(180.dp)
-            .shadow(
-                elevation = 18.dp,
-                shape = RoundedCornerShape(30.dp),
-                ambientColor = Rose.copy(alpha = 0.18f)
-            ),
+        modifier = modifier
+            .height(73.dp)
+            .clickable {
+                onClick()
+            },
 
-        shape = RoundedCornerShape(30.dp),
+        shape = RoundedCornerShape(17.dp),
 
         colors = CardDefaults.cardColors(
-            containerColor = Color.Transparent
+            containerColor =
+                Color.White.copy(
+                    alpha = 0.80f
+                )
         )
     ) {
 
-        Box(
+        Column(
+
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(6.dp),
+
+            horizontalAlignment =
+                Alignment.CenterHorizontally,
+
+            verticalArrangement =
+                Arrangement.Center
+        ) {
+
+            Text(
+                text = icon,
+                fontSize = 17.sp
+            )
+
+            Text(
+                text = title,
+                fontSize = 8.sp,
+                fontWeight = FontWeight.Bold,
+                color = TextDark,
+                textAlign = TextAlign.Center,
+                maxLines = 1
+            )
+
+            Text(
+                text = subtitle,
+                fontSize = 6.sp,
+                color = SoftText,
+                textAlign = TextAlign.Center,
+                maxLines = 1
+            )
+        }
+    }
+}
+
+// ============================================================
+// COMPACT LOVE FOOTER
+// ============================================================
+
+@Composable
+fun CompactLoveFooter() {
+
+    Row(
+
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(
+                RoundedCornerShape(18.dp)
+            )
+            .background(
+                Brush.horizontalGradient(
+                    colors = listOf(
+                        Rose.copy(alpha = 0.90f),
+                        DeepRose.copy(alpha = 0.90f),
+                        Lavender.copy(alpha = 0.82f)
+                    )
+                )
+            )
+            .padding(
+                horizontal = 13.dp,
+                vertical = 9.dp
+            ),
+
+        verticalAlignment =
+            Alignment.CenterVertically
+    ) {
+
+        Text(
+            text = "❤️",
+            fontSize = 17.sp
+        )
+
+        Spacer(
+            modifier = Modifier.width(7.dp)
+        )
+
+        Column(
+            modifier = Modifier.weight(1f)
+        ) {
+
+            Text(
+                text =
+                    "دوستت دارم، نه فقط امروز؛ تا همیشه...",
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                maxLines = 1
+            )
+
+            Text(
+                text =
+                    "رامین ♡ رویا  •  یک دنیای کوچک برای دو نفر",
+                fontSize = 6.sp,
+                color =
+                    Color.White.copy(
+                        alpha = 0.88f
+                    ),
+                maxLines = 1
+            )
+        }
+
+        Text(
+            text = "♡",
+            fontSize = 22.sp,
+            color = Color.White
+        )
+    }
+}
+
+// ============================================================
+// SPECIAL DATES SCREEN
+// ============================================================
+
+@Composable
+fun SpecialDatesScreen(
+    onBack: () -> Unit
+) {
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(PageBackground)
+            .padding(12.dp)
+    ) {
+
+        Column(
             modifier = Modifier.fillMaxSize()
         ) {
 
-            Image(
+            // HEADER
 
-                painter = painterResource(
-                    id = R.drawable.royaram_photo_1
-                ),
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        bottom = 9.dp
+                    ),
 
-                contentDescription = "رویـارام",
+                verticalAlignment =
+                    Alignment.CenterVertically
+            ) {
 
-                contentScale = ContentScale.Crop,
+                Box(
 
-                modifier = Modifier.fillMaxSize()
+                    modifier = Modifier
+                        .size(38.dp)
+                        .clip(CircleShape)
+                        .background(
+                            Color.White.copy(
+                                alpha = 0.82f
+                            )
+                        )
+                        .clickable {
+                            onBack()
+                        },
+
+                    contentAlignment =
+                        Alignment.Center
+                ) {
+
+                    Text(
+                        text = "→",
+                        fontSize = 21.sp,
+                        color = DeepRose
+                    )
+                }
+
+                Spacer(
+                    modifier = Modifier.width(9.dp)
+                )
+
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
+
+                    Text(
+                        text = "لحظه‌های خاص ✨",
+                        fontSize = 20.sp,
+                        fontWeight =
+                            FontWeight.ExtraBold,
+                        color = TextDark
+                    )
+
+                    Text(
+                        text =
+                            "تاریخ‌های مهم دنیای ما",
+                        fontSize = 8.sp,
+                        color = SoftText
+                    )
+                }
+
+                Text(
+                    text = "♡",
+                    fontSize = 27.sp,
+                    color = Rose
+                )
+            }
+
+            // BIRTHDAYS
+
+            Row(
+
+                modifier =
+                    Modifier.fillMaxWidth(),
+
+                horizontalArrangement =
+                    Arrangement.spacedBy(8.dp)
+            ) {
+
+                DateInfoCard(
+
+                    modifier =
+                        Modifier.weight(1f),
+
+                    icon = "👑",
+
+                    name = "رامین",
+
+                    label = "تولد من",
+
+                    date = "۱۳۷۳/۰۶/۲۰"
+                )
+
+                DateInfoCard(
+
+                    modifier =
+                        Modifier.weight(1f),
+
+                    icon = "🌷",
+
+                    name = "رویا",
+
+                    label = "تولد عشق من",
+
+                    date = "۱۳۸۱/۰۹/۱۵"
+                )
+            }
+
+            Spacer(
+                modifier = Modifier.height(8.dp)
             )
+
+            // ANNIVERSARY
+
+            Card(
+
+                modifier =
+                    Modifier.fillMaxWidth(),
+
+                shape =
+                    RoundedCornerShape(22.dp),
+
+                colors =
+                    CardDefaults.cardColors(
+                        containerColor =
+                            Color.White.copy(
+                                alpha = 0.82f
+                            )
+                    )
+            ) {
+
+                Row(
+
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp),
+
+                    verticalAlignment =
+                        Alignment.CenterVertically
+                ) {
+
+                    Box(
+
+                        modifier = Modifier
+                            .size(55.dp)
+                            .clip(
+                                RoundedCornerShape(
+                                    18.dp
+                                )
+                            )
+                            .background(
+                                Brush.linearGradient(
+                                    colors = listOf(
+                                        Rose,
+                                        Lavender
+                                    )
+                                )
+                            ),
+
+                        contentAlignment =
+                            Alignment.Center
+                    ) {
+
+                        Text(
+                            text = "❤️",
+                            fontSize = 25.sp
+                        )
+                    }
+
+                    Spacer(
+                        modifier = Modifier.width(10.dp)
+                    )
+
+                    Column(
+                        modifier =
+                            Modifier.weight(1f)
+                    ) {
+
+                        Text(
+                            text =
+                                "سالگرد آشنایی ما",
+                            fontSize = 12.sp,
+                            fontWeight =
+                                FontWeight.ExtraBold,
+                            color = TextDark
+                        )
+
+                        Text(
+                            text =
+                                "۱۴۰۵/۰۳/۲۰",
+                            fontSize = 17.sp,
+                            fontWeight =
+                                FontWeight.ExtraBold,
+                            color = DeepRose,
+                            modifier =
+                                Modifier.padding(
+                                    top = 2.dp
+                                )
+                        )
+
+                        Text(
+                            text =
+                                "از این روز، قصه‌ی ما شروع شد ❤️",
+                            fontSize = 7.sp,
+                            color = SoftText
+                        )
+                    }
+
+                    Text(
+                        text = "∞",
+                        fontSize = 29.sp,
+                        color = Rose
+                    )
+                }
+            }
+
+            Spacer(
+                modifier = Modifier.height(8.dp)
+            )
+
+            // MONTHLY
+
+            Card(
+
+                modifier =
+                    Modifier.fillMaxWidth(),
+
+                shape =
+                    RoundedCornerShape(22.dp),
+
+                colors =
+                    CardDefaults.cardColors(
+                        containerColor =
+                            Color.White.copy(
+                                alpha = 0.74f
+                            )
+                    )
+            ) {
+
+                Row(
+
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(11.dp),
+
+                    verticalAlignment =
+                        Alignment.CenterVertically
+                ) {
+
+                    Text(
+                        text = "🌙",
+                        fontSize = 27.sp
+                    )
+
+                    Spacer(
+                        modifier = Modifier.width(9.dp)
+                    )
+
+                    Column(
+                        modifier =
+                            Modifier.weight(1f)
+                    ) {
+
+                        Text(
+                            text =
+                                "قرار ماهانه‌ی ما",
+                            fontSize = 11.sp,
+                            fontWeight =
+                                FontWeight.Bold,
+                            color = TextDark
+                        )
+
+                        Text(
+                            text =
+                                "هر ماه یک خاطره‌ی تازه ❤️",
+                            fontSize = 7.sp,
+                            color = SoftText
+                        )
+                    }
+
+                    Text(
+                        text = "۲۰",
+                        fontSize = 23.sp,
+                        fontWeight =
+                            FontWeight.ExtraBold,
+                        color = Rose
+                    )
+                }
+            }
+
+            Spacer(
+                modifier = Modifier.weight(1f)
+            )
+
+            // BOTTOM LOVE
+
+            Row(
+
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(
+                        RoundedCornerShape(18.dp)
+                    )
+                    .background(
+                        Brush.horizontalGradient(
+                            colors = listOf(
+                                Rose,
+                                DeepRose
+                            )
+                        )
+                    )
+                    .padding(11.dp),
+
+                verticalAlignment =
+                    Alignment.CenterVertically
+            ) {
+
+                Text(
+                    text = "✨",
+                    fontSize = 18.sp
+                )
+
+                Spacer(
+                    modifier = Modifier.width(7.dp)
+                )
+
+                Text(
+                    text =
+                        "مهم‌ترین تاریخ، همین امروزِ کنار هم بودنه.",
+                    fontSize = 9.sp,
+                    fontWeight =
+                        FontWeight.Bold,
+                    color = Color.White,
+                    modifier =
+                        Modifier.weight(1f),
+                    textAlign = TextAlign.Center
+                )
+
+                Text(
+                    text = "❤️",
+                    fontSize = 17.sp
+                )
+            }
+        }
+    }
+}
+
+// ============================================================
+// DATE INFO CARD
+// ============================================================
+
+@Composable
+fun DateInfoCard(
+    modifier: Modifier,
+    icon: String,
+    name: String,
+    label: String,
+    date: String
+) {
+
+    Card(
+
+        modifier = modifier,
+
+        shape =
+            RoundedCornerShape(22.dp),
+
+        colors =
+            CardDefaults.cardColors(
+                containerColor =
+                    Color.White.copy(
+                        alpha = 0.82f
+                    )
+            )
+    ) {
+
+        Column(
+
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(10.dp),
+
+            horizontalAlignment =
+                Alignment.CenterHorizontally
+        ) {
 
             Box(
 
                 modifier = Modifier
-                    .fillMaxSize()
+                    .size(48.dp)
+                    .clip(CircleShape)
                     .background(
-                        Brush.verticalGradient(
-                            colors = listOf(
-                                Color.Black.copy(alpha = 0.08f),
-                                Color.Black.copy(alpha = 0.72f)
-                            )
-                        )
-                    )
-            )
+                        SoftPink
+                    ),
 
-            Column(
-
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .padding(20.dp),
-
-                horizontalAlignment = Alignment.CenterHorizontally
+                contentAlignment =
+                    Alignment.Center
             ) {
 
                 Text(
-                    text = "دوستت دارم",
-                    fontSize = 25.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = Color.White
-                )
-
-                Spacer(
-                    modifier = Modifier.height(5.dp)
-                )
-
-                Text(
-                    text = "نه فقط امروز، بلکه تا همیشه... ❤️",
-                    fontSize = 13.sp,
-                    color = Color.White.copy(alpha = 0.95f),
-                    textAlign = TextAlign.Center
-                )
-
-                Spacer(
-                    modifier = Modifier.height(9.dp)
-                )
-
-                Text(
-                    text = "رامین ♡ رویا",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
+                    text = icon,
+                    fontSize = 23.sp
                 )
             }
+
+            Spacer(
+                modifier = Modifier.height(5.dp)
+            )
+
+            Text(
+                text = name,
+                fontSize = 12.sp,
+                fontWeight =
+                    FontWeight.ExtraBold,
+                color = TextDark
+            )
+
+            Text(
+                text = label,
+                fontSize = 7.sp,
+                color = SoftText
+            )
+
+            Text(
+                text = date,
+                fontSize = 10.sp,
+                fontWeight =
+                    FontWeight.Bold,
+                color = DeepRose,
+                modifier =
+                    Modifier.padding(
+                        top = 3.dp
+                    )
+            )
         }
-    }
-}
-
-// ============================================================
-// FOOTER
-// ============================================================
-
-@Composable
-fun PremiumFooter() {
-
-    Column(
-
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(
-                top = 2.dp,
-                bottom = 8.dp
-            ),
-
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-
-        Text(
-            text = "رامین ❤️ رویا",
-            fontSize = 17.sp,
-            fontWeight = FontWeight.Bold,
-            color = DeepRose
-        )
-
-        Spacer(
-            modifier = Modifier.height(3.dp)
-        )
-
-        Text(
-            text = "یک دنیای کوچک، فقط برای دو نفر",
-            fontSize = 10.sp,
-            color = SoftText
-        )
-
-        Spacer(
-            modifier = Modifier.height(6.dp)
-        )
-
-        Text(
-            text = "♡  رویارام  ♡",
-            fontSize = 10.sp,
-            color = Rose.copy(alpha = 0.75f)
-        )
     }
 }
 
@@ -1289,7 +1778,9 @@ fun MemoriesScreen(
     }
 
     var memories by remember {
-        mutableStateOf<List<Memory>>(emptyList())
+        mutableStateOf<List<Memory>>(
+            emptyList()
+        )
     }
 
     var loading by remember {
@@ -1308,7 +1799,9 @@ fun MemoriesScreen(
                 "createdAt",
                 Query.Direction.DESCENDING
             )
-            .addSnapshotListener { snapshot, error ->
+            .addSnapshotListener {
+                    snapshot,
+                    error ->
 
                 loading = false
 
@@ -1318,11 +1811,13 @@ fun MemoriesScreen(
                 ) {
 
                     memories =
-                        snapshot.documents.map { document ->
+                        snapshot.documents.map {
+                            document ->
 
                             Memory(
 
-                                id = document.id,
+                                id =
+                                    document.id,
 
                                 title =
                                     document.getString(
@@ -1350,6 +1845,7 @@ fun MemoriesScreen(
     }
 
     Box(
+
         modifier = Modifier
             .fillMaxSize()
             .background(PageBackground)
@@ -1373,8 +1869,12 @@ fun MemoriesScreen(
                 loading -> {
 
                     Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
+
+                        modifier =
+                            Modifier.fillMaxSize(),
+
+                        contentAlignment =
+                            Alignment.Center
                     ) {
 
                         CircularProgressIndicator(
@@ -1396,15 +1896,17 @@ fun MemoriesScreen(
 
                     LazyColumn(
 
-                        modifier = Modifier.fillMaxSize(),
+                        modifier =
+                            Modifier.fillMaxSize(),
 
-                        contentPadding = PaddingValues(
-                            horizontal = 17.dp,
-                            vertical = 12.dp
-                        ),
+                        contentPadding =
+                            PaddingValues(
+                                horizontal = 15.dp,
+                                vertical = 9.dp
+                            ),
 
                         verticalArrangement =
-                            Arrangement.spacedBy(14.dp)
+                            Arrangement.spacedBy(10.dp)
                     ) {
 
                         items(
@@ -1426,6 +1928,7 @@ fun MemoriesScreen(
         if (showAddDialog) {
 
             AddMemoryDialog(
+
                 onDismiss = {
                     showAddDialog = false
                 }
@@ -1449,37 +1952,41 @@ fun MemoriesHeader(
         modifier = Modifier
             .fillMaxWidth()
             .padding(
-                horizontal = 17.dp,
-                vertical = 14.dp
+                horizontal = 15.dp,
+                vertical = 11.dp
             ),
 
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment =
+            Alignment.CenterVertically
     ) {
 
         Box(
 
             modifier = Modifier
-                .size(44.dp)
+                .size(40.dp)
                 .clip(CircleShape)
                 .background(
-                    Color.White.copy(alpha = 0.85f)
+                    Color.White.copy(
+                        alpha = 0.85f
+                    )
                 )
                 .clickable {
                     onBack()
                 },
 
-            contentAlignment = Alignment.Center
+            contentAlignment =
+                Alignment.Center
         ) {
 
             Text(
                 text = "→",
-                fontSize = 23.sp,
+                fontSize = 21.sp,
                 color = DeepRose
             )
         }
 
         Spacer(
-            modifier = Modifier.width(11.dp)
+            modifier = Modifier.width(9.dp)
         )
 
         Column(
@@ -1488,14 +1995,16 @@ fun MemoriesHeader(
 
             Text(
                 text = "خاطرات ما 📸",
-                fontSize = 22.sp,
-                fontWeight = FontWeight.ExtraBold,
+                fontSize = 20.sp,
+                fontWeight =
+                    FontWeight.ExtraBold,
                 color = TextDark
             )
 
             Text(
-                text = "لحظه‌هایی که نباید فراموش شوند",
-                fontSize = 10.sp,
+                text =
+                    "لحظه‌هایی که نباید فراموش شوند",
+                fontSize = 8.sp,
                 color = SoftText
             )
         }
@@ -1503,7 +2012,7 @@ fun MemoriesHeader(
         Box(
 
             modifier = Modifier
-                .size(44.dp)
+                .size(40.dp)
                 .clip(CircleShape)
                 .background(
                     Brush.linearGradient(
@@ -1517,13 +2026,14 @@ fun MemoriesHeader(
                     onAdd()
                 },
 
-            contentAlignment = Alignment.Center
+            contentAlignment =
+                Alignment.Center
         ) {
 
             Text(
                 text = "+",
                 color = Color.White,
-                fontSize = 25.sp
+                fontSize = 23.sp
             )
         }
     }
@@ -1542,44 +2052,48 @@ fun EmptyMemories(
 
         modifier = Modifier
             .fillMaxSize()
-            .padding(30.dp),
+            .padding(25.dp),
 
-        contentAlignment = Alignment.Center
+        contentAlignment =
+            Alignment.Center
     ) {
 
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment =
+                Alignment.CenterHorizontally
         ) {
 
             Text(
                 text = "💗",
-                fontSize = 55.sp
+                fontSize = 50.sp
             )
 
             Spacer(
-                modifier = Modifier.height(13.dp)
+                modifier = Modifier.height(10.dp)
             )
 
             Text(
-                text = "هنوز خاطره‌ای ثبت نشده",
-                fontSize = 18.sp,
+                text =
+                    "هنوز خاطره‌ای ثبت نشده",
+                fontSize = 17.sp,
                 fontWeight = FontWeight.Bold,
                 color = TextDark
             )
 
             Spacer(
-                modifier = Modifier.height(7.dp)
+                modifier = Modifier.height(5.dp)
             )
 
             Text(
-                text = "اولین لحظه قشنگتون رو اینجا ثبت کنید",
-                fontSize = 13.sp,
+                text =
+                    "اولین لحظه قشنگتون رو اینجا ثبت کنید",
+                fontSize = 11.sp,
                 color = SoftText,
                 textAlign = TextAlign.Center
             )
 
             Spacer(
-                modifier = Modifier.height(20.dp)
+                modifier = Modifier.height(15.dp)
             )
 
             Card(
@@ -1588,21 +2102,26 @@ fun EmptyMemories(
                     onAdd()
                 },
 
-                shape = RoundedCornerShape(18.dp),
+                shape =
+                    RoundedCornerShape(17.dp),
 
-                colors = CardDefaults.cardColors(
-                    containerColor = Rose
-                )
+                colors =
+                    CardDefaults.cardColors(
+                        containerColor = Rose
+                    )
             ) {
 
                 Text(
-                    text = "ثبت اولین خاطره ❤️",
+                    text =
+                        "ثبت اولین خاطره ❤️",
                     color = Color.White,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(
-                        horizontal = 22.dp,
-                        vertical = 13.dp
-                    )
+                    fontSize = 11.sp,
+                    modifier =
+                        Modifier.padding(
+                            horizontal = 19.dp,
+                            vertical = 11.dp
+                        )
                 )
             }
         }
@@ -1620,72 +2139,97 @@ fun MemoryCard(
 
     Card(
 
-        modifier = Modifier.fillMaxWidth(),
+        modifier =
+            Modifier.fillMaxWidth(),
 
-        shape = RoundedCornerShape(25.dp),
+        shape =
+            RoundedCornerShape(22.dp),
 
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White.copy(
-                alpha = 0.90f
+        colors =
+            CardDefaults.cardColors(
+                containerColor =
+                    Color.White.copy(
+                        alpha = 0.90f
+                    )
             )
-        )
     ) {
 
         Column(
-            modifier = Modifier.fillMaxWidth()
+            modifier =
+                Modifier.fillMaxWidth()
         ) {
 
-            if (memory.imageUrl.isNotBlank()) {
+            if (
+                memory.imageUrl.isNotBlank()
+            ) {
 
                 coil.compose.AsyncImage(
 
-                    model = memory.imageUrl,
+                    model =
+                        memory.imageUrl,
 
-                    contentDescription = memory.title,
+                    contentDescription =
+                        memory.title,
 
-                    contentScale = ContentScale.Crop,
+                    contentScale =
+                        ContentScale.Crop,
 
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(220.dp)
-                        .clip(
-                            RoundedCornerShape(
-                                topStart = 25.dp,
-                                topEnd = 25.dp
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .height(210.dp)
+                            .clip(
+                                RoundedCornerShape(
+                                    topStart = 22.dp,
+                                    topEnd = 22.dp
+                                )
                             )
-                        )
                 )
             }
 
             Column(
-                modifier = Modifier.padding(17.dp)
+
+                modifier =
+                    Modifier.padding(15.dp)
             ) {
 
                 Text(
                     text = memory.title,
-                    fontSize = 18.sp,
+                    fontSize = 17.sp,
                     fontWeight = FontWeight.Bold,
                     color = TextDark
                 )
 
-                if (memory.date.isNotBlank()) {
+                if (
+                    memory.date.isNotBlank()
+                ) {
 
                     Text(
-                        text = "📅 ${memory.date}",
-                        fontSize = 11.sp,
+                        text =
+                            "📅 ${memory.date}",
+                        fontSize = 10.sp,
                         color = Rose,
-                        modifier = Modifier.padding(top = 5.dp)
+                        modifier =
+                            Modifier.padding(
+                                top = 4.dp
+                            )
                     )
                 }
 
-                if (memory.description.isNotBlank()) {
+                if (
+                    memory.description.isNotBlank()
+                ) {
 
                     Text(
-                        text = memory.description,
-                        fontSize = 13.sp,
+                        text =
+                            memory.description,
+                        fontSize = 12.sp,
                         color = SoftText,
-                        lineHeight = 22.sp,
-                        modifier = Modifier.padding(top = 9.dp)
+                        lineHeight = 20.sp,
+                        modifier =
+                            Modifier.padding(
+                                top = 7.dp
+                            )
                     )
                 }
             }
@@ -1730,8 +2274,10 @@ fun AddMemoryDialog(
         title = {
 
             Text(
-                text = "ثبت یک خاطره ❤️",
-                fontWeight = FontWeight.Bold
+                text =
+                    "ثبت یک خاطره ❤️",
+                fontWeight =
+                    FontWeight.Bold
             )
         },
 
@@ -1740,13 +2286,13 @@ fun AddMemoryDialog(
             Column(
 
                 modifier = Modifier
-                    .height(300.dp)
+                    .height(285.dp)
                     .verticalScroll(
                         rememberScrollState()
                     ),
 
                 verticalArrangement =
-                    Arrangement.spacedBy(10.dp)
+                    Arrangement.spacedBy(9.dp)
             ) {
 
                 OutlinedTextField(
@@ -1763,7 +2309,8 @@ fun AddMemoryDialog(
 
                     singleLine = true,
 
-                    modifier = Modifier.fillMaxWidth()
+                    modifier =
+                        Modifier.fillMaxWidth()
                 )
 
                 OutlinedTextField(
@@ -1779,17 +2326,21 @@ fun AddMemoryDialog(
                     },
 
                     placeholder = {
-                        Text("مثلاً ۱۴۰۵/۰۳/۲۰")
+                        Text(
+                            "مثلاً ۱۴۰۵/۰۳/۲۰"
+                        )
                     },
 
                     singleLine = true,
 
-                    modifier = Modifier.fillMaxWidth()
+                    modifier =
+                        Modifier.fillMaxWidth()
                 )
 
                 OutlinedTextField(
 
-                    value = description,
+                    value =
+                        description,
 
                     onValueChange = {
                         description = it
@@ -1801,7 +2352,8 @@ fun AddMemoryDialog(
 
                     minLines = 4,
 
-                    modifier = Modifier.fillMaxWidth()
+                    modifier =
+                        Modifier.fillMaxWidth()
                 )
             }
         },
@@ -1822,6 +2374,7 @@ fun AddMemoryDialog(
                             .currentUser
 
                     if (user == null) {
+
                         return@TextButton
                     }
 
@@ -1849,7 +2402,9 @@ fun AddMemoryDialog(
 
                     FirebaseFirestore
                         .getInstance()
-                        .collection("memories")
+                        .collection(
+                            "memories"
+                        )
                         .add(memory)
                         .addOnSuccessListener {
 
@@ -1925,7 +2480,8 @@ fun calculateDaysTogether(): Long {
         Date()
 
     val difference =
-        today.time - startDate.time
+        today.time -
+                startDate.time
 
     val days =
         difference /
