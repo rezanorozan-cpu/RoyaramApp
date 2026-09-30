@@ -24,8 +24,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -67,13 +69,14 @@ import com.google.firebase.firestore.Query
 import java.util.Calendar
 import java.util.Date
 
-// ------------------------------------------------------------
+// ============================================================
 // COLORS
-// ------------------------------------------------------------
+// ============================================================
 
 private val Rose = Color(0xFFE85D86)
 private val DeepRose = Color(0xFFB83260)
 private val Pink = Color(0xFFFF7FA5)
+
 private val SoftPink = Color(0xFFFFDCE7)
 private val PalePink = Color(0xFFFFF3F7)
 
@@ -81,6 +84,7 @@ private val Lavender = Color(0xFFB9A7E8)
 private val PaleLavender = Color(0xFFF0EBFF)
 
 private val Cream = Color(0xFFFFFBFC)
+
 private val TextDark = Color(0xFF30252A)
 private val SoftText = Color(0xFF8A737C)
 
@@ -92,9 +96,9 @@ private val MainBackground = Brush.verticalGradient(
     )
 )
 
-// ------------------------------------------------------------
+// ============================================================
 // DATA
-// ------------------------------------------------------------
+// ============================================================
 
 data class HomeItem(
     val title: String,
@@ -110,9 +114,9 @@ data class Memory(
     val imageUrl: String
 )
 
-// ------------------------------------------------------------
-// ACTIVITY
-// ------------------------------------------------------------
+// ============================================================
+// MAIN ACTIVITY
+// ============================================================
 
 class MainActivity : ComponentActivity() {
 
@@ -155,9 +159,9 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-// ------------------------------------------------------------
-// ROOT
-// ------------------------------------------------------------
+// ============================================================
+// ROOT APP
+// ============================================================
 
 @Composable
 fun RoyaramApp(
@@ -194,9 +198,9 @@ fun RoyaramApp(
     }
 }
 
-// ------------------------------------------------------------
-// HOME
-// ------------------------------------------------------------
+// ============================================================
+// HOME SCREEN
+// ============================================================
 
 @Composable
 fun HomeScreen(
@@ -214,6 +218,10 @@ fun HomeScreen(
 
     var heartPulse by remember {
         mutableStateOf(false)
+    }
+
+    var selectedTab by remember {
+        mutableStateOf(0)
     }
 
     LaunchedEffect(Unit) {
@@ -245,126 +253,199 @@ fun HomeScreen(
         label = "heart_pulse"
     )
 
-    LazyColumn(
-
+    Box(
         modifier = Modifier
-            .fillMaxSize(),
-
-        contentPadding = PaddingValues(
-            start = 18.dp,
-            end = 18.dp,
-            top = 18.dp,
-            bottom = 36.dp
-        ),
-
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .fillMaxSize()
+            .background(MainBackground)
     ) {
 
-        item {
+        LazyColumn(
 
-            AnimatedVisibility(
-                visible = showContent,
-                enter = fadeIn(
-                    animationSpec = tween(500)
-                ) +
-                        slideInVertically(
-                            initialOffsetY = { -30 },
+            modifier = Modifier
+                .fillMaxSize(),
+
+            contentPadding = PaddingValues(
+                start = 18.dp,
+                end = 18.dp,
+                top = 18.dp,
+                bottom = 125.dp
+            ),
+
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+
+            // ------------------------------------------------
+            // HEADER
+            // ------------------------------------------------
+
+            item {
+
+                AnimatedVisibility(
+                    visible = showContent,
+
+                    enter =
+                        fadeIn(
                             animationSpec = tween(500)
-                        )
-            ) {
+                        ) +
+                                slideInVertically(
+                                    initialOffsetY = { -30 },
+                                    animationSpec = tween(500)
+                                )
+                ) {
 
-                PremiumHeader()
+                    PremiumHeader()
+                }
             }
-        }
 
-        item {
+            // ------------------------------------------------
+            // HERO
+            // ------------------------------------------------
 
-            AnimatedVisibility(
-                visible = showContent,
-                enter = fadeIn(
-                    animationSpec = tween(700)
-                ) +
-                        slideInVertically(
-                            initialOffsetY = { 50 },
+            item {
+
+                AnimatedVisibility(
+                    visible = showContent,
+
+                    enter =
+                        fadeIn(
                             animationSpec = tween(700)
-                        )
-            ) {
+                        ) +
+                                slideInVertically(
+                                    initialOffsetY = { 50 },
+                                    animationSpec = tween(700)
+                                )
+                ) {
 
-                HeroCoupleCard(
-                    daysTogether = daysTogether,
-                    heartScale = heartScale
-                )
+                    HeroCoupleCard(
+                        daysTogether = daysTogether,
+                        heartScale = heartScale
+                    )
+                }
             }
-        }
 
-        item {
+            // ------------------------------------------------
+            // COUNTER
+            // ------------------------------------------------
 
-            AnimatedVisibility(
-                visible = showContent,
-                enter = fadeIn(
-                    animationSpec = tween(850)
-                ) +
-                        slideInVertically(
-                            initialOffsetY = { 60 },
+            item {
+
+                AnimatedVisibility(
+                    visible = showContent,
+
+                    enter =
+                        fadeIn(
                             animationSpec = tween(850)
-                        )
-            ) {
+                        ) +
+                                slideInVertically(
+                                    initialOffsetY = { 60 },
+                                    animationSpec = tween(850)
+                                )
+                ) {
 
-                RelationshipCard(
-                    daysTogether = daysTogether
-                )
+                    RelationshipCard(
+                        daysTogether = daysTogether
+                    )
+                }
             }
-        }
 
-        item {
+            // ------------------------------------------------
+            // TODAY MESSAGE
+            // ------------------------------------------------
 
-            AnimatedVisibility(
-                visible = showContent,
-                enter = fadeIn(
-                    animationSpec = tween(1000)
-                ) +
-                        slideInVertically(
-                            initialOffsetY = { 70 },
+            item {
+
+                AnimatedVisibility(
+                    visible = showContent,
+
+                    enter =
+                        fadeIn(
                             animationSpec = tween(1000)
-                        )
-            ) {
+                        ) +
+                                slideInVertically(
+                                    initialOffsetY = { 70 },
+                                    animationSpec = tween(1000)
+                                )
+                ) {
 
-                TodayMessageCard()
+                    TodayMessageCard()
+                }
+            }
+
+            // ------------------------------------------------
+            // SECTION TITLE
+            // ------------------------------------------------
+
+            item {
+
+                Text(
+                    text = "دنیای دونفره‌مون",
+                    fontSize = 21.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TextDark,
+                    modifier = Modifier.padding(
+                        top = 3.dp
+                    )
+                )
+            }
+
+            // ------------------------------------------------
+            // FEATURES
+            // ------------------------------------------------
+
+            item {
+
+                FeatureGrid(
+                    onMemoriesClick = onMemoriesClick,
+                    onChatClick = onChatClick
+                )
+            }
+
+            // ------------------------------------------------
+            // FOOTER
+            // ------------------------------------------------
+
+            item {
+
+                RomanticFooter()
             }
         }
 
-        item {
+        // ====================================================
+        // BOTTOM NAVIGATION
+        // ====================================================
 
-            Text(
-                text = "دنیای دونفره‌مون",
-                fontSize = 21.sp,
-                fontWeight = FontWeight.Bold,
-                color = TextDark,
-                modifier = Modifier.padding(
-                    top = 4.dp,
-                    bottom = 2.dp
-                )
-            )
-        }
+        PremiumBottomBar(
 
-        item {
+            selectedTab = selectedTab,
 
-            FeatureGrid(
-                onMemoriesClick = onMemoriesClick,
-                onChatClick = onChatClick
-            )
-        }
+            onHomeClick = {
+                selectedTab = 0
+            },
 
-        item {
+            onMemoriesClick = {
+                selectedTab = 1
+                onMemoriesClick()
+            },
 
-            RomanticFooter()
-        }
+            onChatClick = {
+                selectedTab = 2
+                onChatClick()
+            },
+
+            onMoreClick = {
+                selectedTab = 3
+            },
+
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .navigationBarsPadding()
+        )
     }
 }
 
-// ------------------------------------------------------------
-// HEADER
-// ------------------------------------------------------------
+// ============================================================
+// PREMIUM HEADER
+// ============================================================
 
 @Composable
 fun PremiumHeader() {
@@ -417,6 +498,7 @@ fun PremiumHeader() {
                         )
                     )
                 ),
+
             contentAlignment = Alignment.Center
         ) {
 
@@ -429,9 +511,9 @@ fun PremiumHeader() {
     }
 }
 
-// ------------------------------------------------------------
-// HERO PHOTO
-// ------------------------------------------------------------
+// ============================================================
+// HERO COUPLE CARD
+// ============================================================
 
 @Composable
 fun HeroCoupleCard(
@@ -514,11 +596,13 @@ fun HeroCoupleCard(
                             colors = listOf(
                                 Color.Black.copy(alpha = 0.03f),
                                 Color.Transparent,
-                                Color.Black.copy(alpha = 0.65f)
+                                Color.Black.copy(alpha = 0.68f)
                             )
                         )
                     )
             )
+
+            // Days pill
 
             Box(
                 modifier = Modifier
@@ -528,7 +612,7 @@ fun HeroCoupleCard(
                         RoundedCornerShape(50.dp)
                     )
                     .background(
-                        Color.White.copy(alpha = 0.88f)
+                        Color.White.copy(alpha = 0.90f)
                     )
                     .padding(
                         horizontal = 13.dp,
@@ -543,6 +627,26 @@ fun HeroCoupleCard(
                     color = DeepRose
                 )
             }
+
+            // Center heart
+
+            Box(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .graphicsLayer {
+                        scaleX = heartScale
+                        scaleY = heartScale
+                    }
+            ) {
+
+                Text(
+                    text = "♥",
+                    color = Color.White.copy(alpha = 0.90f),
+                    fontSize = 42.sp
+                )
+            }
+
+            // Bottom text
 
             Column(
 
@@ -571,29 +675,13 @@ fun HeroCoupleCard(
                     color = Color.White.copy(alpha = 0.92f)
                 )
             }
-
-            Box(
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .graphicsLayer {
-                        scaleX = heartScale
-                        scaleY = heartScale
-                    }
-            ) {
-
-                Text(
-                    text = "♥",
-                    color = Color.White.copy(alpha = 0.90f),
-                    fontSize = 42.sp
-                )
-            }
         }
     }
 }
 
-// ------------------------------------------------------------
-// RELATIONSHIP COUNTER
-// ------------------------------------------------------------
+// ============================================================
+// RELATIONSHIP CARD
+// ============================================================
 
 @Composable
 fun RelationshipCard(
@@ -614,7 +702,7 @@ fun RelationshipCard(
         shape = RoundedCornerShape(26.dp),
 
         colors = CardDefaults.cardColors(
-            containerColor = Color.White.copy(alpha = 0.82f)
+            containerColor = Color.White.copy(alpha = 0.84f)
         )
     ) {
 
@@ -643,7 +731,7 @@ fun RelationshipCard(
             }
 
             Spacer(
-                modifier = Modifier.size(14.dp)
+                modifier = Modifier.width(14.dp)
             )
 
             Column(
@@ -677,8 +765,8 @@ fun RelationshipCard(
                 )
 
                 Text(
-                    text = "روز",
-                    fontSize = 11.sp,
+                    text = "روز کنار هم",
+                    fontSize = 10.sp,
                     color = SoftText
                 )
             }
@@ -686,17 +774,16 @@ fun RelationshipCard(
     }
 }
 
-// ------------------------------------------------------------
+// ============================================================
 // TODAY MESSAGE
-// ------------------------------------------------------------
+// ============================================================
 
 @Composable
 fun TodayMessageCard() {
 
     Card(
 
-        modifier = Modifier
-            .fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
 
         shape = RoundedCornerShape(26.dp),
 
@@ -735,7 +822,7 @@ fun TodayMessageCard() {
                 )
 
                 Text(
-                    text = "«بعضی آدم‌ها فقط وارد زندگی‌مان نمی‌شوند؛ خانه‌ی قلبمان می‌شوند.»",
+                    text = "«کنار تو، حتی روزهای معمولی هم قشنگ می‌شن.»",
                     color = Color.White,
                     fontSize = 17.sp,
                     fontWeight = FontWeight.SemiBold,
@@ -756,9 +843,9 @@ fun TodayMessageCard() {
     }
 }
 
-// ------------------------------------------------------------
+// ============================================================
 // FEATURE GRID
-// ------------------------------------------------------------
+// ============================================================
 
 @Composable
 fun FeatureGrid(
@@ -836,12 +923,19 @@ fun FeatureGrid(
                     modifier = Modifier.weight(1f),
                     onClick = {
 
-                        if (items[firstIndex].title == "خاطرات ما") {
-                            onMemoriesClick()
-                        }
+                        when (items[firstIndex].title) {
 
-                        if (items[firstIndex].title == "چت دونفره") {
-                            onChatClick()
+                            "خاطرات ما" -> {
+                                onMemoriesClick()
+                            }
+
+                            "چت دونفره" -> {
+                                onChatClick()
+                            }
+
+                            else -> {
+                                // آماده‌سازی برای قابلیت‌های آینده
+                            }
                         }
                     }
                 )
@@ -851,12 +945,19 @@ fun FeatureGrid(
                     modifier = Modifier.weight(1f),
                     onClick = {
 
-                        if (items[secondIndex].title == "خاطرات ما") {
-                            onMemoriesClick()
-                        }
+                        when (items[secondIndex].title) {
 
-                        if (items[secondIndex].title == "چت دونفره") {
-                            onChatClick()
+                            "خاطرات ما" -> {
+                                onMemoriesClick()
+                            }
+
+                            "چت دونفره" -> {
+                                onChatClick()
+                            }
+
+                            else -> {
+                                // آماده‌سازی برای قابلیت‌های آینده
+                            }
                         }
                     }
                 )
@@ -865,9 +966,9 @@ fun FeatureGrid(
     }
 }
 
-// ------------------------------------------------------------
+// ============================================================
 // FEATURE CARD
-// ------------------------------------------------------------
+// ============================================================
 
 @Composable
 fun FeatureCard(
@@ -893,7 +994,7 @@ fun FeatureCard(
         shape = RoundedCornerShape(24.dp),
 
         colors = CardDefaults.cardColors(
-            containerColor = Color.White.copy(alpha = 0.86f)
+            containerColor = Color.White.copy(alpha = 0.88f)
         )
     ) {
 
@@ -904,6 +1005,7 @@ fun FeatureCard(
                 .padding(15.dp),
 
             verticalArrangement = Arrangement.Center,
+
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
@@ -956,9 +1058,9 @@ fun FeatureCard(
     }
 }
 
-// ------------------------------------------------------------
+// ============================================================
 // FOOTER
-// ------------------------------------------------------------
+// ============================================================
 
 @Composable
 fun RomanticFooter() {
@@ -1003,9 +1105,275 @@ fun RomanticFooter() {
     }
 }
 
-// ------------------------------------------------------------
+// ============================================================
+// PREMIUM BOTTOM BAR
+// ============================================================
+
+@Composable
+fun PremiumBottomBar(
+    selectedTab: Int,
+    onHomeClick: () -> Unit,
+    onMemoriesClick: () -> Unit,
+    onChatClick: () -> Unit,
+    onMoreClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+
+    Card(
+
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(
+                start = 14.dp,
+                end = 14.dp,
+                bottom = 8.dp
+            )
+            .shadow(
+                elevation = 18.dp,
+                shape = RoundedCornerShape(30.dp),
+                ambientColor = Rose.copy(alpha = 0.18f),
+                spotColor = Rose.copy(alpha = 0.18f)
+            ),
+
+        shape = RoundedCornerShape(30.dp),
+
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White.copy(alpha = 0.95f)
+        )
+    ) {
+
+        Row(
+
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    horizontal = 8.dp,
+                    vertical = 8.dp
+                ),
+
+            horizontalArrangement = Arrangement.SpaceEvenly,
+
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+
+            BottomBarItem(
+                selected = selectedTab == 0,
+                icon = "⌂",
+                title = "خانه",
+                onClick = onHomeClick
+            )
+
+            BottomBarItem(
+                selected = selectedTab == 1,
+                icon = "♡",
+                title = "خاطرات",
+                onClick = onMemoriesClick
+            )
+
+            BottomBarCenterButton(
+                selected = selectedTab == 2,
+                onClick = onChatClick
+            )
+
+            BottomBarItem(
+                selected = selectedTab == 3,
+                icon = "✦",
+                title = "بیشتر",
+                onClick = onMoreClick
+            )
+        }
+    }
+}
+
+// ============================================================
+// BOTTOM BAR ITEM
+// ============================================================
+
+@Composable
+fun BottomBarItem(
+    selected: Boolean,
+    icon: String,
+    title: String,
+    onClick: () -> Unit
+) {
+
+    val scale by animateFloatAsState(
+
+        targetValue =
+            if (selected) {
+                1.06f
+            } else {
+                1f
+            },
+
+        animationSpec = tween(250),
+
+        label = "bottom_item_scale"
+    )
+
+    Column(
+
+        modifier = Modifier
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
+            .clip(
+                RoundedCornerShape(20.dp)
+            )
+            .clickable {
+                onClick()
+            }
+            .padding(
+                horizontal = 13.dp,
+                vertical = 7.dp
+            ),
+
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+
+        Box(
+
+            modifier = Modifier
+                .size(
+                    if (selected) {
+                        38.dp
+                    } else {
+                        32.dp
+                    }
+                )
+                .clip(CircleShape)
+                .background(
+                    if (selected) {
+                        SoftPink
+                    } else {
+                        Color.Transparent
+                    }
+                ),
+
+            contentAlignment = Alignment.Center
+        ) {
+
+            Text(
+                text = icon,
+
+                fontSize =
+                    if (selected) {
+                        23.sp
+                    } else {
+                        20.sp
+                    },
+
+                color =
+                    if (selected) {
+                        DeepRose
+                    } else {
+                        SoftText
+                    }
+            )
+        }
+
+        Spacer(
+            modifier = Modifier.height(2.dp)
+        )
+
+        Text(
+            text = title,
+
+            fontSize = 10.sp,
+
+            fontWeight =
+                if (selected) {
+                    FontWeight.Bold
+                } else {
+                    FontWeight.Normal
+                },
+
+            color =
+                if (selected) {
+                    DeepRose
+                } else {
+                    SoftText
+                }
+        )
+    }
+}
+
+// ============================================================
+// CENTER CHAT BUTTON
+// ============================================================
+
+@Composable
+fun BottomBarCenterButton(
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+
+    val scale by animateFloatAsState(
+
+        targetValue =
+            if (selected) {
+                1.08f
+            } else {
+                1f
+            },
+
+        animationSpec = tween(250),
+
+        label = "center_button_scale"
+    )
+
+    Box(
+        modifier = Modifier
+            .size(62.dp)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
+            .shadow(
+                elevation = 10.dp,
+                shape = CircleShape,
+                ambientColor = Rose.copy(alpha = 0.25f),
+                spotColor = Rose.copy(alpha = 0.25f)
+            )
+            .clip(CircleShape)
+            .background(
+                Brush.linearGradient(
+                    colors = listOf(
+                        Rose,
+                        DeepRose
+                    )
+                )
+            )
+            .clickable {
+                onClick()
+            },
+
+        contentAlignment = Alignment.Center
+    ) {
+
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+
+            Text(
+                text = "💬",
+                fontSize = 25.sp
+            )
+
+            Text(
+                text = "چت",
+                fontSize = 9.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+        }
+    }
+}
+
+// ============================================================
 // MEMORIES SCREEN
-// ------------------------------------------------------------
+// ============================================================
 
 @Composable
 fun MemoriesScreen(
@@ -1042,29 +1410,30 @@ fun MemoriesScreen(
 
                 if (error == null && snapshot != null) {
 
-                    memories = snapshot.documents.map { document ->
+                    memories =
+                        snapshot.documents.map { document ->
 
-                        Memory(
+                            Memory(
 
-                            id = document.id,
+                                id = document.id,
 
-                            title =
-                                document.getString("title")
-                                    ?: "خاطره ما",
+                                title =
+                                    document.getString("title")
+                                        ?: "خاطره ما",
 
-                            date =
-                                document.getString("date")
-                                    ?: "",
+                                date =
+                                    document.getString("date")
+                                        ?: "",
 
-                            description =
-                                document.getString("description")
-                                    ?: "",
+                                description =
+                                    document.getString("description")
+                                        ?: "",
 
-                            imageUrl =
-                                document.getString("imageUrl")
-                                    ?: ""
-                        )
-                    }
+                                imageUrl =
+                                    document.getString("imageUrl")
+                                        ?: ""
+                            )
+                        }
                 }
             }
     }
@@ -1079,6 +1448,7 @@ fun MemoriesScreen(
 
             MemoriesHeader(
                 onBack = onBack,
+
                 onAdd = {
                     showAddDialog = true
                 }
@@ -1119,11 +1489,12 @@ fun MemoriesScreen(
                             vertical = 16.dp
                         ),
 
-                        verticalArrangement = Arrangement.spacedBy(14.dp)
+                        verticalArrangement =
+                            Arrangement.spacedBy(14.dp)
                     ) {
 
                         items(
-                            memories,
+                            items = memories,
                             key = {
                                 it.id
                             }
@@ -1149,9 +1520,9 @@ fun MemoriesScreen(
     }
 }
 
-// ------------------------------------------------------------
+// ============================================================
 // MEMORIES HEADER
-// ------------------------------------------------------------
+// ============================================================
 
 @Composable
 fun MemoriesHeader(
@@ -1175,7 +1546,9 @@ fun MemoriesHeader(
             modifier = Modifier
                 .size(44.dp)
                 .clip(CircleShape)
-                .background(Color.White.copy(alpha = 0.85f))
+                .background(
+                    Color.White.copy(alpha = 0.85f)
+                )
                 .clickable {
                     onBack()
                 },
@@ -1191,7 +1564,7 @@ fun MemoriesHeader(
         }
 
         Spacer(
-            modifier = Modifier.size(12.dp)
+            modifier = Modifier.width(12.dp)
         )
 
         Column(
@@ -1240,9 +1613,9 @@ fun MemoriesHeader(
     }
 }
 
-// ------------------------------------------------------------
+// ============================================================
 // EMPTY MEMORIES
-// ------------------------------------------------------------
+// ============================================================
 
 @Composable
 fun EmptyMemories(
@@ -1320,9 +1693,9 @@ fun EmptyMemories(
     }
 }
 
-// ------------------------------------------------------------
+// ============================================================
 // MEMORY CARD
-// ------------------------------------------------------------
+// ============================================================
 
 @Composable
 fun MemoryCard(
@@ -1331,13 +1704,12 @@ fun MemoryCard(
 
     Card(
 
-        modifier = Modifier
-            .fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
 
         shape = RoundedCornerShape(25.dp),
 
         colors = CardDefaults.cardColors(
-            containerColor = Color.White.copy(alpha = 0.9f)
+            containerColor = Color.White.copy(alpha = 0.90f)
         )
     ) {
 
@@ -1403,9 +1775,9 @@ fun MemoryCard(
     }
 }
 
-// ------------------------------------------------------------
+// ============================================================
 // ADD MEMORY DIALOG
-// ------------------------------------------------------------
+// ============================================================
 
 @Composable
 fun AddMemoryDialog(
@@ -1431,6 +1803,7 @@ fun AddMemoryDialog(
     AlertDialog(
 
         onDismissRequest = {
+
             if (!saving) {
                 onDismiss()
             }
@@ -1453,7 +1826,8 @@ fun AddMemoryDialog(
                         rememberScrollState()
                     ),
 
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+                verticalArrangement =
+                    Arrangement.spacedBy(10.dp)
             ) {
 
                 OutlinedTextField(
@@ -1587,9 +1961,9 @@ fun AddMemoryDialog(
     )
 }
 
-// ------------------------------------------------------------
-// DAYS COUNTER
-// ------------------------------------------------------------
+// ============================================================
+// DAYS TOGETHER
+// ============================================================
 
 fun calculateDaysTogether(): Long {
 
@@ -1625,11 +1999,8 @@ fun calculateDaysTogether(): Long {
                 )
 
     return if (days < 0) {
-
         0L
-
     } else {
-
         days + 1
     }
 }
