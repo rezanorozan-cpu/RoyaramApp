@@ -214,15 +214,18 @@ fun HomeScreen(
             .fillMaxSize()
             .background(PageBackground)
     ) {
+
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
                 start = 16.dp,
                 end = 16.dp,
-                top = 14.dp,
+                top = 12.dp,
                 bottom = 105.dp
             ),
             verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+
             item {
                 PremiumTopBar(
                     onSettingsClick = {
