@@ -1221,126 +1221,115 @@ fun FeatureGrid(
 // PHOTO FEATURE CARD
 // ============================================================
 
-@Composable
+@@Composable
 fun PhotoFeatureCard(
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
     image: Int,
     title: String,
     subtitle: String,
-    emoji: String,
     onClick: () -> Unit
 ) {
 
     Card(
-
         modifier = modifier
-            .aspectRatio(0.96f)
+            .height(137.dp)
             .clickable {
                 onClick()
             }
             .shadow(
-                elevation = 5.dp,
-                shape = RoundedCornerShape(18.dp),
-                ambientColor =
-                    Rose.copy(alpha = 0.10f)
+                elevation = 9.dp,
+                shape = RoundedCornerShape(22.dp),
+                ambientColor = Rose.copy(alpha = 0.14f),
+                spotColor = Rose.copy(alpha = 0.16f)
             ),
 
-        shape = RoundedCornerShape(18.dp),
+        shape = RoundedCornerShape(22.dp),
 
         colors = CardDefaults.cardColors(
             containerColor = Color.White
         )
     ) {
 
-        Box(
+        Column(
             modifier = Modifier.fillMaxSize()
         ) {
 
-            Image(
-
-                painter = painterResource(
-                    id = image
-                ),
-
-                contentDescription = title,
-
-                contentScale =
-                    ContentScale.Crop,
-
-                modifier =
-                    Modifier.fillMaxSize()
-            )
-
             Box(
-
                 modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(
-                                Color.Transparent,
-                                Color.Black.copy(
-                                    alpha = 0.03f
-                                ),
-                                Color.Black.copy(
-                                    alpha = 0.80f
+                    .fillMaxWidth()
+                    .height(82.dp)
+            ) {
+
+                Image(
+                    painter = painterResource(
+                        id = image
+                    ),
+
+                    contentDescription = title,
+
+                    contentScale =
+                        ContentScale.Crop,
+
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(
+                            RoundedCornerShape(
+                                topStart = 22.dp,
+                                topEnd = 22.dp
+                            )
+                        )
+                )
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    Color.Transparent,
+                                    Color.Black.copy(
+                                        alpha = 0.16f
+                                    )
                                 )
                             )
                         )
-                    )
-            )
-
-            Box(
-
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(6.dp)
-                    .clip(CircleShape)
-                    .background(
-                        Color.White.copy(
-                            alpha = 0.82f
-                        )
-                    )
-                    .padding(5.dp)
-            ) {
-
-                Text(
-                    text = emoji,
-                    fontSize = 12.sp
                 )
             }
 
             Column(
-
                 modifier = Modifier
-                    .align(Alignment.BottomCenter)
                     .fillMaxWidth()
+                    .weight(1f)
                     .padding(
-                        horizontal = 5.dp,
-                        vertical = 7.dp
-                    ),
-
-                horizontalAlignment =
-                    Alignment.CenterHorizontally
+                        horizontal = 8.dp,
+                        vertical = 5.dp
+                    )
             ) {
 
                 Text(
                     text = title,
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = Color.White,
-                    textAlign = TextAlign.Center,
+
+                    fontSize = 11.sp,
+
+                    fontWeight =
+                        FontWeight.ExtraBold,
+
+                    color = TextDark,
+
                     maxLines = 1
+                )
+
+                Spacer(
+                    modifier = Modifier.height(1.dp)
                 )
 
                 Text(
                     text = subtitle,
+
                     fontSize = 7.sp,
-                    color =
-                        Color.White.copy(
-                            alpha = 0.92f
-                        ),
-                    textAlign = TextAlign.Center,
+
+                    color = SoftText,
+
                     maxLines = 1
                 )
             }
