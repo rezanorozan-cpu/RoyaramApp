@@ -198,78 +198,215 @@ fun RoyaramApp(
 }
 
 @Composable
-fun HomeScreen(
-    onMemoriesClick: () -> Unit,
-    onChatClick: () -> Unit,
-    onSpecialClick: () -> Unit,
-    onToast: (String) -> Unit,
-    onHomeClick: () -> Unit
+fun PremiumHero(
+    daysTogether: Int
 ) {
-    val daysTogether = remember {
-        calculateDaysTogether()
-    }
+    val transition = rememberInfiniteTransition(
+        label = "heroPulse"
+    )
 
-    Box(
+    val scale by transition.animateFloat(
+        initialValue = 1f,
+        targetValue = 1.018f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(
+                durationMillis = 7000,
+                easing = FastOutSlowInEasing
+            ),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "heroScale"
+    )
+
+    Card(
         modifier = Modifier
-            .fillMaxSize()
-            .background(PageBackground)
+            .fillMaxWidth()
+            .height(205.dp)
+            .shadow(
+                elevation = 15.dp,
+                shape = RoundedCornerShape(30.dp),
+                ambientColor = Rose.copy(alpha = 0.18f)
+            ),
+        shape = RoundedCornerShape(30.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.Transparent
+        )
     ) {
 
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(
-                start = 16.dp,
-                end = 16.dp,
-                top = 12.dp,
-                bottom = 105.dp
-            ),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+        Box(
+            modifier = Modifier.fillMaxSize()
         ) {
 
-            item {
-                PremiumTopBar(
-                    onSettingsClick = {
-                        onToast("تنظیمات رویارام 💗")
-                    }
+            // 🌿 پس‌زمینه طبیعت
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.linearGradient(
+                            colors = listOf(
+                                Color(0xFFB8D8CE),
+                                Color(0xFFDDE8D8),
+                                Color(0xFFFFE3D8)
+                            )
+                        )
+                    )
+            )
+
+            // 🌿 نور و عمق طبیعی پس‌زمینه
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.horizontalGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                Color.White.copy(alpha = 0.10f),
+                                Color.White.copy(alpha = 0.22f)
+                            )
+                        )
+                    )
+            )
+
+            // ❤️ عکس بوسه در سمت چپ
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .fillMaxWidth(0.62f)
+                    .align(Alignment.CenterStart)
+                    .clip(
+                        RoundedCornerShape(
+                            topStart = 30.dp,
+                            bottomStart = 30.dp
+                        )
+                    )
+            ) {
+
+                AsyncImage(
+                    model = R.drawable.royaram_photo_1,
+                    contentDescription = "رامین و رویا در حال بوسه",
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer {
+                            scaleX = scale
+                            scaleY = scale
+                        },
+                    contentScale = ContentScale.Crop
+                )
+
+                // ترکیب نرم عکس با طبیعت
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.horizontalGradient(
+                                colors = listOf(
+                                    Color.Transparent,
+                                    Color.Transparent,
+                                    Color(0xFFDDE8D8).copy(alpha = 0.35f)
+                                )
+                            )
+                        )
                 )
             }
 
-            item {
-                PremiumHero(
-                    daysTogether = daysTogether
+            // 🌿 طبیعت سمت راست
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .fillMaxWidth(0.48f)
+                    .align(Alignment.CenterEnd)
+                    .background(
+                        Brush.horizontalGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                Color(0xFFDDE8D8).copy(alpha = 0.30f),
+                                Color(0xFFFFE3D8).copy(alpha = 0.55f)
+                            )
+                        )
+                    )
+            )
+
+            // 🌅 نور پایین تصویر
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(90.dp)
+                    .align(Alignment.BottomCenter)
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                Color.Black.copy(alpha = 0.48f)
+                            )
+                        )
+                    )
+            )
+
+            // ❤️ آیکون
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(16.dp)
+                    .size(42.dp)
+                    .shadow(
+                        elevation = 8.dp,
+                        shape = CircleShape
+                    )
+                    .background(
+                        Color.White.copy(alpha = 0.88f),
+                        CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "❤️",
+                    fontSize = 20.sp
                 )
             }
 
-            item {
-                RelationshipGlassCard(
-                    daysTogether = daysTogether
+            // متن روی Hero
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(
+                        start = 18.dp,
+                        end = 18.dp,
+                        bottom = 16.dp
+                    ),
+                horizontalAlignment = Alignment.End
+            ) {
+
+                Text(
+                    text = "رامین ❤️ رویا",
+                    color = Color.White,
+                    fontSize = 21.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.End
                 )
-            }
 
-            item {
-                RoyaramFolderLayout(
-                    onMemoriesClick = onMemoriesClick,
-                    onChatClick = onChatClick,
-                    onSpecialClick = onSpecialClick,
-                    onToast = onToast
+                Spacer(
+                    modifier = Modifier.height(3.dp)
                 )
-            }
 
-            item {
-                DailyWordsCard()
-            }
+                Text(
+                    text = "هر روز یک صفحه‌ی تازه از قصه‌ی ما",
+                    color = Color.White.copy(alpha = 0.92f),
+                    fontSize = 11.sp,
+                    textAlign = TextAlign.End
+                )
 
-            item {
-                CompactLoveFooter()
+                Spacer(
+                    modifier = Modifier.height(4.dp)
+                )
+
+                Text(
+                    text = "$daysTogether روز کنار هم ❤️",
+                    color = Color.White.copy(alpha = 0.90f),
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Medium
+                )
             }
         }
-
-        PremiumBottomBar(
-            selected = "home",
-            onHomeClick = onHomeClick,
-            onMemoriesClick = onMemoriesClick,
-            onSpecialClick = onSpecialClick
-        )
     }
 }
 
