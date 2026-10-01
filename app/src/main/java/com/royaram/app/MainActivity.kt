@@ -6,11 +6,11 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -22,25 +22,31 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Divider
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -54,36 +60,31 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.runtime.CompositionLocalProvider
+import coil.compose.AsyncImage
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
+import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
-
-// ============================================================
-// ROYARAM COLORS
-// ============================================================
+import java.util.Locale
 
 private val Rose = Color(0xFFE85D86)
 private val DeepRose = Color(0xFFB83260)
 private val Pink = Color(0xFFFF7FA5)
-
 private val SoftPink = Color(0xFFFFDCE7)
 private val PalePink = Color(0xFFFFF3F7)
-
 private val Lavender = Color(0xFFB9A7E8)
 private val PaleLavender = Color(0xFFF0EBFF)
-
 private val Cream = Color(0xFFFFFBFC)
-
 private val TextDark = Color(0xFF30252A)
 private val SoftText = Color(0xFF8A737C)
 
@@ -95,21 +96,18 @@ private val PageBackground = Brush.verticalGradient(
     )
 )
 
-// ============================================================
-// MEMORY DATA
-// ============================================================
+private val RelationshipStartDate = Calendar.getInstance().apply {
+    set(2026, Calendar.JUNE, 10, 0, 0, 0)
+    set(Calendar.MILLISECOND, 0)
+}.time
 
 data class Memory(
-    val id: String,
-    val title: String,
-    val date: String,
-    val description: String,
-    val imageUrl: String
+    val id: String = "",
+    val title: String = "",
+    val date: String = "",
+    val description: String = "",
+    val imageUrl: String = ""
 )
-
-// ============================================================
-// MAIN ACTIVITY
-// ============================================================
 
 class MainActivity : ComponentActivity() {
 
@@ -117,38 +115,20 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-
             CompositionLocalProvider(
                 LocalLayoutDirection provides LayoutDirection.Rtl
             ) {
-
                 MaterialTheme {
-
                     RoyaramApp(
-
                         onChatClick = {
-
-                            try {
-
-                                startActivity(
-                                    Intent(
-                                        this@MainActivity,
-                                        ChatActivity::class.java
-                                    )
-                                )
-
-                            } catch (_: Exception) {
-
-                                Toast.makeText(
+                            startActivity(
+                                Intent(
                                     this@MainActivity,
-                                    "صفحه چت هنوز آماده نیست ❤️",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
+                                    ChatActivity::class.java
+                                )
+                            )
                         },
-
                         onToast = { message ->
-
                             Toast.makeText(
                                 this@MainActivity,
                                 message,
@@ -162,18 +142,71 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-// ============================================================
-// ROOT
-// ============================================================
-
 @Composable
 fun RoyaramApp(
     onChatClick: () -> Unit,
     onToast: (String) -> Unit
 ) {
+    var currentPage by remember { mutableStateOf("home") }
 
-    var currentPage by remember {
-        mutableStateOf("home")
+    when (currentPage) {
+        "home" -> {
+            HomeScreen(
+                onMemoriesClick = {
+                    currentPage = "memories"
+                },
+                onChatClick = onChatClick,
+                onSpecialClick = {
+                    currentPage = "special"
+                },
+                onToast = onToast,
+                onHomeClick = {
+                    currentPage = "home"
+                }
+            )
+        }
+
+        "memories" -> {
+            MemoriesScreen(
+                onBack = {
+                    currentPage = "home"
+                },
+                onHomeClick = {
+                    currentPage = "home"
+                },
+                onSpecialClick = {
+                    currentPage = "special"
+                },
+                onToast = onToast
+            )
+        }
+
+        "special" -> {
+            SpecialDatesScreen(
+                onBack = {
+                    currentPage = "home"
+                },
+                onHomeClick = {
+                    currentPage = "home"
+                },
+                onMemoriesClick = {
+                    currentPage = "memories"
+                }
+            )
+        }
+    }
+}
+
+@Composable
+fun HomeScreen(
+    onMemoriesClick: () -> Unit,
+    onChatClick: () -> Unit,
+    onSpecialClick: () -> Unit,
+    onToast: (String) -> Unit,
+    onHomeClick: () -> Unit
+) {
+    val daysTogether = remember {
+        calculateDaysTogether()
     }
 
     Box(
@@ -181,373 +214,222 @@ fun RoyaramApp(
             .fillMaxSize()
             .background(PageBackground)
     ) {
-
-        when (currentPage) {
-
-            "memories" -> {
-
-                MemoriesScreen(
-                    onBack = {
-                        currentPage = "home"
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(
+                start = 16.dp,
+                end = 16.dp,
+                top = 14.dp,
+                bottom = 105.dp
+            ),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            item {
+                PremiumTopBar(
+                    onSettingsClick = {
+                        onToast("تنظیمات رویارام 💗")
                     }
                 )
             }
 
-            "special" -> {
-
-                SpecialDatesScreen(
-                    onBack = {
-                        currentPage = "home"
-                    }
+            item {
+                PremiumHero(
+                    daysTogether = daysTogether
                 )
             }
 
-            else -> {
+            item {
+                RelationshipGlassCard(
+                    daysTogether = daysTogether
+                )
+            }
 
-                HomeScreen(
-
-                    onMemoriesClick = {
-                        currentPage = "memories"
-                    },
-
-                    onSpecialClick = {
-                        currentPage = "special"
-                    },
-
+            item {
+                RoyaramFolderLayout(
+                    onMemoriesClick = onMemoriesClick,
                     onChatClick = onChatClick,
-
+                    onSpecialClick = onSpecialClick,
                     onToast = onToast
                 )
             }
+
+            item {
+                DailyWordsCard()
+            }
+
+            item {
+                CompactLoveFooter()
+            }
         }
+
+        PremiumBottomBar(
+            selected = "home",
+            onHomeClick = onHomeClick,
+            onMemoriesClick = onMemoriesClick,
+            onSpecialClick = onSpecialClick
+        )
     }
 }
-
-// ============================================================
-// HOME SCREEN
-// ============================================================
-
-@Composable
-fun HomeScreen(
-    onMemoriesClick: () -> Unit,
-    onSpecialClick: () -> Unit,
-    onChatClick: () -> Unit,
-    onToast: (String) -> Unit
-) {
-    val daysTogether = remember { calculateDaysTogether() }
-
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(PageBackground),
-        contentPadding = PaddingValues(
-            start = 10.dp,
-            end = 10.dp,
-            top = 4.dp,
-            bottom = 18.dp
-        ),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-
-        // هدر
-        item {
-            PremiumTopBar(
-                onSettingsClick = {
-                    onToast("تنظیمات رویارام 💗")
-                }
-            )
-        }
-
-        // عکس بوسه
-        item {
-            PremiumHero(daysTogether = daysTogether)
-        }
-
-        // تاریخ آشنایی و شمارش روزها
-        item {
-            RelationshipGlassCard(
-                daysTogether = daysTogether
-            )
-        }
-
-        // هفت پوشه + شمارش تولد
-        item {
-            RoyaramFolderLayout(
-                onMemoriesClick = onMemoriesClick,
-                onChatClick = onChatClick,
-                onSpecialClick = onSpecialClick,
-                onToast = onToast
-            )
-        }
-
-        // کلام روزانه
-        item {
-            DailyWordsCard()
-        }
-
-        // پایین صفحه
-        item {
-            CompactLoveFooter()
-        }
-    }
-}
-// ============================================================
-// TOP BAR
-// ============================================================
 
 @Composable
 fun PremiumTopBar(
     onSettingsClick: () -> Unit
 ) {
-
     Row(
-
         modifier = Modifier
             .fillMaxWidth()
-            .padding(
-                horizontal = 3.dp,
-                vertical = 3.dp
-            ),
-
+            .padding(top = 2.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-
         Column(
             modifier = Modifier.weight(1f)
         ) {
-
             Text(
-                text = "رویـارام",
-                fontSize = 27.sp,
-                fontWeight = FontWeight.ExtraBold,
+                text = "رویارام",
+                fontSize = 25.sp,
+                fontWeight = FontWeight.Black,
                 color = DeepRose
             )
 
             Text(
                 text = "قصه‌ی من و تو، برای همیشه",
                 fontSize = 10.sp,
+                fontWeight = FontWeight.Medium,
                 color = SoftText
             )
         }
 
         Box(
-
             modifier = Modifier
-                .size(43.dp)
+                .size(44.dp)
                 .shadow(
-                    elevation = 10.dp,
+                    elevation = 8.dp,
                     shape = CircleShape,
-                    ambientColor = Rose.copy(alpha = 0.20f),
-                    spotColor = Rose.copy(alpha = 0.22f)
+                    ambientColor = Rose.copy(alpha = 0.16f)
                 )
                 .clip(CircleShape)
-                .background(
-                    Brush.linearGradient(
-                        colors = listOf(
-                            Rose,
-                            DeepRose
-                        )
-                    )
-                )
+                .background(Color.White.copy(alpha = 0.78f))
                 .clickable {
                     onSettingsClick()
                 },
-
             contentAlignment = Alignment.Center
         ) {
-
             Text(
-                text = "♡",
-                color = Color.White,
-                fontSize = 25.sp
+                text = "⚙",
+                fontSize = 20.sp,
+                color = DeepRose
             )
         }
     }
 }
 
-// ============================================================
-// HERO IMAGE
-// ============================================================
-
 @Composable
 fun PremiumHero(
-    daysTogether: Long
+    daysTogether: Int
 ) {
-
     val transition = rememberInfiniteTransition(
-        label = "royaramHero"
+        label = "heroPulse"
     )
 
-    val imageScale by transition.animateFloat(
-
-        initialValue = 1.00f,
-
+    val scale by transition.animateFloat(
+        initialValue = 1f,
         targetValue = 1.025f,
-
         animationSpec = infiniteRepeatable(
-
             animation = tween(
                 durationMillis = 7000,
                 easing = FastOutSlowInEasing
-            )
+            ),
+            repeatMode = RepeatMode.Reverse
         ),
-
         label = "heroScale"
     )
 
     Card(
-
         modifier = Modifier
             .fillMaxWidth()
-            .height(208.dp)
+            .height(270.dp)
             .shadow(
                 elevation = 18.dp,
-                shape = RoundedCornerShape(27.dp),
-                ambientColor = Rose.copy(alpha = 0.20f),
-                spotColor = Rose.copy(alpha = 0.22f)
+                shape = RoundedCornerShape(34.dp),
+                ambientColor = Rose.copy(alpha = 0.18f)
             ),
-
-        shape = RoundedCornerShape(27.dp),
-
+        shape = RoundedCornerShape(34.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.Transparent
+            containerColor = Color.White.copy(alpha = 0.74f)
         )
     ) {
-
         Box(
             modifier = Modifier.fillMaxSize()
         ) {
 
-            Image(
-
-                painter = painterResource(
-                    id = R.drawable.royaram_photo_1
-                ),
-
+            AsyncImage(
+                model = R.drawable.royaram_photo_1,
                 contentDescription = "رامین و رویا",
-
-                contentScale = ContentScale.Crop,
-
-                alignment = Alignment.CenterStart,
-
                 modifier = Modifier
                     .fillMaxSize()
                     .graphicsLayer {
-
-                        scaleX = imageScale
-                        scaleY = imageScale
+                        scaleX = scale
+                        scaleY = scale
                     }
+                    .clip(RoundedCornerShape(34.dp)),
+                contentScale = ContentScale.Crop
             )
 
             Box(
-
                 modifier = Modifier
                     .fillMaxSize()
                     .background(
                         Brush.verticalGradient(
                             colors = listOf(
-                                Color.Black.copy(alpha = 0.03f),
-                                Color.Transparent,
-                                Color.Black.copy(alpha = 0.52f)
+                                Color.Black.copy(alpha = 0.04f),
+                                Color.Black.copy(alpha = 0.16f),
+                                Color.Black.copy(alpha = 0.72f)
                             )
                         )
                     )
             )
 
-            Box(
-
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(10.dp)
-                    .clip(
-                        RoundedCornerShape(50.dp)
-                    )
-                    .background(
-                        Color.White.copy(alpha = 0.20f)
-                    )
-                    .padding(
-                        horizontal = 11.dp,
-                        vertical = 6.dp
-                    )
-            ) {
-
-                Text(
-                    text = "برای همیشه ♡",
-                    color = Color.White,
-                    fontSize = 8.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-
             Column(
-
                 modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .padding(
-                        start = 18.dp,
-                        end = 18.dp,
-                        bottom = 12.dp
-                    ),
-
-                horizontalAlignment =
-                    Alignment.CenterHorizontally
+                    .fillMaxSize()
+                    .padding(22.dp),
+                verticalArrangement = Arrangement.Bottom,
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-
                 Text(
                     text = "رامین ❤️ رویا",
-                    fontSize = 23.sp,
-                    fontWeight = FontWeight.ExtraBold,
                     color = Color.White,
-                    textAlign = TextAlign.Center
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Black
                 )
 
                 Spacer(
-                    modifier = Modifier.height(2.dp)
+                    modifier = Modifier.height(5.dp)
                 )
 
                 Text(
                     text = "هر روز یک صفحه‌ی تازه از قصه‌ی ما",
-                    fontSize = 9.sp,
-                    color = Color.White.copy(alpha = 0.94f),
-                    textAlign = TextAlign.Center
+                    color = Color.White.copy(alpha = 0.92f),
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Medium
                 )
 
                 Spacer(
-                    modifier = Modifier.height(6.dp)
+                    modifier = Modifier.height(13.dp)
                 )
 
-                Row(
-
-                    modifier = Modifier
-                        .clip(
-                            RoundedCornerShape(50.dp)
-                        )
-                        .background(
-                            Color.White.copy(alpha = 0.20f)
-                        )
-                        .padding(
-                            horizontal = 13.dp,
-                            vertical = 5.dp
-                        ),
-
-                    verticalAlignment =
-                        Alignment.CenterVertically
+                Surface(
+                    shape = RoundedCornerShape(50.dp),
+                    color = Color.White.copy(alpha = 0.22f)
                 ) {
-
                     Text(
-                        text = "❤️",
-                        fontSize = 11.sp
-                    )
-
-                    Spacer(
-                        modifier = Modifier.width(5.dp)
-                    )
-
-                    Text(
-                        text = "$daysTogether روز کنار هم",
-                        fontSize = 9.sp,
+                        text = "❤️ $daysTogether روز کنار هم",
+                        modifier = Modifier.padding(
+                            horizontal = 18.dp,
+                            vertical = 8.dp
+                        ),
                         color = Color.White,
+                        fontSize = 11.sp,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -556,688 +438,100 @@ fun PremiumHero(
     }
 }
 
-// ============================================================
-// RELATIONSHIP CARD
-// ============================================================
-
 @Composable
 fun RelationshipGlassCard(
-    daysTogether: Long
+    daysTogether: Int
 ) {
-
     Card(
-
         modifier = Modifier
             .fillMaxWidth()
             .shadow(
-                elevation = 8.dp,
-                shape = RoundedCornerShape(22.dp),
-                ambientColor = Lavender.copy(alpha = 0.13f)
+                elevation = 10.dp,
+                shape = RoundedCornerShape(25.dp),
+                ambientColor = Rose.copy(alpha = 0.10f)
             ),
-
-        shape = RoundedCornerShape(22.dp),
-
+        shape = RoundedCornerShape(25.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White.copy(
-                alpha = 0.80f
-            )
+            containerColor = Color.White.copy(alpha = 0.80f)
         )
     ) {
-
         Row(
-
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(
-                    horizontal = 9.dp,
-                    vertical = 10.dp
+                    horizontal = 18.dp,
+                    vertical = 16.dp
                 ),
-
-            verticalAlignment =
-                Alignment.CenterVertically
-        ) {
-
-            Column(
-
-                modifier = Modifier.weight(1f),
-
-                horizontalAlignment =
-                    Alignment.CenterHorizontally
-            ) {
-
-                Text(
-                    text = "تاریخ آشنایی",
-                    fontSize = 8.sp,
-                    color = SoftText
-                )
-
-                Spacer(
-                    modifier = Modifier.height(2.dp)
-                )
-
-                Text(
-                    text = "۱۴۰۵/۰۳/۲۰",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = DeepRose
-                )
-            }
-
-            Box(
-
-                modifier = Modifier
-                    .width(1.dp)
-                    .height(37.dp)
-                    .background(
-                        Rose.copy(alpha = 0.18f)
-                    )
-            )
-
-            Column(
-
-                modifier = Modifier.weight(1f),
-
-                horizontalAlignment =
-                    Alignment.CenterHorizontally
-            ) {
-
-                Text(
-                    text = "$daysTogether",
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = Rose
-                )
-
-                Text(
-                    text = "روز کنار هم",
-                    fontSize = 8.sp,
-                    color = SoftText
-                )
-            }
-
-            Box(
-
-                modifier = Modifier
-                    .width(1.dp)
-                    .height(37.dp)
-                    .background(
-                        Rose.copy(alpha = 0.18f)
-                    )
-            )
-
-            Column(
-
-                modifier = Modifier.weight(1.15f),
-
-                horizontalAlignment =
-                    Alignment.CenterHorizontally
-            ) {
-
-                Text(
-                    text = "هر روز ❤️",
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = DeepRose
-                )
-
-                Text(
-                    text = "بهانه‌ای برای عاشق‌تر شدن",
-                    fontSize = 7.sp,
-                    color = SoftText,
-                    textAlign = TextAlign.Center
-                )
-            }
-        }
-    }
-}
-
-// ============================================================
-// SECTION TITLE
-// ============================================================
-
-@Composable
-fun SectionTitle() {
-
-    Row(
-
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(
-                horizontal = 3.dp,
-                vertical = 1.dp
-            ),
-
-        verticalAlignment =
-            Alignment.CenterVertically
-    ) {
-
-        Column(
-            modifier = Modifier.weight(1f)
-        ) {
-
-            Text(
-                text = "دنیای دونفره‌مون",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = TextDark
-            )
-
-            Text(
-                text = "همه‌چیز برای من و تو، همین‌جاست ❤️",
-                fontSize = 8.sp,
-                color = SoftText
-            )
-        }
-
-        Text(
-            text = "✦",
-            fontSize = 20.sp,
-            color = Rose
-        )
-    }
-}
-
-// ============================================================
-// FEATURE GRID
-// ============================================================
-
-@Composable
-fun FeatureGrid(
-    onMemoriesClick: () -> Unit,
-    onSpecialClick: () -> Unit,
-    onChatClick: () -> Unit,
-    onToast: (String) -> Unit
-) {
-
-    Column(
-
-        modifier = Modifier.fillMaxWidth(),
-
-        verticalArrangement =
-            Arrangement.spacedBy(8.dp)
-    ) {
-
-        // ====================================================
-        // PHOTO ROW 1
-        // ====================================================
-
-        Row(
-
-            modifier = Modifier.fillMaxWidth(),
-
-            horizontalArrangement =
-                Arrangement.spacedBy(8.dp)
-        ) {
-
-            PhotoFeatureCard(
-
-                modifier = Modifier.weight(1f),
-
-                image = R.drawable.royaram_photo_2,
-
-                title = "خاطرات ما",
-
-                subtitle = "لحظه‌های قشنگمون",
-
-                onClick = onMemoriesClick
-            )
-
-            PhotoFeatureCard(
-
-                modifier = Modifier.weight(1f),
-
-                image = R.drawable.royaram_photo_3,
-
-                title = "نامه‌های عاشقانه",
-
-                subtitle = "حرف‌هایی از قلبمون",
-
-                onClick = {
-
-                    onToast(
-                        "نامه‌های عاشقانه به‌زودی آماده می‌شه 💌"
-                    )
-                }
-            )
-
-            PhotoFeatureCard(
-
-                modifier = Modifier.weight(1f),
-
-                image = R.drawable.royaram_photo_4,
-
-                title = "آهنگ ما",
-
-                subtitle = "صدای خاطره‌هامون",
-
-                onClick = {
-
-                    onToast(
-                        "آهنگ ما به‌زودی اضافه می‌شه 🎵"
-                    )
-                }
-            )
-        }
-
-        // ====================================================
-        // PHOTO ROW 2
-        // ====================================================
-
-        Row(
-
-            modifier = Modifier.fillMaxWidth(),
-
-            horizontalArrangement =
-                Arrangement.spacedBy(8.dp)
-        ) {
-
-            PhotoFeatureCard(
-
-                modifier = Modifier.weight(1f),
-
-                image = R.drawable.royaram_photo_5,
-
-                title = "وقتی دلمون گرفت",
-
-                subtitle = "اینجا امنِ ماست",
-
-                onClick = {
-
-                    onToast(
-                        "اینجا همیشه جای امنِ من و توئه 🤍"
-                    )
-                }
-            )
-
-            PhotoFeatureCard(
-
-                modifier = Modifier.weight(1f),
-
-                image = R.drawable.royaram_photo_6,
-
-                title = "چت دونفره",
-
-                subtitle = "حرف‌های من و تو",
-
-                onClick = onChatClick
-            )
-
-            PhotoFeatureCard(
-
-                modifier = Modifier.weight(1f),
-
-                image = R.drawable.royaram_photo_7,
-
-                title = "بخش خصوصی",
-
-                subtitle = "فقط برای ما 🔐",
-
-                onClick = {
-
-                    onToast(
-                        "بخش خصوصی رویارام به‌زودی فعال می‌شه 🔐"
-                    )
-                }
-            )
-        }
-
-        // ====================================================
-        // SEPARATE FIXED SECTIONS
-        // ====================================================
-
-        SectionCard(
-
-            icon = "📅",
-
-            title = "رویدادهای خاص",
-
-            subtitle = "تاریخ‌های مهم، تولدها و سالگرد آشنایی ما",
-
-            onClick = onSpecialClick
-        )
-
-        SectionCard(
-
-            icon = "🗂️",
-
-            title = "پوشه‌های ما",
-
-            subtitle = "یادگاری‌ها و چیزهایی که فقط برای ما هستند",
-
-            onClick = {
-
-                onToast(
-                    "پوشه‌های عاشقانه به‌زودی آماده می‌شن 🗂️"
-                )
-            }
-        )
-
-        SectionCard(
-
-            icon = "💌",
-
-            title = "کلام روزانه",
-
-            subtitle = "«کنار تو، حتی روزهای معمولی هم قشنگ می‌شن.» ❤️",
-
-            onClick = {
-
-                onToast(
-                    "امروز هم دوستت دارم، بیشتر از دیروز ❤️"
-                )
-            }
-        )
-    }
-}
-
-// ============================================================
-// PHOTO FEATURE CARD
-// ============================================================
-
-@Composable
-fun PhotoFeatureCard(
-    modifier: Modifier = Modifier,
-    image: Int,
-    title: String,
-    subtitle: String,
-    onClick: () -> Unit
-) {
-
-    Card(
-
-        modifier = modifier
-            .height(137.dp)
-            .clickable {
-                onClick()
-            }
-            .shadow(
-                elevation = 9.dp,
-                shape = RoundedCornerShape(21.dp),
-                ambientColor = Rose.copy(alpha = 0.14f),
-                spotColor = Rose.copy(alpha = 0.16f)
-            ),
-
-        shape = RoundedCornerShape(21.dp),
-
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White
-        )
-    ) {
-
-        Column(
-            modifier = Modifier.fillMaxSize()
+            verticalAlignment = Alignment.CenterVertically
         ) {
 
             Box(
-
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(82.dp)
-            ) {
-
-                Image(
-
-                    painter = painterResource(
-                        id = image
-                    ),
-
-                    contentDescription = title,
-
-                    contentScale = ContentScale.Crop,
-
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clip(
-                            RoundedCornerShape(
-                                topStart = 21.dp,
-                                topEnd = 21.dp
-                            )
-                        )
-                )
-
-                Box(
-
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            Brush.verticalGradient(
-                                colors = listOf(
-                                    Color.Transparent,
-                                    Color.Black.copy(
-                                        alpha = 0.18f
-                                    )
-                                )
-                            )
-                        )
-                )
-            }
-
-            Column(
-
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .padding(
-                        horizontal = 7.dp,
-                        vertical = 5.dp
-                    )
-            ) {
-
-                Text(
-
-                    text = title,
-
-                    fontSize = 10.sp,
-
-                    fontWeight =
-                        FontWeight.ExtraBold,
-
-                    color = TextDark,
-
-                    maxLines = 1
-                )
-
-                Spacer(
-                    modifier = Modifier.height(1.dp)
-                )
-
-                Text(
-
-                    text = subtitle,
-
-                    fontSize = 6.5.sp,
-
-                    color = SoftText,
-
-                    maxLines = 1
-                )
-            }
-        }
-    }
-}
-
-// ============================================================
-// SEPARATE SECTION CARD
-// ============================================================
-
-@Composable
-fun SectionCard(
-    icon: String,
-    title: String,
-    subtitle: String,
-    onClick: () -> Unit
-) {
-
-    Card(
-
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(72.dp)
-            .clickable {
-                onClick()
-            }
-            .shadow(
-                elevation = 7.dp,
-                shape = RoundedCornerShape(20.dp),
-                ambientColor = Rose.copy(alpha = 0.10f)
-            ),
-
-        shape = RoundedCornerShape(20.dp),
-
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White.copy(
-                alpha = 0.84f
-            )
-        )
-    ) {
-
-        Row(
-
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(
-                    horizontal = 11.dp,
-                    vertical = 8.dp
-                ),
-
-            verticalAlignment =
-                Alignment.CenterVertically
-        ) {
-
-            Box(
-
-                modifier = Modifier
-                    .size(46.dp)
-                    .clip(
-                        RoundedCornerShape(15.dp)
-                    )
+                    .size(52.dp)
+                    .clip(CircleShape)
                     .background(
                         Brush.linearGradient(
-                            colors = listOf(
-                                SoftPink,
-                                PaleLavender
+                            listOf(
+                                Rose,
+                                Lavender
                             )
                         )
                     ),
-
-                contentAlignment =
-                    Alignment.Center
+                contentAlignment = Alignment.Center
             ) {
-
                 Text(
-                    text = icon,
-                    fontSize = 21.sp
+                    text = "♥",
+                    color = Color.White,
+                    fontSize = 25.sp
                 )
             }
 
             Spacer(
-                modifier = Modifier.width(10.dp)
+                modifier = Modifier.width(13.dp)
             )
 
             Column(
                 modifier = Modifier.weight(1f)
             ) {
-
                 Text(
-                    text = title,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = TextDark
+                    text = "از ۲۰ خرداد ۱۴۰۵",
+                    fontSize = 10.sp,
+                    color = SoftText,
+                    fontWeight = FontWeight.Medium
                 )
 
                 Spacer(
-                    modifier = Modifier.height(2.dp)
+                    modifier = Modifier.height(3.dp)
                 )
 
                 Text(
-                    text = subtitle,
-                    fontSize = 7.sp,
-                    color = SoftText,
-                    maxLines = 1
+                    text = "داستان ما از همین‌جا شروع شد ✨",
+                    fontSize = 13.sp,
+                    color = TextDark,
+                    fontWeight = FontWeight.Bold
                 )
             }
 
-            Text(
-                text = "‹",
-                fontSize = 24.sp,
-                color = Rose
-            )
-        }
-    }
-}
-
-// ============================================================
-// LOVE FOOTER
-// ============================================================
-
-@Composable
-fun CompactLoveFooter() {
-
-    Row(
-
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(
-                RoundedCornerShape(19.dp)
-            )
-            .background(
-                Brush.horizontalGradient(
-                    colors = listOf(
-                        Rose,
-                        DeepRose,
-                        Lavender
-                    )
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = daysTogether.toString(),
+                    fontSize = 23.sp,
+                    color = DeepRose,
+                    fontWeight = FontWeight.Black
                 )
-            )
-            .padding(
-                horizontal = 13.dp,
-                vertical = 10.dp
-            ),
 
-        verticalAlignment =
-            Alignment.CenterVertically
-    ) {
-
-        Text(
-            text = "❤️",
-            fontSize = 17.sp
-        )
-
-        Spacer(
-            modifier = Modifier.width(7.dp)
-        )
-
-        Column(
-            modifier = Modifier.weight(1f)
-        ) {
-
-            Text(
-                text =
-                    "دوستت دارم، نه فقط امروز؛ تا همیشه...",
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White,
-                maxLines = 1
-            )
-
-            Text(
-                text =
-                    "رامین ♡ رویا  •  یک دنیای کوچک برای دو نفر",
-                fontSize = 6.sp,
-                color = Color.White.copy(
-                    alpha = 0.88f
-                ),
-                maxLines = 1
-            )
+                Text(
+                    text = "روز",
+                    fontSize = 9.sp,
+                    color = SoftText
+                )
+            }
         }
-
-        Text(
-            text = "♡",
-            fontSize = 22.sp,
-            color = Color.White
-        )
     }
 }
+
 @Composable
 fun RoyaramFolderLayout(
     onMemoriesClick: () -> Unit,
@@ -1246,8 +540,7 @@ fun RoyaramFolderLayout(
     onToast: (String) -> Unit
 ) {
     Column(
-        modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        modifier = Modifier.fillMaxWidth()
     ) {
 
         SectionTitle(
@@ -1255,10 +548,13 @@ fun RoyaramFolderLayout(
             subtitle = "همه‌ی لحظه‌های رامین ❤️ رویا"
         )
 
-        // ردیف اول
+        Spacer(
+            modifier = Modifier.height(10.dp)
+        )
+
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(9.dp)
         ) {
 
             RoyaramFolderCard(
@@ -1266,16 +562,16 @@ fun RoyaramFolderLayout(
                 image = R.drawable.royaram_photo_2,
                 title = "خاطرات ما",
                 subtitle = "لحظه‌های قشنگمون",
-                icon = Icons.Rounded.PhotoLibrary,
+                iconText = "📸",
                 onClick = onMemoriesClick
             )
 
             RoyaramFolderCard(
                 modifier = Modifier.weight(1f),
                 image = R.drawable.royaram_photo_3,
-                title = "نامه‌های عاشقانه",
-                subtitle = "حرف‌هایی از قلبمون",
-                icon = Icons.Rounded.Favorite,
+                title = "نامه‌ها",
+                subtitle = "حرف‌های قلبمون",
+                iconText = "💌",
                 onClick = {
                     onToast("نامه‌های عاشقانه به‌زودی 💌")
                 }
@@ -1285,28 +581,31 @@ fun RoyaramFolderLayout(
                 modifier = Modifier.weight(1f),
                 image = R.drawable.royaram_photo_4,
                 title = "آهنگ ما",
-                subtitle = "صدای خاطره‌هامون",
-                icon = Icons.Rounded.MusicNote,
+                subtitle = "صدای عشق ما",
+                iconText = "🎵",
                 onClick = {
                     onToast("آهنگ ما به‌زودی 🎵")
                 }
             )
         }
 
-        // ردیف دوم
+        Spacer(
+            modifier = Modifier.height(9.dp)
+        )
+
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(9.dp)
         ) {
 
             RoyaramFolderCard(
                 modifier = Modifier.weight(1f),
                 image = R.drawable.royaram_photo_5,
-                title = "وقتی دلمون گرفت",
-                subtitle = "اینجا کنار همیم",
-                icon = Icons.Rounded.FavoriteBorder,
+                title = "کنار هم",
+                subtitle = "وقتی دلمون گرفت",
+                iconText = "🤍",
                 onClick = {
-                    onToast("اینجا همیشه جای امن ماست 🤍")
+                    onToast("اینجا همیشه کنار همیم 🤍")
                 }
             )
 
@@ -1314,81 +613,115 @@ fun RoyaramFolderLayout(
                 modifier = Modifier.weight(1f),
                 image = R.drawable.royaram_photo_6,
                 title = "چت دونفره",
-                subtitle = "حرف‌های من و تو ❤️",
-                icon = Icons.Rounded.ChatBubble,
+                subtitle = "حرف‌های من و تو",
+                iconText = "💬",
                 onClick = onChatClick
             )
 
             RoyaramFolderCard(
                 modifier = Modifier.weight(1f),
                 image = R.drawable.royaram_photo_7,
-                title = "بخش خصوصی",
-                subtitle = "فقط برای من و تو 🔐",
-                icon = Icons.Rounded.Lock,
-                onClick = {
-                    onToast("بخش خصوصی رویارام 🔐")
-                }
+                title = "لحظه‌های خاص",
+                subtitle = "تاریخ‌های مهم ما",
+                iconText = "✨",
+                onClick = onSpecialClick
             )
         }
 
-        // ردیف سوم؛ بخش‌های ثابت و جدا
+        Spacer(
+            modifier = Modifier.height(9.dp)
+        )
+
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(9.dp)
         ) {
 
             RoyaramMiniCard(
                 modifier = Modifier.weight(1f),
-                icon = Icons.Rounded.Event,
-                title = "رویدادها",
-                subtitle = "تاریخ‌های ما",
-                onClick = onSpecialClick
-            )
-
-            RoyaramMiniCard(
-                modifier = Modifier.weight(1f),
-                icon = Icons.Rounded.Folder,
-                title = "پوشه‌ها",
-                subtitle = "دنیای ما",
+                iconText = "🔐",
+                title = "بخش خصوصی",
+                subtitle = "فقط من و تو",
                 onClick = {
-                    onToast("پوشه‌های رویارام 💗")
+                    onToast("بخش خصوصی رویارام 🔐")
                 }
             )
 
             RoyaramMiniCard(
                 modifier = Modifier.weight(1f),
-                icon = Icons.Rounded.AutoAwesome,
-                title = "کلام امروز",
-                subtitle = "برای تو ❤️",
+                iconText = "📁",
+                title = "گنجینه",
+                subtitle = "چیزهای خاص ما",
                 onClick = {
-                    onToast("امروز هم دوستت دارم ❤️")
+                    onToast("گنجینه‌ی رویارام به‌زودی ✨")
+                }
+            )
+
+            RoyaramMiniCard(
+                modifier = Modifier.weight(1f),
+                iconText = "⚙",
+                title = "تنظیمات",
+                subtitle = "شخصی‌سازی",
+                onClick = {
+                    onToast("تنظیمات رویارام 💗")
                 }
             )
         }
     }
 }
+
+@Composable
+fun SectionTitle(
+    title: String = "دنیای دونفره‌مون",
+    subtitle: String = "همه‌ی لحظه‌های رامین ❤️ رویا"
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text(
+            text = title,
+            fontSize = 17.sp,
+            fontWeight = FontWeight.Black,
+            color = TextDark
+        )
+
+        Spacer(
+            modifier = Modifier.height(2.dp)
+        )
+
+        Text(
+            text = subtitle,
+            fontSize = 9.sp,
+            color = SoftText
+        )
+    }
+}
+
 @Composable
 fun RoyaramFolderCard(
     modifier: Modifier = Modifier,
     image: Int,
     title: String,
     subtitle: String,
-    icon: ImageVector,
+    iconText: String,
     onClick: () -> Unit
 ) {
     Card(
         modifier = modifier
-            .height(145.dp)
-            .clickable { onClick() },
-        shape = RoundedCornerShape(22.dp),
+            .aspectRatio(0.82f)
+            .shadow(
+                elevation = 8.dp,
+                shape = RoundedCornerShape(23.dp),
+                ambientColor = Rose.copy(alpha = 0.10f)
+            )
+            .clickable {
+                onClick()
+            },
+        shape = RoundedCornerShape(23.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White.copy(alpha = 0.72f)
-        ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 2.dp
+            containerColor = Color.White.copy(alpha = 0.82f)
         )
     ) {
-
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
@@ -1396,7 +729,13 @@ fun RoyaramFolderCard(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(82.dp)
+                    .weight(1f)
+                    .clip(
+                        RoundedCornerShape(
+                            topStart = 23.dp,
+                            topEnd = 23.dp
+                        )
+                    )
             ) {
 
                 AsyncImage(
@@ -1406,35 +745,17 @@ fun RoyaramFolderCard(
                     contentScale = ContentScale.Crop
                 )
 
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            Brush.verticalGradient(
-                                listOf(
-                                    Color.Transparent,
-                                    Color.Black.copy(alpha = 0.38f)
-                                )
-                            )
-                        )
-                )
-
-                Box(
+                Surface(
                     modifier = Modifier
                         .padding(7.dp)
-                        .size(28.dp)
-                        .background(
-                            Color.White.copy(alpha = 0.82f),
-                            CircleShape
-                        )
                         .align(Alignment.TopEnd),
-                    contentAlignment = Alignment.Center
+                    shape = CircleShape,
+                    color = Color.White.copy(alpha = 0.84f)
                 ) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        tint = DeepRose,
-                        modifier = Modifier.size(16.dp)
+                    Text(
+                        text = iconText,
+                        modifier = Modifier.padding(6.dp),
+                        fontSize = 13.sp
                     )
                 }
             }
@@ -1444,74 +765,74 @@ fun RoyaramFolderCard(
                     .fillMaxWidth()
                     .padding(
                         horizontal = 8.dp,
-                        vertical = 6.dp
+                        vertical = 7.dp
                     )
             ) {
 
                 Text(
                     text = title,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Bold,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.ExtraBold,
                     color = TextDark,
-                    maxLines = 1
-                )
-
-                Spacer(
-                    modifier = Modifier.height(2.dp)
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
 
                 Text(
                     text = subtitle,
-                    fontSize = 9.sp,
+                    fontSize = 8.sp,
                     color = SoftText,
-                    maxLines = 1
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
         }
     }
 }
+
 @Composable
 fun RoyaramMiniCard(
     modifier: Modifier = Modifier,
-    icon: ImageVector,
+    iconText: String,
     title: String,
     subtitle: String,
     onClick: () -> Unit
 ) {
     Card(
         modifier = modifier
-            .height(78.dp)
-            .clickable { onClick() },
-        shape = RoundedCornerShape(20.dp),
+            .height(83.dp)
+            .clickable {
+                onClick()
+            },
+        shape = RoundedCornerShape(21.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White.copy(alpha = 0.70f)
-        ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 1.dp
+            containerColor = Color.White.copy(alpha = 0.78f)
         )
     ) {
-
         Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 8.dp),
+                .padding(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
 
             Box(
                 modifier = Modifier
-                    .size(34.dp)
+                    .size(40.dp)
+                    .clip(CircleShape)
                     .background(
-                        SoftPink.copy(alpha = 0.75f),
-                        CircleShape
+                        Brush.linearGradient(
+                            listOf(
+                                SoftPink,
+                                PaleLavender
+                            )
+                        )
                     ),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = DeepRose,
-                    modifier = Modifier.size(18.dp)
+                Text(
+                    text = iconText,
+                    fontSize = 17.sp
                 )
             }
 
@@ -1522,580 +843,271 @@ fun RoyaramMiniCard(
             Column(
                 modifier = Modifier.weight(1f)
             ) {
-
                 Text(
                     text = title,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.ExtraBold,
                     color = TextDark,
-                    maxLines = 1
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
 
                 Text(
                     text = subtitle,
-                    fontSize = 8.sp,
+                    fontSize = 7.sp,
                     color = SoftText,
-                    maxLines = 1
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
         }
     }
 }
-// ============================================================
-// SPECIAL DATES SCREEN
-// ============================================================
 
 @Composable
-fun SpecialDatesScreen(
-    onBack: () -> Unit
-) {
-
-    Column(
-
+fun DailyWordsCard() {
+    Card(
         modifier = Modifier
-            .fillMaxSize()
-            .background(PageBackground)
+            .fillMaxWidth()
+            .shadow(
+                elevation = 8.dp,
+                shape = RoundedCornerShape(22.dp),
+                ambientColor = Rose.copy(alpha = 0.12f)
+            ),
+        shape = RoundedCornerShape(22.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White.copy(alpha = 0.80f)
+        )
     ) {
-
         Row(
-
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(
-                    horizontal = 13.dp,
-                    vertical = 10.dp
+                    horizontal = 14.dp,
+                    vertical = 12.dp
                 ),
-
-            verticalAlignment =
-                Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically
         ) {
 
             Box(
-
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(42.dp)
                     .clip(CircleShape)
                     .background(
-                        Color.White.copy(
-                            alpha = 0.85f
+                        Brush.linearGradient(
+                            listOf(
+                                Rose,
+                                Lavender
+                            )
                         )
-                    )
-                    .clickable {
-                        onBack()
-                    },
-
-                contentAlignment =
-                    Alignment.Center
+                    ),
+                contentAlignment = Alignment.Center
             ) {
-
                 Text(
-                    text = "→",
-                    fontSize = 21.sp,
-                    color = DeepRose
+                    text = "✦",
+                    color = Color.White,
+                    fontSize = 20.sp
                 )
             }
 
             Spacer(
-                modifier = Modifier.width(9.dp)
+                modifier = Modifier.width(10.dp)
             )
 
             Column(
                 modifier = Modifier.weight(1f)
             ) {
-
                 Text(
-                    text = "رویدادهای خاص ✨",
-                    fontSize = 20.sp,
+                    text = "کلام امروز ❤️",
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.ExtraBold,
-                    color = TextDark
+                    color = DeepRose
+                )
+
+                Spacer(
+                    modifier = Modifier.height(3.dp)
                 )
 
                 Text(
-                    text = "تاریخ‌های مهم دنیای ما",
-                    fontSize = 8.sp,
-                    color = SoftText
+                    text = "«کنار تو، حتی روزهای معمولی هم قشنگ می‌شن.»",
+                    fontSize = 9.sp,
+                    color = TextDark,
+                    lineHeight = 15.sp
                 )
             }
 
             Text(
                 text = "♡",
-                fontSize = 27.sp,
+                fontSize = 25.sp,
                 color = Rose
             )
         }
-
-        LazyColumn(
-
-            modifier = Modifier.fillMaxSize(),
-
-            contentPadding = PaddingValues(
-                start = 12.dp,
-                end = 12.dp,
-                bottom = 16.dp
-            ),
-
-            verticalArrangement =
-                Arrangement.spacedBy(8.dp)
-        ) {
-
-            item {
-
-                Card(
-
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(105.dp),
-
-                    shape = RoundedCornerShape(23.dp),
-
-                    colors =
-                        CardDefaults.cardColors(
-                            containerColor =
-                                Color.Transparent
-                        )
-                ) {
-
-                    Box(
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-
-                        Image(
-
-                            painter = painterResource(
-                                id =
-                                    R.drawable.royaram_photo_1
-                            ),
-
-                            contentDescription =
-                                "رامین و رویا",
-
-                            contentScale =
-                                ContentScale.Crop,
-
-                            alignment =
-                                Alignment.CenterStart,
-
-                            modifier =
-                                Modifier.fillMaxSize()
-                        )
-
-                        Box(
-
-                            modifier =
-                                Modifier.fillMaxSize()
-                                    .background(
-                                        Brush.verticalGradient(
-                                            colors =
-                                                listOf(
-                                                    Color.Transparent,
-                                                    Color.Black.copy(
-                                                        alpha = 0.50f
-                                                    )
-                                                )
-                                        )
-                                    )
-                        )
-
-                        Text(
-
-                            text =
-                                "مهم‌ترین فصل قصه‌ی ما ❤️",
-
-                            modifier =
-                                Modifier
-                                    .align(
-                                        Alignment.BottomCenter
-                                    )
-                                    .padding(
-                                        bottom = 10.dp
-                                    ),
-
-                            color = Color.White,
-
-                            fontSize = 14.sp,
-
-                            fontWeight =
-                                FontWeight.ExtraBold
-                        )
-                    }
-                }
-            }
-
-            item {
-
-                Card(
-
-                    modifier =
-                        Modifier.fillMaxWidth(),
-
-                    shape =
-                        RoundedCornerShape(22.dp),
-
-                    colors =
-                        CardDefaults.cardColors(
-                            containerColor =
-                                Color.White.copy(
-                                    alpha = 0.84f
-                                )
-                        )
-                ) {
-
-                    Row(
-
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(12.dp),
-
-                        verticalAlignment =
-                            Alignment.CenterVertically
-                    ) {
-
-                        Box(
-
-                            modifier = Modifier
-                                .size(56.dp)
-                                .clip(
-                                    RoundedCornerShape(
-                                        17.dp
-                                    )
-                                )
-                                .background(
-                                    Brush.linearGradient(
-                                        colors = listOf(
-                                            Rose,
-                                            Lavender
-                                        )
-                                    )
-                                ),
-
-                            contentAlignment =
-                                Alignment.Center
-                        ) {
-
-                            Text(
-                                text = "❤️",
-                                fontSize = 25.sp
-                            )
-                        }
-
-                        Spacer(
-                            modifier =
-                                Modifier.width(10.dp)
-                        )
-
-                        Column(
-                            modifier =
-                                Modifier.weight(1f)
-                        ) {
-
-                            Text(
-                                text =
-                                    "سالگرد آشنایی ما",
-                                fontSize = 12.sp,
-                                fontWeight =
-                                    FontWeight.ExtraBold,
-                                color = TextDark
-                            )
-
-                            Text(
-                                text =
-                                    "۱۴۰۵/۰۳/۲۰",
-                                fontSize = 17.sp,
-                                fontWeight =
-                                    FontWeight.ExtraBold,
-                                color = DeepRose
-                            )
-
-                            Text(
-                                text =
-                                    "از این روز قصه‌ی ما شروع شد ❤️",
-                                fontSize = 7.sp,
-                                color = SoftText
-                            )
-                        }
-
-                        Text(
-                            text = "∞",
-                            fontSize = 29.sp,
-                            color = Rose
-                        )
-                    }
-                }
-            }
-
-            item {
-
-                Row(
-
-                    modifier =
-                        Modifier.fillMaxWidth(),
-
-                    horizontalArrangement =
-                        Arrangement.spacedBy(8.dp)
-                ) {
-
-                    DateInfoCard(
-
-                        modifier =
-                            Modifier.weight(1f),
-
-                        icon = "👑",
-
-                        name = "رامین",
-
-                        label = "تولد من",
-
-                        date = "۱۳۷۳/۰۶/۲۰"
-                    )
-
-                    DateInfoCard(
-
-                        modifier =
-                            Modifier.weight(1f),
-
-                        icon = "🌷",
-
-                        name = "رویا",
-
-                        label = "تولد عشق من",
-
-                        date = "۱۳۸۱/۰۹/۱۵"
-                    )
-                }
-            }
-
-            item {
-
-                Card(
-
-                    modifier =
-                        Modifier.fillMaxWidth(),
-
-                    shape =
-                        RoundedCornerShape(20.dp),
-
-                    colors =
-                        CardDefaults.cardColors(
-                            containerColor =
-                                Color.White.copy(
-                                    alpha = 0.78f
-                                )
-                        )
-                ) {
-
-                    Row(
-
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(11.dp),
-
-                        verticalAlignment =
-                            Alignment.CenterVertically
-                    ) {
-
-                        Text(
-                            text = "🌙",
-                            fontSize = 26.sp
-                        )
-
-                        Spacer(
-                            modifier =
-                                Modifier.width(9.dp)
-                        )
-
-                        Column(
-                            modifier =
-                                Modifier.weight(1f)
-                        ) {
-
-                            Text(
-                                text =
-                                    "قرار ماهانه‌ی ما",
-                                fontSize = 11.sp,
-                                fontWeight =
-                                    FontWeight.Bold,
-                                color = TextDark
-                            )
-
-                            Text(
-                                text =
-                                    "هر ماه یک خاطره‌ی تازه ❤️",
-                                fontSize = 7.sp,
-                                color = SoftText
-                            )
-                        }
-
-                        Text(
-                            text = "۲۰",
-                            fontSize = 23.sp,
-                            fontWeight =
-                                FontWeight.ExtraBold,
-                            color = Rose
-                        )
-                    }
-                }
-            }
-
-            item {
-
-                Row(
-
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(
-                            RoundedCornerShape(18.dp)
-                        )
-                        .background(
-                            Brush.horizontalGradient(
-                                colors = listOf(
-                                    Rose,
-                                    DeepRose
-                                )
-                            )
-                        )
-                        .padding(11.dp),
-
-                    verticalAlignment =
-                        Alignment.CenterVertically
-                ) {
-
-                    Text(
-                        text = "✨",
-                        fontSize = 18.sp
-                    )
-
-                    Spacer(
-                        modifier =
-                            Modifier.width(7.dp)
-                    )
-
-                    Text(
-                        text =
-                            "مهم‌ترین تاریخ، همین امروزِ کنار هم بودنه.",
-                        fontSize = 9.sp,
-                        fontWeight =
-                            FontWeight.Bold,
-                        color = Color.White,
-                        modifier =
-                            Modifier.weight(1f),
-                        textAlign = TextAlign.Center
-                    )
-
-                    Text(
-                        text = "❤️",
-                        fontSize = 17.sp
-                    )
-                }
-            }
-        }
     }
 }
 
-// ============================================================
-// DATE INFO CARD
-// ============================================================
+@Composable
+fun CompactLoveFooter() {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(
+                top = 3.dp,
+                bottom = 4.dp
+            ),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+
+        Text(
+            text = "ساخته شده با ❤️ برای رامین و رویا",
+            fontSize = 9.sp,
+            color = SoftText,
+            fontWeight = FontWeight.Medium
+        )
+
+        Spacer(
+            modifier = Modifier.height(3.dp)
+        )
+
+        Text(
+            text = "رویـارام • فقط برای ما",
+            fontSize = 7.sp,
+            color = Rose
+        )
+    }
+}
 
 @Composable
-fun DateInfoCard(
-    modifier: Modifier,
-    icon: String,
-    name: String,
-    label: String,
-    date: String
+fun PremiumBottomBar(
+    selected: String,
+    onHomeClick: () -> Unit,
+    onMemoriesClick: () -> Unit,
+    onSpecialClick: () -> Unit
 ) {
-
-    Card(
-
-        modifier = modifier,
-
-        shape =
-            RoundedCornerShape(21.dp),
-
-        colors =
-            CardDefaults.cardColors(
-                containerColor =
-                    Color.White.copy(
-                        alpha = 0.84f
-                    )
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .navigationBarsPadding()
+            .padding(
+                horizontal = 18.dp,
+                vertical = 10.dp
             )
     ) {
 
-        Column(
-
+        Surface(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(10.dp),
-
-            horizontalAlignment =
-                Alignment.CenterHorizontally
+                .shadow(
+                    elevation = 16.dp,
+                    shape = RoundedCornerShape(28.dp),
+                    ambientColor = Rose.copy(alpha = 0.18f)
+                ),
+            shape = RoundedCornerShape(28.dp),
+            color = Color.White.copy(alpha = 0.90f)
         ) {
 
-            Box(
-
+            Row(
                 modifier = Modifier
-                    .size(45.dp)
-                    .clip(CircleShape)
-                    .background(
-                        SoftPink
+                    .fillMaxWidth()
+                    .padding(
+                        horizontal = 8.dp,
+                        vertical = 7.dp
                     ),
-
-                contentAlignment =
-                    Alignment.Center
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
             ) {
 
-                Text(
-                    text = icon,
-                    fontSize = 22.sp
+                BottomBarItem(
+                    icon = "⌂",
+                    title = "خانه",
+                    selected = selected == "home",
+                    onClick = onHomeClick
+                )
+
+                BottomBarItem(
+                    icon = "♡",
+                    title = "خاطرات",
+                    selected = selected == "memories",
+                    onClick = onMemoriesClick
+                )
+
+                BottomBarItem(
+                    icon = "✦",
+                    title = "لحظه‌های خاص",
+                    selected = selected == "special",
+                    onClick = onSpecialClick
                 )
             }
+        }
+    }
+}
 
-            Spacer(
-                modifier = Modifier.height(5.dp)
+@Composable
+fun BottomBarItem(
+    icon: String,
+    title: String,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    Surface(
+        modifier = Modifier
+            .clip(RoundedCornerShape(18.dp))
+            .clickable {
+                onClick()
+            },
+        shape = RoundedCornerShape(18.dp),
+        color = if (selected) {
+            SoftPink.copy(alpha = 0.72f)
+        } else {
+            Color.Transparent
+        }
+    ) {
+
+        Column(
+            modifier = Modifier
+                .padding(
+                    horizontal = 18.dp,
+                    vertical = 5.dp
+                ),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+
+            Text(
+                text = icon,
+                fontSize = 19.sp,
+                color = if (selected) {
+                    DeepRose
+                } else {
+                    SoftText
+                }
             )
 
             Text(
-                text = name,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = TextDark
-            )
-
-            Text(
-                text = label,
-                fontSize = 7.sp,
-                color = SoftText
-            )
-
-            Text(
-                text = date,
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Bold,
-                color = DeepRose,
-                modifier = Modifier.padding(
-                    top = 3.dp
-                )
+                text = title,
+                fontSize = 8.sp,
+                fontWeight = if (selected) {
+                    FontWeight.Bold
+                } else {
+                    FontWeight.Medium
+                },
+                color = if (selected) {
+                    DeepRose
+                } else {
+                    SoftText
+                }
             )
         }
     }
 }
 
-// ============================================================
-// MEMORIES SCREEN
-// ============================================================
-
 @Composable
 fun MemoriesScreen(
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onHomeClick: () -> Unit,
+    onSpecialClick: () -> Unit,
+    onToast: (String) -> Unit
 ) {
-
-    val firestore = remember {
-        FirebaseFirestore.getInstance()
-    }
-
     var memories by remember {
-        mutableStateOf<List<Memory>>(
-            emptyList()
-        )
+        mutableStateOf<List<Memory>>(emptyList())
     }
 
     var loading by remember {
@@ -2106,102 +1118,97 @@ fun MemoriesScreen(
         mutableStateOf(false)
     }
 
-    LaunchedEffect(Unit) {
+    val firestore = remember {
+        FirebaseFirestore.getInstance()
+    }
 
-        firestore
+    DisposableEffect(Unit) {
+
+        val registration = firestore
             .collection("memories")
             .orderBy(
                 "createdAt",
                 Query.Direction.DESCENDING
             )
-            .addSnapshotListener {
-
-                    snapshot,
-                    error ->
+            .addSnapshotListener { snapshot, error ->
 
                 loading = false
 
-                if (
-                    error == null &&
-                    snapshot != null
-                ) {
-
-                    memories =
-                        snapshot.documents.map {
-
-                            document ->
-
-                            Memory(
-
-                                id =
-                                    document.id,
-
-                                title =
-                                    document.getString(
-                                        "title"
-                                    ) ?: "خاطره ما",
-
-                                date =
-                                    document.getString(
-                                        "date"
-                                    ) ?: "",
-
-                                description =
-                                    document.getString(
-                                        "description"
-                                    ) ?: "",
-
-                                imageUrl =
-                                    document.getString(
-                                        "imageUrl"
-                                    ) ?: ""
-                            )
-                        }
+                if (error != null) {
+                    onToast("خطا در دریافت خاطرات")
+                    return@addSnapshotListener
                 }
+
+                memories = snapshot?.documents?.map { document ->
+
+                    Memory(
+                        id = document.id,
+                        title = document.getString("title").orEmpty(),
+                        date = document.getString("date").orEmpty(),
+                        description = document
+                            .getString("description")
+                            .orEmpty(),
+                        imageUrl = document
+                            .getString("imageUrl")
+                            .orEmpty()
+                    )
+
+                } ?: emptyList()
             }
+
+        onDispose {
+            registration.remove()
+        }
     }
 
     Box(
-
         modifier = Modifier
             .fillMaxSize()
             .background(PageBackground)
     ) {
 
-        Column(
-            modifier = Modifier.fillMaxSize()
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(
+                start = 16.dp,
+                end = 16.dp,
+                top = 14.dp,
+                bottom = 105.dp
+            ),
+            verticalArrangement = Arrangement.spacedBy(13.dp)
         ) {
 
-            MemoriesHeader(
+            item {
+                MemoriesHeader(
+                    onBack = onBack,
+                    onAdd = {
+                        showAddDialog = true
+                    }
+                )
+            }
 
-                onBack = onBack,
+            item {
+                MemoriesIntro()
+            }
 
-                onAdd = {
-                    showAddDialog = true
-                }
-            )
+            if (loading) {
 
-            when {
-
-                loading -> {
-
+                item {
                     Box(
-
-                        modifier =
-                            Modifier.fillMaxSize(),
-
-                        contentAlignment =
-                            Alignment.Center
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(40.dp),
+                        contentAlignment = Alignment.Center
                     ) {
-
                         CircularProgressIndicator(
                             color = Rose
                         )
                     }
                 }
 
-                memories.isEmpty() -> {
+            } else if (memories.isEmpty()) {
 
+                item {
                     EmptyMemories(
                         onAdd = {
                             showAddDialog = true
@@ -2209,194 +1216,207 @@ fun MemoriesScreen(
                     )
                 }
 
-                else -> {
+            } else {
 
-                    LazyColumn(
-
-                        modifier =
-                            Modifier.fillMaxSize(),
-
-                        contentPadding =
-                            PaddingValues(
-                                horizontal = 15.dp,
-                                vertical = 9.dp
-                            ),
-
-                        verticalArrangement =
-                            Arrangement.spacedBy(10.dp)
-                    ) {
-
-                        items(
-
-                            items = memories,
-
-                            key = {
-                                it.id
-                            }
-
-                        ) { memory ->
-
-                            MemoryCard(
-                                memory = memory
-                            )
-                        }
+                items(
+                    items = memories,
+                    key = {
+                        it.id
                     }
+                ) { memory ->
+
+                    MemoryCard(
+                        memory = memory
+                    )
                 }
             }
         }
 
-        if (showAddDialog) {
+        PremiumBottomBar(
+            selected = "memories",
+            onHomeClick = onHomeClick,
+            onMemoriesClick = {},
+            onSpecialClick = onSpecialClick
+        )
+    }
 
-            AddMemoryDialog(
-
-                onDismiss = {
-                    showAddDialog = false
-                }
-            )
-        }
+    if (showAddDialog) {
+        AddMemoryDialog(
+            onDismiss = {
+                showAddDialog = false
+            },
+            onSaved = {
+                showAddDialog = false
+                onToast("خاطره با عشق ذخیره شد ❤️")
+            }
+        )
     }
 }
-
-// ============================================================
-// MEMORIES HEADER
-// ============================================================
 
 @Composable
 fun MemoriesHeader(
     onBack: () -> Unit,
     onAdd: () -> Unit
 ) {
-
     Row(
-
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(
-                horizontal = 15.dp,
-                vertical = 11.dp
-            ),
-
-        verticalAlignment =
-            Alignment.CenterVertically
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
     ) {
 
         Box(
-
             modifier = Modifier
-                .size(40.dp)
+                .size(43.dp)
                 .clip(CircleShape)
-                .background(
-                    Color.White.copy(
-                        alpha = 0.85f
-                    )
-                )
+                .background(Color.White.copy(alpha = 0.82f))
                 .clickable {
                     onBack()
                 },
-
-            contentAlignment =
-                Alignment.Center
+            contentAlignment = Alignment.Center
         ) {
-
             Text(
                 text = "→",
-                fontSize = 21.sp,
+                fontSize = 20.sp,
                 color = DeepRose
             )
         }
 
         Spacer(
-            modifier = Modifier.width(9.dp)
+            modifier = Modifier.width(10.dp)
         )
 
         Column(
             modifier = Modifier.weight(1f)
         ) {
-
             Text(
-                text = "خاطرات ما 📸",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = TextDark
+                text = "خاطرات ما",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Black,
+                color = DeepRose
             )
 
             Text(
-                text =
-                    "لحظه‌هایی که نباید فراموش شوند",
-                fontSize = 8.sp,
+                text = "لحظه‌هایی که هیچ‌وقت فراموش نمی‌شن ❤️",
+                fontSize = 9.sp,
                 color = SoftText
             )
         }
 
         Box(
-
             modifier = Modifier
-                .size(40.dp)
+                .size(43.dp)
                 .clip(CircleShape)
                 .background(
                     Brush.linearGradient(
-                        colors = listOf(
+                        listOf(
                             Rose,
-                            DeepRose
+                            Lavender
                         )
                     )
                 )
                 .clickable {
                     onAdd()
                 },
-
-            contentAlignment =
-                Alignment.Center
+            contentAlignment = Alignment.Center
         ) {
-
             Text(
                 text = "+",
                 color = Color.White,
-                fontSize = 23.sp
+                fontSize = 25.sp
             )
         }
     }
 }
 
-// ============================================================
-// EMPTY MEMORIES
-// ============================================================
+@Composable
+fun MemoriesIntro() {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White.copy(alpha = 0.76f)
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(15.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(SoftPink),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "📸",
+                    fontSize = 22.sp
+                )
+            }
+
+            Spacer(
+                modifier = Modifier.width(11.dp)
+            )
+
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+
+                Text(
+                    text = "دفتر خاطرات رامین و رویا",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = TextDark
+                )
+
+                Spacer(
+                    modifier = Modifier.height(3.dp)
+                )
+
+                Text(
+                    text = "هر خاطره یک تکه از داستان ماست.",
+                    fontSize = 9.sp,
+                    color = SoftText
+                )
+            }
+        }
+    }
+}
 
 @Composable
 fun EmptyMemories(
     onAdd: () -> Unit
 ) {
-
-    Box(
-
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(25.dp),
-
-        contentAlignment =
-            Alignment.Center
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White.copy(alpha = 0.80f)
+        )
     ) {
-
         Column(
-
-            horizontalAlignment =
-                Alignment.CenterHorizontally
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(30.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
             Text(
-                text = "💗",
-                fontSize = 50.sp
+                text = "♡",
+                fontSize = 50.sp,
+                color = Rose
             )
 
             Spacer(
-                modifier = Modifier.height(10.dp)
+                modifier = Modifier.height(8.dp)
             )
 
             Text(
-                text =
-                    "هنوز خاطره‌ای ثبت نشده",
-                fontSize = 17.sp,
-                fontWeight = FontWeight.Bold,
+                text = "هنوز خاطره‌ای ثبت نشده",
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Black,
                 color = TextDark
             )
 
@@ -2405,9 +1425,8 @@ fun EmptyMemories(
             )
 
             Text(
-                text =
-                    "اولین لحظه قشنگتون رو اینجا ثبت کنید",
-                fontSize = 11.sp,
+                text = "اولین لحظه‌ی قشنگتون رو اینجا ثبت کنید ❤️",
+                fontSize = 9.sp,
                 color = SoftText,
                 textAlign = TextAlign.Center
             )
@@ -2416,141 +1435,114 @@ fun EmptyMemories(
                 modifier = Modifier.height(15.dp)
             )
 
-            Card(
-
-                modifier =
-                    Modifier.clickable {
-                        onAdd()
-                    },
-
-                shape =
-                    RoundedCornerShape(17.dp),
-
-                colors =
-                    CardDefaults.cardColors(
-                        containerColor = Rose
-                    )
+            Button(
+                onClick = onAdd,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Rose
+                ),
+                shape = RoundedCornerShape(16.dp)
             ) {
-
                 Text(
-                    text =
-                        "ثبت اولین خاطره ❤️",
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 11.sp,
-                    modifier =
-                        Modifier.padding(
-                            horizontal = 19.dp,
-                            vertical = 11.dp
-                        )
+                    text = "ثبت اولین خاطره",
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold
                 )
             }
         }
     }
 }
-
-// ============================================================
-// MEMORY CARD
-// ============================================================
 
 @Composable
 fun MemoryCard(
     memory: Memory
 ) {
-
     Card(
-
-        modifier =
-            Modifier.fillMaxWidth(),
-
-        shape =
-            RoundedCornerShape(22.dp),
-
-        colors =
-            CardDefaults.cardColors(
-                containerColor =
-                    Color.White.copy(
-                        alpha = 0.90f
-                    )
-            )
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(
+                elevation = 7.dp,
+                shape = RoundedCornerShape(25.dp),
+                ambientColor = Rose.copy(alpha = 0.09f)
+            ),
+        shape = RoundedCornerShape(25.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White.copy(alpha = 0.84f)
+        )
     ) {
 
         Column(
-            modifier =
-                Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth()
         ) {
 
-            if (
-                memory.imageUrl.isNotBlank()
-            ) {
+            if (memory.imageUrl.isNotBlank()) {
 
-                coil.compose.AsyncImage(
-
-                    model =
-                        memory.imageUrl,
-
-                    contentDescription =
-                        memory.title,
-
-                    contentScale =
-                        ContentScale.Crop,
-
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .height(210.dp)
-                            .clip(
-                                RoundedCornerShape(
-                                    topStart = 22.dp,
-                                    topEnd = 22.dp
-                                )
+                AsyncImage(
+                    model = memory.imageUrl,
+                    contentDescription = memory.title,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(210.dp)
+                        .clip(
+                            RoundedCornerShape(
+                                topStart = 25.dp,
+                                topEnd = 25.dp
                             )
+                        ),
+                    contentScale = ContentScale.Crop
                 )
             }
 
             Column(
-
-                modifier =
-                    Modifier.padding(15.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(15.dp)
             ) {
 
-                Text(
-                    text = memory.title,
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = TextDark
-                )
-
-                if (
-                    memory.date.isNotBlank()
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
 
                     Text(
-                        text =
-                            "📅 ${memory.date}",
-                        fontSize = 10.sp,
-                        color = Rose,
-                        modifier =
-                            Modifier.padding(
-                                top = 4.dp
-                            )
+                        text = memory.title.ifBlank {
+                            "یک خاطره‌ی قشنگ ❤️"
+                        },
+                        modifier = Modifier.weight(1f),
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Black,
+                        color = TextDark
                     )
+
+                    if (memory.date.isNotBlank()) {
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = PalePink
+                        ) {
+                            Text(
+                                text = memory.date,
+                                modifier = Modifier.padding(
+                                    horizontal = 8.dp,
+                                    vertical = 5.dp
+                                ),
+                                fontSize = 8.sp,
+                                color = DeepRose,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
                 }
 
-                if (
-                    memory.description.isNotBlank()
-                ) {
+                if (memory.description.isNotBlank()) {
+
+                    Spacer(
+                        modifier = Modifier.height(8.dp)
+                    )
 
                     Text(
-                        text =
-                            memory.description,
-                        fontSize = 12.sp,
+                        text = memory.description,
+                        fontSize = 10.sp,
                         color = SoftText,
-                        lineHeight = 20.sp,
-                        modifier =
-                            Modifier.padding(
-                                top = 7.dp
-                            )
+                        lineHeight = 17.sp
                     )
                 }
             }
@@ -2558,15 +1550,12 @@ fun MemoryCard(
     }
 }
 
-// ============================================================
-// ADD MEMORY DIALOG
-// ============================================================
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddMemoryDialog(
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onSaved: () -> Unit
 ) {
-
     var title by remember {
         mutableStateOf("")
     }
@@ -2579,241 +1568,425 @@ fun AddMemoryDialog(
         mutableStateOf("")
     }
 
+    var imageUrl by remember {
+        mutableStateOf("")
+    }
+
     var saving by remember {
         mutableStateOf(false)
     }
 
     AlertDialog(
-
         onDismissRequest = {
-
             if (!saving) {
                 onDismiss()
             }
         },
-
+        containerColor = Cream,
+        shape = RoundedCornerShape(28.dp),
         title = {
-
             Text(
-                text =
-                    "ثبت یک خاطره ❤️",
-                fontWeight =
-                    FontWeight.Bold
+                text = "ثبت یک خاطره ❤️",
+                fontSize = 19.sp,
+                fontWeight = FontWeight.Black,
+                color = DeepRose
             )
         },
-
         text = {
 
             Column(
-
-                modifier = Modifier
-                    .height(285.dp)
-                    .verticalScroll(
-                        rememberScrollState()
-                    ),
-
-                verticalArrangement =
-                    Arrangement.spacedBy(9.dp)
+                modifier = Modifier.fillMaxWidth()
             ) {
 
                 OutlinedTextField(
-
                     value = title,
-
                     onValueChange = {
                         title = it
                     },
-
+                    modifier = Modifier.fillMaxWidth(),
                     label = {
-                        Text("عنوان خاطره")
+                        Text(
+                            text = "عنوان خاطره"
+                        )
                     },
-
                     singleLine = true,
+                    shape = RoundedCornerShape(15.dp)
+                )
 
-                    modifier =
-                        Modifier.fillMaxWidth()
+                Spacer(
+                    modifier = Modifier.height(9.dp)
                 )
 
                 OutlinedTextField(
-
                     value = date,
-
                     onValueChange = {
                         date = it
                     },
-
+                    modifier = Modifier.fillMaxWidth(),
                     label = {
-                        Text("تاریخ")
-                    },
-
-                    placeholder = {
                         Text(
-                            "مثلاً ۱۴۰۵/۰۳/۲۰"
+                            text = "تاریخ"
                         )
                     },
-
                     singleLine = true,
+                    shape = RoundedCornerShape(15.dp)
+                )
 
-                    modifier =
-                        Modifier.fillMaxWidth()
+                Spacer(
+                    modifier = Modifier.height(9.dp)
                 )
 
                 OutlinedTextField(
-
                     value = description,
-
                     onValueChange = {
                         description = it
                     },
-
+                    modifier = Modifier.fillMaxWidth(),
                     label = {
-                        Text("توضیح خاطره")
+                        Text(
+                            text = "توضیح خاطره"
+                        )
                     },
+                    minLines = 3,
+                    maxLines = 4,
+                    shape = RoundedCornerShape(15.dp)
+                )
 
-                    minLines = 4,
+                Spacer(
+                    modifier = Modifier.height(9.dp)
+                )
 
-                    modifier =
-                        Modifier.fillMaxWidth()
+                OutlinedTextField(
+                    value = imageUrl,
+                    onValueChange = {
+                        imageUrl = it
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = {
+                        Text(
+                            text = "لینک عکس، در صورت وجود"
+                        )
+                    },
+                    singleLine = true,
+                    shape = RoundedCornerShape(15.dp)
                 )
             }
         },
-
         confirmButton = {
 
             TextButton(
-
-                enabled =
-                    !saving &&
-                            title.isNotBlank(),
-
+                enabled = !saving,
                 onClick = {
 
-                    val user =
-                        FirebaseAuth
-                            .getInstance()
-                            .currentUser
+                    if (title.isBlank()) {
+                        return@TextButton
+                    }
+
+                    val user = FirebaseAuth
+                        .getInstance()
+                        .currentUser
 
                     if (user == null) {
-
                         return@TextButton
                     }
 
                     saving = true
 
-                    val memory =
-                        hashMapOf<String, Any>(
-
-                            "title" to
-                                    title.trim(),
-
-                            "date" to
-                                    date.trim(),
-
-                            "description" to
-                                    description.trim(),
-
-                            "createdBy" to
-                                    user.uid,
-
-                            "createdAt" to
-                                    FieldValue
-                                        .serverTimestamp()
-                        )
+                    val data = hashMapOf(
+                        "title" to title.trim(),
+                        "date" to date.trim(),
+                        "description" to description.trim(),
+                        "imageUrl" to imageUrl.trim(),
+                        "createdBy" to user.uid,
+                        "createdAt" to com.google.firebase.firestore.FieldValue.serverTimestamp()
+                    )
 
                     FirebaseFirestore
                         .getInstance()
                         .collection("memories")
-                        .add(memory)
+                        .add(data)
                         .addOnSuccessListener {
-
                             saving = false
-
-                            onDismiss()
+                            onSaved()
                         }
                         .addOnFailureListener {
-
                             saving = false
                         }
                 }
             ) {
-
-                Text(
-
-                    text =
-                        if (saving) {
-                            "در حال ذخیره..."
-                        } else {
-                            "ذخیره ❤️"
-                        },
-
-                    color = DeepRose
-                )
+                if (saving) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        color = Rose,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text(
+                        text = "ذخیره ❤️",
+                        color = DeepRose,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
         },
-
         dismissButton = {
 
             TextButton(
-
                 enabled = !saving,
-
-                onClick = {
-                    onDismiss()
-                }
+                onClick = onDismiss
             ) {
-
-                Text("لغو")
+                Text(
+                    text = "انصراف",
+                    color = SoftText
+                )
             }
         }
     )
 }
 
-// ============================================================
-// DAYS TOGETHER
-// ۱۴۰۵/۰۳/۲۰ = 2026/06/10
-// ============================================================
+@Composable
+fun SpecialDatesScreen(
+    onBack: () -> Unit,
+    onHomeClick: () -> Unit,
+    onMemoriesClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(PageBackground)
+    ) {
 
-fun calculateDaysTogether(): Long {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(
+                start = 16.dp,
+                end = 16.dp,
+                top = 14.dp,
+                bottom = 105.dp
+            ),
+            verticalArrangement = Arrangement.spacedBy(13.dp)
+        ) {
 
-    val calendar =
-        Calendar.getInstance()
+            item {
 
-    calendar.set(
-        2026,
-        Calendar.JUNE,
-        10,
-        0,
-        0,
-        0
-    )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
 
-    calendar.set(
-        Calendar.MILLISECOND,
-        0
-    )
+                    Box(
+                        modifier = Modifier
+                            .size(43.dp)
+                            .clip(CircleShape)
+                            .background(
+                                Color.White.copy(alpha = 0.82f)
+                            )
+                            .clickable {
+                                onBack()
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "→",
+                            fontSize = 20.sp,
+                            color = DeepRose
+                        )
+                    }
 
-    val startDate =
-        calendar.time
+                    Spacer(
+                        modifier = Modifier.width(10.dp)
+                    )
 
-    val today =
-        Date()
+                    Column {
+                        Text(
+                            text = "لحظه‌های خاص",
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Black,
+                            color = DeepRose
+                        )
 
-    val difference =
-        today.time -
-                startDate.time
+                        Text(
+                            text = "تاریخ‌هایی که برای ما معنی دارن ✨",
+                            fontSize = 9.sp,
+                            color = SoftText
+                        )
+                    }
+                }
+            }
 
-    val days =
-        difference /
-                (
-                    1000L *
-                            60L *
-                            60L *
-                            24L
+            item {
+                DateInfoCard(
+                    icon = "❤️",
+                    title = "شروع داستان ما",
+                    date = "۲۰ خرداد ۱۴۰۵",
+                    description = "روزی که قصه‌ی رامین و رویا شروع شد."
+                )
+            }
+
+            item {
+                DateInfoCard(
+                    icon = "💗",
+                    title = "هر ماه با هم",
+                    date = "ماهگرد ما",
+                    description = "یک ماه دیگر از با هم بودنمان گذشت."
+                )
+            }
+
+            item {
+                DateInfoCard(
+                    icon = "🎂",
+                    title = "تولدها",
+                    date = "به‌زودی ثبت می‌شود",
+                    description = "تولد رامین و رویا را اینجا ذخیره می‌کنیم."
+                )
+            }
+
+            item {
+                DateInfoCard(
+                    icon = "💍",
+                    title = "سالگرد",
+                    date = "هر سال",
+                    description = "سال‌های بیشتری از داستانمان را کنار هم جشن می‌گیریم."
+                )
+            }
+
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(27.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = DeepRose
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(21.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+
+                        Text(
+                            text = "«با تو، تاریخ‌ها فقط عدد نیستن؛",
+                            color = Color.White,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center
+                        )
+
+                        Text(
+                            text = "هر کدومشون یک خاطره‌ان.» ❤️",
+                            color = Color.White,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Black,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+            }
+        }
+
+        PremiumBottomBar(
+            selected = "special",
+            onHomeClick = onHomeClick,
+            onMemoriesClick = onMemoriesClick,
+            onSpecialClick = {}
+        )
+    }
+}
+
+@Composable
+fun DateInfoCard(
+    icon: String,
+    title: String,
+    date: String,
+    description: String
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White.copy(alpha = 0.82f)
+        )
+    ) {
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(15.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+
+            Box(
+                modifier = Modifier
+                    .size(50.dp)
+                    .clip(CircleShape)
+                    .background(
+                        Brush.linearGradient(
+                            listOf(
+                                SoftPink,
+                                PaleLavender
+                            )
+                        )
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = icon,
+                    fontSize = 22.sp
+                )
+            }
+
+            Spacer(
+                modifier = Modifier.width(11.dp)
+            )
+
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+
+                Text(
+                    text = title,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Black,
+                    color = TextDark
                 )
 
-    return if (days < 0) {
-        0L
-    } else {
-        days + 1
+                Spacer(
+                    modifier = Modifier.height(3.dp)
+                )
+
+                Text(
+                    text = date,
+                    fontSize = 10.sp,
+                    color = DeepRose,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Spacer(
+                    modifier = Modifier.height(3.dp)
+                )
+
+                Text(
+                    text = description,
+                    fontSize = 8.sp,
+                    color = SoftText,
+                    lineHeight = 14.sp
+                )
+            }
+        }
     }
+}
+
+fun calculateDaysTogether(): Int {
+    val now = Calendar.getInstance().time
+
+    val difference =
+        now.time - RelationshipStartDate.time
+
+    val days =
+        difference / (1000L * 60L * 60L * 24L)
+
+    return days
+        .coerceAtLeast(0L)
+        .toInt()
 }
