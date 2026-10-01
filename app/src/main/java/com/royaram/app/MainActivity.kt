@@ -784,12 +784,14 @@ fun RoyaramFolderCard(
             ) {
 
                 AsyncImage(
-                    model = image,
-                    contentDescription = title,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
-
+    model = image,
+    contentDescription = title,
+    modifier = Modifier
+        .fillMaxSize()
+        .padding(5.dp)
+        .clip(RoundedCornerShape(18.dp)),
+    contentScale = ContentScale.Fit
+)
                 Surface(
                     modifier = Modifier
                         .padding(7.dp)
