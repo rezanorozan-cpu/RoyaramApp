@@ -407,49 +407,42 @@ fun PremiumTopBar(
 // HERO
 // ============================================================
 
-@Composable
+@@Composable
 fun PremiumHero(
     daysTogether: Long
 ) {
 
-    val transition =
-        rememberInfiniteTransition(
-            label = "hero_transition"
-        )
+    val transition = rememberInfiniteTransition(
+        label = "royaram_hero"
+    )
 
     val imageScale by transition.animateFloat(
-
         initialValue = 1.00f,
-
-        targetValue = 1.035f,
-
-        animationSpec =
-            infiniteRepeatable(
-                animation = tween(
-                    durationMillis = 6500,
-                    easing = FastOutSlowInEasing
-                )
-            ),
-
+        targetValue = 1.025f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(
+                durationMillis = 7000,
+                easing = FastOutSlowInEasing
+            )
+        ),
         label = "hero_scale"
     )
 
     Card(
-
         modifier = Modifier
             .fillMaxWidth()
-            .height(285.dp)
+            .height(228.dp)
             .shadow(
                 elevation = 18.dp,
                 shape = RoundedCornerShape(28.dp),
-                ambientColor = Rose.copy(alpha = 0.18f),
-                spotColor = Rose.copy(alpha = 0.20f)
+                ambientColor = Rose.copy(alpha = 0.20f),
+                spotColor = Rose.copy(alpha = 0.22f)
             ),
 
         shape = RoundedCornerShape(28.dp),
 
         colors = CardDefaults.cardColors(
-            containerColor = Color.White
+            containerColor = Color.Transparent
         )
     ) {
 
@@ -457,8 +450,13 @@ fun PremiumHero(
             modifier = Modifier.fillMaxSize()
         ) {
 
+            /*
+             * عکس اصلی بوسه
+             *
+             * Alignment.CenterStart باعث می‌شود
+             * کادر بیشتر سمت چپ عکس را نگه دارد.
+             */
             Image(
-
                 painter = painterResource(
                     id = R.drawable.royaram_photo_1
                 ),
@@ -466,6 +464,8 @@ fun PremiumHero(
                 contentDescription = "رامین و رویا",
 
                 contentScale = ContentScale.Crop,
+
+                alignment = Alignment.CenterStart,
 
                 modifier = Modifier
                     .fillMaxSize()
@@ -475,33 +475,35 @@ fun PremiumHero(
                     }
             )
 
+            /*
+             * لایه‌ی بسیار ظریف برای خوانایی متن
+             */
             Box(
-
                 modifier = Modifier
                     .fillMaxSize()
                     .background(
                         Brush.verticalGradient(
                             colors = listOf(
-                                Color.Black.copy(alpha = 0.04f),
+                                Color.Black.copy(alpha = 0.05f),
                                 Color.Transparent,
-                                Color.Black.copy(alpha = 0.78f)
+                                Color.Black.copy(alpha = 0.48f)
                             )
                         )
                     )
             )
 
-            // TOP GLASS LABEL
-
+            /*
+             * برچسب کوچک بالا
+             */
             Box(
-
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .padding(11.dp)
+                    .padding(10.dp)
                     .clip(
                         RoundedCornerShape(50.dp)
                     )
                     .background(
-                        Color.White.copy(alpha = 0.22f)
+                        Color.White.copy(alpha = 0.20f)
                     )
                     .padding(
                         horizontal = 11.dp,
@@ -512,22 +514,22 @@ fun PremiumHero(
                 Text(
                     text = "برای همیشه ♡",
                     color = Color.White,
-                    fontSize = 9.sp,
+                    fontSize = 8.sp,
                     fontWeight = FontWeight.Bold
                 )
             }
 
-            // HERO TEXT
-
+            /*
+             * اطلاعات پایین عکس
+             */
             Column(
-
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
                     .padding(
                         start = 18.dp,
                         end = 18.dp,
-                        bottom = 17.dp
+                        bottom = 13.dp
                     ),
 
                 horizontalAlignment =
@@ -536,39 +538,40 @@ fun PremiumHero(
 
                 Text(
                     text = "رامین ❤️ رویا",
-                    fontSize = 27.sp,
+                    fontSize = 24.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = Color.White,
                     textAlign = TextAlign.Center
                 )
 
                 Spacer(
-                    modifier = Modifier.height(3.dp)
+                    modifier = Modifier.height(2.dp)
                 )
 
                 Text(
-                    text = "هر روز یک صفحه‌ی تازه از قصه‌ی ما",
-                    fontSize = 10.sp,
-                    color = Color.White.copy(alpha = 0.94f),
+                    text = "قصه‌ی من و تو، برای همیشه",
+                    fontSize = 9.sp,
+                    color = Color.White.copy(
+                        alpha = 0.95f
+                    ),
                     textAlign = TextAlign.Center
                 )
 
                 Spacer(
-                    modifier = Modifier.height(9.dp)
+                    modifier = Modifier.height(7.dp)
                 )
 
                 Row(
-
                     modifier = Modifier
                         .clip(
                             RoundedCornerShape(50.dp)
                         )
                         .background(
-                            Color.White.copy(alpha = 0.22f)
+                            Color.White.copy(alpha = 0.20f)
                         )
                         .padding(
-                            horizontal = 14.dp,
-                            vertical = 6.dp
+                            horizontal = 13.dp,
+                            vertical = 5.dp
                         ),
 
                     verticalAlignment =
@@ -577,7 +580,7 @@ fun PremiumHero(
 
                     Text(
                         text = "❤️",
-                        fontSize = 12.sp
+                        fontSize = 11.sp
                     )
 
                     Spacer(
@@ -586,7 +589,7 @@ fun PremiumHero(
 
                     Text(
                         text = "$daysTogether روز کنار هم",
-                        fontSize = 10.sp,
+                        fontSize = 9.sp,
                         color = Color.White,
                         fontWeight = FontWeight.Bold
                     )
@@ -595,6 +598,8 @@ fun PremiumHero(
         }
     }
 }
+
+    v
 
 // ============================================================
 // RELATIONSHIP GLASS CARD
