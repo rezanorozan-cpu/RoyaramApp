@@ -323,7 +323,7 @@ fun PremiumTopBar(
     }
 }
 
-@Composable
+@@Composable
 fun PremiumHero(
     daysTogether: Int
 ) {
@@ -333,7 +333,7 @@ fun PremiumHero(
 
     val scale by transition.animateFloat(
         initialValue = 1f,
-        targetValue = 1.025f,
+        targetValue = 1.018f,
         animationSpec = infiniteRepeatable(
             animation = tween(
                 durationMillis = 7000,
@@ -347,89 +347,135 @@ fun PremiumHero(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(270.dp)
+            .height(205.dp)
             .shadow(
-                elevation = 18.dp,
-                shape = RoundedCornerShape(34.dp),
+                elevation = 15.dp,
+                shape = RoundedCornerShape(30.dp),
                 ambientColor = Rose.copy(alpha = 0.18f)
             ),
-        shape = RoundedCornerShape(34.dp),
+        shape = RoundedCornerShape(30.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White.copy(alpha = 0.74f)
+            containerColor = Color.White.copy(alpha = 0.78f)
         )
     ) {
+
         Box(
             modifier = Modifier.fillMaxSize()
         ) {
 
-            AsyncImage(
-                model = R.drawable.royaram_photo_1,
-                contentDescription = "رامین و رویا",
-                modifier = Modifier
-                    .fillMaxSize()
-                    .graphicsLayer {
-                        scaleX = scale
-                        scaleY = scale
-                    }
-                    .clip(RoundedCornerShape(34.dp)),
-                contentScale = ContentScale.Crop
-            )
-
+            // طبیعت پشت عکس
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(
                         Brush.verticalGradient(
                             colors = listOf(
-                                Color.Black.copy(alpha = 0.04f),
-                                Color.Black.copy(alpha = 0.16f),
-                                Color.Black.copy(alpha = 0.72f)
+                                Color(0xFFB9D9D0),
+                                Color(0xFFDFE8D9),
+                                Color(0xFFFFE1D8)
                             )
                         )
                     )
             )
 
+            // عکس اصلی کوچک‌تر و بدون کشیدگی
+            AsyncImage(
+                model = R.drawable.royaram_photo_1,
+                contentDescription = "رامین و رویا",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(165.dp)
+                    .align(Alignment.TopCenter)
+                    .graphicsLayer {
+                        scaleX = scale
+                        scaleY = scale
+                    }
+                    .clip(
+                        RoundedCornerShape(
+                            topStart = 30.dp,
+                            topEnd = 30.dp
+                        )
+                    ),
+                contentScale = ContentScale.Crop
+            )
+
+            // لایه طبیعی برای ترکیب عکس با پس‌زمینه
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(205.dp)
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                Color.Black.copy(alpha = 0.05f),
+                                Color.Black.copy(alpha = 0.60f)
+                            )
+                        )
+                    )
+            )
+
+            // آیکون کوچک گوشه بالا
+            Surface(
+                modifier = Modifier
+                    .padding(12.dp)
+                    .align(Alignment.TopEnd),
+                shape = CircleShape,
+                color = Color.White.copy(alpha = 0.86f),
+                shadowElevation = 5.dp
+            ) {
+                Text(
+                    text = "❤️",
+                    modifier = Modifier.padding(8.dp),
+                    fontSize = 14.sp
+                )
+            }
+
+            // متن پایین
             Column(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(22.dp),
-                verticalArrangement = Arrangement.Bottom,
+                    .fillMaxWidth()
+                    .align(Alignment.BottomCenter)
+                    .padding(
+                        horizontal = 18.dp,
+                        vertical = 13.dp
+                    ),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+
                 Text(
                     text = "رامین ❤️ رویا",
                     color = Color.White,
-                    fontSize = 28.sp,
+                    fontSize = 23.sp,
                     fontWeight = FontWeight.Black
                 )
 
                 Spacer(
-                    modifier = Modifier.height(5.dp)
+                    modifier = Modifier.height(2.dp)
                 )
 
                 Text(
                     text = "هر روز یک صفحه‌ی تازه از قصه‌ی ما",
-                    color = Color.White.copy(alpha = 0.92f),
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Medium
+                    color = Color.White.copy(alpha = 0.94f),
+                    fontSize = 9.sp
                 )
 
                 Spacer(
-                    modifier = Modifier.height(13.dp)
+                    modifier = Modifier.height(7.dp)
                 )
 
                 Surface(
                     shape = RoundedCornerShape(50.dp),
-                    color = Color.White.copy(alpha = 0.22f)
+                    color = Color.White.copy(alpha = 0.23f)
                 ) {
                     Text(
                         text = "❤️ $daysTogether روز کنار هم",
                         modifier = Modifier.padding(
-                            horizontal = 18.dp,
-                            vertical = 8.dp
+                            horizontal = 13.dp,
+                            vertical = 5.dp
                         ),
                         color = Color.White,
-                        fontSize = 11.sp,
+                        fontSize = 9.sp,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -437,7 +483,6 @@ fun PremiumHero(
         }
     }
 }
-
 @Composable
 fun RelationshipGlassCard(
     daysTogether: Int
