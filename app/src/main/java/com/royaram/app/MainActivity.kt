@@ -1238,7 +1238,309 @@ fun CompactLoveFooter() {
         )
     }
 }
+@Composable
+fun RoyaramFolderLayout(
+    onMemoriesClick: () -> Unit,
+    onChatClick: () -> Unit,
+    onSpecialClick: () -> Unit,
+    onToast: (String) -> Unit
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
 
+        SectionTitle(
+            title = "دنیای دونفره‌ی ما",
+            subtitle = "همه‌ی لحظه‌های رامین ❤️ رویا"
+        )
+
+        // ردیف اول
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+
+            RoyaramFolderCard(
+                modifier = Modifier.weight(1f),
+                image = R.drawable.royaram_photo_2,
+                title = "خاطرات ما",
+                subtitle = "لحظه‌های قشنگمون",
+                icon = Icons.Rounded.PhotoLibrary,
+                onClick = onMemoriesClick
+            )
+
+            RoyaramFolderCard(
+                modifier = Modifier.weight(1f),
+                image = R.drawable.royaram_photo_3,
+                title = "نامه‌های عاشقانه",
+                subtitle = "حرف‌هایی از قلبمون",
+                icon = Icons.Rounded.Favorite,
+                onClick = {
+                    onToast("نامه‌های عاشقانه به‌زودی 💌")
+                }
+            )
+
+            RoyaramFolderCard(
+                modifier = Modifier.weight(1f),
+                image = R.drawable.royaram_photo_4,
+                title = "آهنگ ما",
+                subtitle = "صدای خاطره‌هامون",
+                icon = Icons.Rounded.MusicNote,
+                onClick = {
+                    onToast("آهنگ ما به‌زودی 🎵")
+                }
+            )
+        }
+
+        // ردیف دوم
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+
+            RoyaramFolderCard(
+                modifier = Modifier.weight(1f),
+                image = R.drawable.royaram_photo_5,
+                title = "وقتی دلمون گرفت",
+                subtitle = "اینجا کنار همیم",
+                icon = Icons.Rounded.FavoriteBorder,
+                onClick = {
+                    onToast("اینجا همیشه جای امن ماست 🤍")
+                }
+            )
+
+            RoyaramFolderCard(
+                modifier = Modifier.weight(1f),
+                image = R.drawable.royaram_photo_6,
+                title = "چت دونفره",
+                subtitle = "حرف‌های من و تو ❤️",
+                icon = Icons.Rounded.ChatBubble,
+                onClick = onChatClick
+            )
+
+            RoyaramFolderCard(
+                modifier = Modifier.weight(1f),
+                image = R.drawable.royaram_photo_7,
+                title = "بخش خصوصی",
+                subtitle = "فقط برای من و تو 🔐",
+                icon = Icons.Rounded.Lock,
+                onClick = {
+                    onToast("بخش خصوصی رویارام 🔐")
+                }
+            )
+        }
+
+        // ردیف سوم؛ بخش‌های ثابت و جدا
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+
+            RoyaramMiniCard(
+                modifier = Modifier.weight(1f),
+                icon = Icons.Rounded.Event,
+                title = "رویدادها",
+                subtitle = "تاریخ‌های ما",
+                onClick = onSpecialClick
+            )
+
+            RoyaramMiniCard(
+                modifier = Modifier.weight(1f),
+                icon = Icons.Rounded.Folder,
+                title = "پوشه‌ها",
+                subtitle = "دنیای ما",
+                onClick = {
+                    onToast("پوشه‌های رویارام 💗")
+                }
+            )
+
+            RoyaramMiniCard(
+                modifier = Modifier.weight(1f),
+                icon = Icons.Rounded.AutoAwesome,
+                title = "کلام امروز",
+                subtitle = "برای تو ❤️",
+                onClick = {
+                    onToast("امروز هم دوستت دارم ❤️")
+                }
+            )
+        }
+    }
+}
+@Composable
+fun RoyaramFolderCard(
+    modifier: Modifier = Modifier,
+    image: Int,
+    title: String,
+    subtitle: String,
+    icon: ImageVector,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = modifier
+            .height(145.dp)
+            .clickable { onClick() },
+        shape = RoundedCornerShape(22.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White.copy(alpha = 0.72f)
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 2.dp
+        )
+    ) {
+
+        Column(
+            modifier = Modifier.fillMaxSize()
+        ) {
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(82.dp)
+            ) {
+
+                AsyncImage(
+                    model = image,
+                    contentDescription = title,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(
+                                    Color.Transparent,
+                                    Color.Black.copy(alpha = 0.38f)
+                                )
+                            )
+                        )
+                )
+
+                Box(
+                    modifier = Modifier
+                        .padding(7.dp)
+                        .size(28.dp)
+                        .background(
+                            Color.White.copy(alpha = 0.82f),
+                            CircleShape
+                        )
+                        .align(Alignment.TopEnd),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = DeepRose,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+            }
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        horizontal = 8.dp,
+                        vertical = 6.dp
+                    )
+            ) {
+
+                Text(
+                    text = title,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TextDark,
+                    maxLines = 1
+                )
+
+                Spacer(
+                    modifier = Modifier.height(2.dp)
+                )
+
+                Text(
+                    text = subtitle,
+                    fontSize = 9.sp,
+                    color = SoftText,
+                    maxLines = 1
+                )
+            }
+        }
+    }
+}
+@Composable
+fun RoyaramMiniCard(
+    modifier: Modifier = Modifier,
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = modifier
+            .height(78.dp)
+            .clickable { onClick() },
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White.copy(alpha = 0.70f)
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 1.dp
+        )
+    ) {
+
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+
+            Box(
+                modifier = Modifier
+                    .size(34.dp)
+                    .background(
+                        SoftPink.copy(alpha = 0.75f),
+                        CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = DeepRose,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+
+            Spacer(
+                modifier = Modifier.width(7.dp)
+            )
+
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+
+                Text(
+                    text = title,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = TextDark,
+                    maxLines = 1
+                )
+
+                Text(
+                    text = subtitle,
+                    fontSize = 8.sp,
+                    color = SoftText,
+                    maxLines = 1
+                )
+            }
+        }
+    }
+}
 // ============================================================
 // SPECIAL DATES SCREEN
 // ============================================================
