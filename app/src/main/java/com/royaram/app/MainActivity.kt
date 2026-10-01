@@ -323,7 +323,7 @@ fun PremiumTopBar(
     }
 }
 
-@@Composable
+@Composable
 fun PremiumHero(
     daysTogether: Int
 ) {
