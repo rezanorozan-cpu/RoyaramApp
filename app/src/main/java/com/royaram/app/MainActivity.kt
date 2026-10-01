@@ -234,29 +234,23 @@ fun HomeScreen(
     onChatClick: () -> Unit,
     onToast: (String) -> Unit
 ) {
-
-    val daysTogether = remember {
-        calculateDaysTogether()
-    }
+    val daysTogether = remember { calculateDaysTogether() }
 
     LazyColumn(
-
         modifier = Modifier
             .fillMaxSize()
             .background(PageBackground),
-
         contentPadding = PaddingValues(
-            start = 11.dp,
-            end = 11.dp,
-            top = 5.dp,
+            start = 10.dp,
+            end = 10.dp,
+            top = 4.dp,
             bottom = 18.dp
         ),
-
-        verticalArrangement = Arrangement.spacedBy(9.dp)
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
 
+        // هدر
         item {
-
             PremiumTopBar(
                 onSettingsClick = {
                     onToast("تنظیمات رویارام 💗")
@@ -264,46 +258,39 @@ fun HomeScreen(
             )
         }
 
+        // عکس بوسه
         item {
-
-            PremiumHero(
-                daysTogether = daysTogether
-            )
+            PremiumHero(daysTogether = daysTogether)
         }
 
+        // تاریخ آشنایی و شمارش روزها
         item {
-
             RelationshipGlassCard(
                 daysTogether = daysTogether
             )
         }
 
+        // هفت پوشه + شمارش تولد
         item {
-
-            SectionTitle()
-        }
-
-        item {
-
-            FeatureGrid(
-
+            RoyaramFolderLayout(
                 onMemoriesClick = onMemoriesClick,
-
-                onSpecialClick = onSpecialClick,
-
                 onChatClick = onChatClick,
-
+                onSpecialClick = onSpecialClick,
                 onToast = onToast
             )
         }
 
+        // کلام روزانه
         item {
+            DailyWordsCard()
+        }
 
+        // پایین صفحه
+        item {
             CompactLoveFooter()
         }
     }
 }
-
 // ============================================================
 // TOP BAR
 // ============================================================
