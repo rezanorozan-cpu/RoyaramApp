@@ -787,10 +787,191 @@ fun FeatureGrid(
 ) {
 
     Column(
+        modifier = Modifier.fillMaxWidth(),
+
         verticalArrangement =
-            Arrangement.spacedBy(7.dp)
+            Arrangement.spacedBy(8.dp)
     ) {
 
+        /*
+         * =====================================================
+         * ROW 1
+         * =====================================================
+         */
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+
+            horizontalArrangement =
+                Arrangement.spacedBy(8.dp)
+        ) {
+
+            PhotoFeatureCard(
+                modifier = Modifier.weight(1f),
+
+                image = R.drawable.royaram_photo_2,
+
+                title = "خاطرات ما",
+
+                subtitle = "لحظه‌های قشنگمون",
+
+                onClick = onMemoriesClick
+            )
+
+            PhotoFeatureCard(
+                modifier = Modifier.weight(1f),
+
+                image = R.drawable.royaram_photo_3,
+
+                title = "نامه‌های عاشقانه",
+
+                subtitle = "حرف‌هایی از قلبمون",
+
+                onClick = {
+                    onToast(
+                        "نامه‌های عاشقانه به‌زودی باز می‌شن 💌"
+                    )
+                }
+            )
+
+            PhotoFeatureCard(
+                modifier = Modifier.weight(1f),
+
+                image = R.drawable.royaram_photo_4,
+
+                title = "آهنگ ما",
+
+                subtitle = "صدای خاطره‌هامون",
+
+                onClick = {
+                    onToast(
+                        "آهنگ ما به‌زودی آماده می‌شه 🎵"
+                    )
+                }
+            )
+        }
+
+
+        /*
+         * =====================================================
+         * ROW 2
+         * =====================================================
+         */
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+
+            horizontalArrangement =
+                Arrangement.spacedBy(8.dp)
+        ) {
+
+            PhotoFeatureCard(
+                modifier = Modifier.weight(1f),
+
+                image = R.drawable.royaram_photo_5,
+
+                title = "وقتی دلمون گرفت",
+
+                subtitle = "اینجا همیشه کنار همیم",
+
+                onClick = {
+                    onToast(
+                        "اینجا همیشه جای توئه ❤️"
+                    )
+                }
+            )
+
+            PhotoFeatureCard(
+                modifier = Modifier.weight(1f),
+
+                image = R.drawable.royaram_photo_6,
+
+                title = "چت دونفره",
+
+                subtitle = "حرف‌های من و تو ❤️",
+
+                onClick = onChatClick
+            )
+
+            PhotoFeatureCard(
+                modifier = Modifier.weight(1f),
+
+                image = R.drawable.royaram_photo_7,
+
+                title = "بخش خصوصی",
+
+                subtitle = "فقط برای من و تو 🔐",
+
+                onClick = {
+                    onToast(
+                        "این قسمت فقط برای رامین و رویاست 🔐"
+                    )
+                }
+            )
+        }
+
+
+        /*
+         * =====================================================
+         * ROW 3
+         * سه بخش مستقل
+         * رویدادها / پوشه‌ها / کلام امروز
+         * =====================================================
+         */
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+
+            horizontalArrangement =
+                Arrangement.spacedBy(8.dp)
+        ) {
+
+            CompactFeatureCard(
+                modifier = Modifier.weight(1f),
+
+                icon = "📅",
+
+                title = "رویدادهای خاص",
+
+                subtitle = "تاریخ‌های مهم ما",
+
+                onClick = onSpecialClick
+            )
+
+            CompactFeatureCard(
+                modifier = Modifier.weight(1f),
+
+                icon = "🗂️",
+
+                title = "پوشه‌های ما",
+
+                subtitle = "یادگاری‌های دیجیتال",
+
+                onClick = {
+                    onToast(
+                        "پوشه‌های عاشقانه به‌زودی آماده می‌شن 🗂️"
+                    )
+                }
+            )
+
+            CompactFeatureCard(
+                modifier = Modifier.weight(1f),
+
+                icon = "💌",
+
+                title = "کلام امروز",
+
+                subtitle = "یک جمله برای تو",
+
+                onClick = {
+                    onToast(
+                        "کنار تو، هر روز قشنگ‌تره ❤️"
+                    )
+                }
+            )
+        }
+    }
+}
         // --------------------------------------------------------
         // PHOTO ROW 1
         // --------------------------------------------------------
