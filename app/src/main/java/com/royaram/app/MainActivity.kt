@@ -222,8 +222,7 @@ fun HomeScreen(
                 top = 14.dp,
                 bottom = 105.dp
             ),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
-        ) {
+            verticalArrangement = Arrangement.spacedBy(10.dp)
             item {
                 PremiumTopBar(
                     onSettingsClick = {
@@ -753,7 +752,7 @@ fun RoyaramFolderCard(
 ) {
     Card(
         modifier = modifier
-            .aspectRatio(0.82f)
+            .aspectRatio(0.88f)
             .shadow(
                 elevation = 8.dp,
                 shape = RoundedCornerShape(23.dp),
