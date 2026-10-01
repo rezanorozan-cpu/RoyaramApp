@@ -977,70 +977,113 @@ fun RoyaramFolderCard(
 }
 
 @Composable
-fun RoyaramMiniCard(
+fun RoyaramFolderCard(
     modifier: Modifier = Modifier,
-    iconText: String,
+    image: Int,
     title: String,
     subtitle: String,
+    iconText: String,
     onClick: () -> Unit
 ) {
     Card(
         modifier = modifier
-            .height(83.dp)
+            .aspectRatio(0.88f)
+            .shadow(
+                elevation = 8.dp,
+                shape = RoundedCornerShape(23.dp),
+                ambientColor = Rose.copy(alpha = 0.10f)
+            )
             .clickable {
                 onClick()
             },
-        shape = RoundedCornerShape(21.dp),
+        shape = RoundedCornerShape(23.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White.copy(alpha = 0.78f)
+            containerColor = Color.White.copy(alpha = 0.90f)
         )
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(8.dp),
-            verticalAlignment = Alignment.CenterVertically
+
+        Column(
+            modifier = Modifier.fillMaxSize()
         ) {
 
+            // 🖼️ تصویر کاملاً پوشاننده‌ی بخش بالایی پوشه
             Box(
                 modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(
-                        Brush.linearGradient(
-                            listOf(
-                                SoftPink,
-                                PaleLavender
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .clip(
+                        RoundedCornerShape(
+                            topStart = 23.dp,
+                            topEnd = 23.dp
+                        )
+                    )
+            ) {
+
+                AsyncImage(
+                    model = image,
+                    contentDescription = title,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+
+                // لایه خیلی ظریف برای لوکس‌تر شدن عکس
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    Color.Transparent,
+                                    Color.Transparent,
+                                    Color.Black.copy(alpha = 0.12f)
+                                )
                             )
                         )
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = iconText,
-                    fontSize = 17.sp
                 )
+
+                // ❤️ آیکون کوچک روی تصویر
+                Surface(
+                    modifier = Modifier
+                        .padding(7.dp)
+                        .align(Alignment.TopEnd),
+                    shape = CircleShape,
+                    color = Color.White.copy(alpha = 0.88f),
+                    shadowElevation = 4.dp
+                ) {
+                    Text(
+                        text = iconText,
+                        modifier = Modifier.padding(6.dp),
+                        fontSize = 13.sp
+                    )
+                }
             }
 
-            Spacer(
-                modifier = Modifier.width(7.dp)
-            )
-
+            // 📝 عنوان پوشه
             Column(
-                modifier = Modifier.weight(1f)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        horizontal = 9.dp,
+                        vertical = 7.dp
+                    )
             ) {
+
                 Text(
                     text = title,
-                    fontSize = 10.sp,
+                    fontSize = 11.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = TextDark,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
 
+                Spacer(
+                    modifier = Modifier.height(2.dp)
+                )
+
                 Text(
                     text = subtitle,
-                    fontSize = 7.sp,
+                    fontSize = 8.sp,
                     color = SoftText,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -1049,7 +1092,6 @@ fun RoyaramMiniCard(
         }
     }
 }
-
 @Composable
 fun DailyWordsCard() {
     Card(
