@@ -706,7 +706,7 @@ fun PremiumMemoryFeatureCard(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(235.dp)
+            .height(190.dp)
             .clip(RoundedCornerShape(30.dp))
             .shadow(
                 15.dp,
