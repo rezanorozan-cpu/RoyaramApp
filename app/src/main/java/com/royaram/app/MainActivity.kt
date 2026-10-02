@@ -1036,37 +1036,83 @@ fun PremiumPrivateCard(
 @Composable
 fun DailyWordsCard() {
     Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(26.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(86.dp),
+        shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White.copy(alpha = 0.76f)
+            containerColor = Color.White.copy(alpha = 0.78f)
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 0.dp
         )
     ) {
 
-        Column(
+        Row(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(19.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .fillMaxSize()
+                .padding(
+                    horizontal = 17.dp,
+                    vertical = 11.dp
+                ),
+            verticalAlignment = Alignment.CenterVertically
         ) {
 
-            Text(
-                text = "امروز برای تو...",
-                color = DeepRose,
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Bold
-            )
+            // آیکن قلب
+            Box(
+                modifier = Modifier
+                    .size(45.dp)
+                    .clip(CircleShape)
+                    .background(
+                        Brush.linearGradient(
+                            colors = listOf(
+                                SoftPink,
+                                PaleLavender
+                            )
+                        )
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "♥",
+                    color = DeepRose,
+                    fontSize = 20.sp
+                )
+            }
 
             Spacer(
-                modifier = Modifier.height(8.dp)
+                modifier = Modifier.width(12.dp)
             )
 
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
+
+                Text(
+                    text = "کلام امروز",
+                    color = DeepRose,
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Black
+                )
+
+                Spacer(
+                    modifier = Modifier.height(4.dp)
+                )
+
+                Text(
+                    text = "«کنار تو، حتی روزهای معمولی هم قشنگ می‌شن.» ❤️",
+                    color = TextDark,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
             Text(
-                text = "«کنار تو، حتی روزهای معمولی هم قشنگ می‌شن.» ❤️",
-                color = TextDark,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.SemiBold,
-                textAlign = TextAlign.Center
+                text = "✦",
+                color = Lavender,
+                fontSize = 16.sp
             )
         }
     }
