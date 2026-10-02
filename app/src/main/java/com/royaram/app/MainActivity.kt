@@ -968,7 +968,7 @@ fun PremiumPrivateCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(102.dp)
+            .height(92.dp)
             .clickable {
                 onClick()
             },
