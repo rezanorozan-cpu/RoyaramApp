@@ -832,7 +832,7 @@ fun PremiumSmallPhotoCard(
 ) {
     Box(
         modifier = modifier
-            .height(175.dp)
+            .height(145.dp)
             .clip(RoundedCornerShape(27.dp))
             .shadow(
                 10.dp,
