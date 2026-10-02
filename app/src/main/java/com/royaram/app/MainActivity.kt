@@ -211,14 +211,15 @@ fun HomeScreen(
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
-                start = 17.dp,
-                end = 17.dp,
-                top = 12.dp,
+                start = 12.dp,
+                end = 12.dp,
+                top = 6.dp,
                 bottom = 112.dp
             ),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+            verticalArrangement = Arrangement.spacedBy(9.dp)
         ) {
 
+            // هدر رویارام
             item {
                 PremiumTopBar(
                     onSettingsClick = {
@@ -227,31 +228,36 @@ fun HomeScreen(
                 )
             }
 
+            // عکس بوسه — کوتاه‌تر و جمع‌وجورتر
             item {
                 PremiumHero(
                     daysTogether = daysTogether
                 )
             }
 
+            // تاریخ آشنایی + تعداد روزها
             item {
                 RelationshipGlassCard(
                     daysTogether = daysTogether
                 )
             }
 
+            // عنوان بخش‌ها
             item {
                 SectionTitle(
                     title = "دنیای دونفره‌ی ما",
-                    subtitle = "هر گوشه، یک تکه از قصه‌ی ما"
+                    subtitle = "هر گوشه، یک تکه از قصه‌ی رامین ❤️ رویا"
                 )
             }
 
+            // خاطرات
             item {
                 PremiumMemoryFeatureCard(
                     onClick = onMemoriesClick
                 )
             }
 
+            // نامه‌ها + آهنگ
             item {
                 PremiumSplitCards(
                     onLettersClick = {
@@ -263,6 +269,7 @@ fun HomeScreen(
                 )
             }
 
+            // وقتی دلمون گرفت
             item {
                 PremiumWideLoveCard(
                     onClick = {
@@ -271,12 +278,13 @@ fun HomeScreen(
                 )
             }
 
+            // چت + رویدادهای خاص
             item {
                 PremiumSplitCards(
                     firstTitle = "چت دونفره",
                     firstSubtitle = "حرف‌های من و تو ❤️",
                     firstIcon = "💬",
-                    secondTitle = "لحظه‌های خاص",
+                    secondTitle = "رویدادهای خاص",
                     secondSubtitle = "تاریخ‌های مهم ما ✨",
                     secondIcon = "✨",
                     onLettersClick = onChatClick,
@@ -284,6 +292,7 @@ fun HomeScreen(
                 )
             }
 
+            // بخش خصوصی
             item {
                 PremiumPrivateCard(
                     onClick = {
@@ -292,15 +301,18 @@ fun HomeScreen(
                 )
             }
 
+            // کلام روزانه
             item {
                 DailyWordsCard()
             }
 
+            // پایین صفحه
             item {
                 CompactLoveFooter()
             }
         }
 
+        // نوار پایین
         PremiumBottomBar(
             modifier = Modifier.align(Alignment.BottomCenter),
             selected = "home",
