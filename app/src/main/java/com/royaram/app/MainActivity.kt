@@ -907,7 +907,7 @@ fun PremiumWideLoveCard(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(125.dp)
+            .height(105.dp)
             .clip(RoundedCornerShape(27.dp))
             .clickable {
                 onClick()
