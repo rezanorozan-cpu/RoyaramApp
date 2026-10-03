@@ -1375,7 +1375,7 @@ fun PremiumBottomBar(
     }
 }
 
-@@Composable
+@Composable
 fun BottomBarItem(
     icon: String,
     title: String,
