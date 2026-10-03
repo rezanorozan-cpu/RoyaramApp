@@ -823,7 +823,7 @@ fun PremiumSplitCards(
     }
 }
 
-@@Composable
+@Composable
 fun PremiumSmallPhotoCard(
     modifier: Modifier,
     imageRes: String,
