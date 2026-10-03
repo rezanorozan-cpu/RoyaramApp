@@ -1169,7 +1169,7 @@ fun PremiumSmallPhotoCard(
         }
     }
 }
-@@Composable
+@Composable
 fun PremiumWideLoveCard(
     onClick: () -> Unit
 ) {
