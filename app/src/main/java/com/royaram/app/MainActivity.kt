@@ -213,10 +213,10 @@ fun HomeScreen(
             contentPadding = PaddingValues(
                 start = 12.dp,
                 end = 12.dp,
-                top = 6.dp,
-                bottom = 112.dp
+                top = 5.dp,
+                bottom = 105.dp
             ),
-            verticalArrangement = Arrangement.spacedBy(9.dp)
+            verticalArrangement = Arrangement.spacedBy(7.dp)
         ) {
 
             // هدر رویارام
@@ -731,7 +731,7 @@ fun PremiumMemoryFeatureCard(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(190.dp)
+            .height(178.dp)
             .clip(RoundedCornerShape(30.dp))
             .shadow(
                 elevation = 15.dp,
@@ -894,7 +894,7 @@ fun PremiumCompactCard(
 ) {
     Card(
         modifier = modifier
-            .height(92.dp)
+            .height(86.dp)
             .clickable {
                 onClick()
             },
@@ -920,7 +920,7 @@ fun PremiumCompactCard(
 
             Box(
                 modifier = Modifier
-                    .size(34.dp)
+                    .size(32.dp)
                     .clip(CircleShape)
                     .background(
                         Brush.linearGradient(
@@ -975,7 +975,7 @@ fun PremiumSmallPhotoCard(
 ) {
     Box(
         modifier = modifier
-            .height(145.dp)
+            .height(132.dp)
             .clip(RoundedCornerShape(27.dp))
             .shadow(
                 elevation = 10.dp,
@@ -1053,7 +1053,7 @@ fun PremiumWideLoveCard(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(105.dp)
+            .height(96.dp)
             .clip(RoundedCornerShape(27.dp))
             .clickable {
                 onClick()
@@ -1114,7 +1114,7 @@ fun PremiumPrivateCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(92.dp)
+            .height(86.dp)
             .clickable {
                 onClick()
             },
@@ -1184,7 +1184,7 @@ fun DailyWordsCard() {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(86.dp),
+            .height(78.dp),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
             containerColor = Color.White.copy(alpha = 0.78f)
@@ -1269,7 +1269,7 @@ fun CompactLoveFooter() {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(68.dp),
+            .height(62.dp),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
             containerColor = Color.White.copy(alpha = 0.68f)
