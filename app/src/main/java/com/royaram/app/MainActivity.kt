@@ -1330,99 +1330,127 @@ fun PremiumBottomBar(
     onMemoriesClick: () -> Unit,
     onSpecialClick: () -> Unit
 ) {
-    Box(
+    Card(
         modifier = modifier
             .fillMaxWidth()
-            .navigationBarsPadding()
-            .padding(
-                start = 15.dp,
-                end = 15.dp,
-                bottom = 9.dp
-            )
+            .padding(horizontal = 12.dp),
+        shape = RoundedCornerShape(30.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White.copy(alpha = 0.90f)
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 10.dp
+        )
     ) {
-
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(28.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = Color.White.copy(alpha = 0.91f)
-            ),
-            elevation = CardDefaults.cardElevation(
-                defaultElevation = 9.dp
-            )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(70.dp)
+                .padding(horizontal = 8.dp, vertical = 7.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
         ) {
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        horizontal = 8.dp,
-                        vertical = 7.dp
-                    ),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
+            BottomBarItem(
+                icon = "⌂",
+                title = "خانه",
+                selected = selected == "home",
+                onClick = onHomeClick
+            )
 
-                BottomBarItem(
-                    icon = "⌂",
-                    title = "خانه",
-                    selected = selected == "home",
-                    onClick = onHomeClick
-                )
+            BottomBarItem(
+                icon = "♡",
+                title = "خاطرات",
+                selected = selected == "memories",
+                onClick = onMemoriesClick
+            )
 
-                BottomBarItem(
-                    icon = "♡",
-                    title = "خاطرات",
-                    selected = selected == "memories",
-                    onClick = onMemoriesClick
-                )
-
-                BottomBarItem(
-                    icon = "✨",
-                    title = "خاص",
-                    selected = selected == "special",
-                    onClick = onSpecialClick
-                )
-            }
+            BottomBarItem(
+                icon = "✦",
+                title = "رویدادها",
+                selected = selected == "special",
+                onClick = onSpecialClick
+            )
         }
     }
 }
 
-@Composable
+@@Composable
 fun BottomBarItem(
     icon: String,
     title: String,
     selected: Boolean,
     onClick: () -> Unit
 ) {
+    val backgroundColor =
+        if (selected) {
+            Brush.linearGradient(
+                colors = listOf(
+                    SoftPink,
+                    PaleLavender
+                )
+            )
+        } else {
+            Brush.linearGradient(
+                colors = listOf(
+                    Color.Transparent,
+                    Color.Transparent
+                )
+            )
+        }
+
     Column(
         modifier = Modifier
-            .clip(RoundedCornerShape(18.dp))
-            .clickable {
-                onClick()
-            }
+            .width(82.dp)
+            .clip(RoundedCornerShape(22.dp))
+            .clickable { onClick() }
+            .background(backgroundColor)
             .padding(
-                horizontal = 20.dp,
-                vertical = 6.dp
+                horizontal = 7.dp,
+                vertical = 5.dp
             ),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
 
-        Text(
-            text = icon,
-            color = if (selected) DeepRose else SoftText,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold
+        Box(
+            modifier = Modifier
+                .size(if (selected) 34.dp else 30.dp)
+                .clip(CircleShape)
+                .background(
+                    if (selected) {
+                        Color.White.copy(alpha = 0.72f)
+                    } else {
+                        Color.Transparent
+                    }
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = icon,
+                color = if (selected) DeepRose else SoftText,
+                fontSize = if (selected) 20.sp else 18.sp,
+                fontWeight = FontWeight.Black
+            )
+        }
+
+        Spacer(
+            modifier = Modifier.height(2.dp)
         )
 
         Text(
             text = title,
             color = if (selected) DeepRose else SoftText,
             fontSize = 8.sp,
-            fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
+            fontWeight = if (selected) {
+                FontWeight.Black
+            } else {
+                FontWeight.SemiBold
+            },
+            maxLines = 1
         )
     }
 }
-
 @Composable
 fun MemoriesScreen(
     onBack: () -> Unit,
