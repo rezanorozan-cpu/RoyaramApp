@@ -1292,74 +1292,126 @@ fun PremiumWideLoveCard(
 fun PremiumPrivateCard(
     onClick: () -> Unit
 ) {
-    Card(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(86.dp)
-            .clickable {
-                onClick()
-            },
-        shape = RoundedCornerShape(26.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color(0xFF392630)
-        )
+            .clip(RoundedCornerShape(26.dp))
+            .shadow(
+                elevation = 12.dp,
+                shape = RoundedCornerShape(26.dp),
+                ambientColor = Lavender.copy(alpha = 0.16f)
+            )
+            .clickable { onClick() }
+            .background(
+                Brush.horizontalGradient(
+                    colors = listOf(
+                        Color(0xFFF1EAFF),
+                        Color(0xFFFFEAF1),
+                        Color(0xFFFFF8FB)
+                    )
+                )
+            )
     ) {
 
-        Row(
+        // هاله‌ی شیشه‌ای
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 19.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-
-            Box(
-                modifier = Modifier
-                    .size(54.dp)
-                    .clip(CircleShape)
-                    .background(Color.White.copy(alpha = 0.10f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "🔐",
-                    fontSize = 23.sp
+                .background(
+                    Brush.radialGradient(
+                        colors = listOf(
+                            Color.White.copy(alpha = 0.72f),
+                            Color.Transparent
+                        )
+                    )
                 )
-            }
+        )
 
-            Spacer(
-                modifier = Modifier.width(13.dp)
+        // آیکون قفل
+        Box(
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .padding(end = 16.dp)
+                .size(49.dp)
+                .clip(CircleShape)
+                .background(
+                    Color.White.copy(alpha = 0.72f)
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "🔐",
+                fontSize = 22.sp
+            )
+        }
+
+        // متن
+        Column(
+            modifier = Modifier
+                .align(Alignment.CenterStart)
+                .padding(
+                    start = 17.dp,
+                    end = 78.dp
+                )
+        ) {
+            Text(
+                text = "بخش خصوصی",
+                color = DeepRose,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Black
             )
 
-            Column(
-                modifier = Modifier.weight(1f)
-            ) {
-
-                Text(
-                    text = "بخش خصوصی",
-                    color = Color.White,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Black
-                )
-
-                Spacer(
-                    modifier = Modifier.height(3.dp)
-                )
-
-                Text(
-                    text = "فقط برای من و تو",
-                    color = Color.White.copy(alpha = 0.68f),
-                    fontSize = 9.sp
-                )
-            }
+            Spacer(
+                modifier = Modifier.height(3.dp)
+            )
 
             Text(
-                text = "›",
-                color = Color.White.copy(alpha = 0.75f),
-                fontSize = 27.sp
+                text = "فقط برای من و تو",
+                color = TextDark.copy(alpha = 0.80f),
+                fontSize = 9.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+
+            Spacer(
+                modifier = Modifier.height(4.dp)
+            )
+
+            Text(
+                text = "دنیای کوچیک و خصوصی رامین ❤️ رویا",
+                color = SoftText,
+                fontSize = 7.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+
+        // نشان امنیت
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(
+                    start = 13.dp,
+                    top = 8.dp
+                )
+                .clip(RoundedCornerShape(10.dp))
+                .background(
+                    Color.White.copy(alpha = 0.62f)
+                )
+                .padding(
+                    horizontal = 7.dp,
+                    vertical = 3.dp
+                )
+        ) {
+            Text(
+                text = "خصوصی",
+                color = Lavender,
+                fontSize = 6.sp,
+                fontWeight = FontWeight.Black
             )
         }
     }
 }
-
 @Composable
 fun DailyWordsCard() {
     Card(
