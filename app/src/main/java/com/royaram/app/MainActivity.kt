@@ -373,21 +373,19 @@ fun PremiumTopBar(
 fun PremiumHero(
     daysTogether: Int
 ) {
-    val transition = rememberInfiniteTransition(
-        label = "heart"
-    )
+    val transition = rememberInfiniteTransition(label = "heroHeart")
 
     val pulse by transition.animateFloat(
-        initialValue = 0.96f,
-        targetValue = 1.04f,
+        initialValue = 0.94f,
+        targetValue = 1.06f,
         animationSpec = infiniteRepeatable(
             animation = tween(
-                durationMillis = 1400,
+                durationMillis = 1500,
                 easing = FastOutSlowInEasing
             ),
             repeatMode = RepeatMode.Reverse
         ),
-        label = "pulse"
+        label = "heroPulse"
     )
 
     Box(
@@ -396,45 +394,45 @@ fun PremiumHero(
             .height(178.dp)
             .clip(RoundedCornerShape(29.dp))
             .shadow(
-                elevation = 16.dp,
+                elevation = 17.dp,
                 shape = RoundedCornerShape(29.dp),
-                ambientColor = Rose.copy(alpha = 0.18f)
+                ambientColor = Rose.copy(alpha = 0.20f)
             )
     ) {
 
-        // زمینه‌ی لطیف پشت عکس
+        // پس‌زمینه‌ی نرم برای بخش خالی کارت
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
                     Brush.linearGradient(
                         colors = listOf(
-                            Color(0xFFE8D5DC),
-                            Color(0xFFF4DCE2),
-                            Color(0xFFFFE9D7)
+                            Color(0xFFF4E1E7),
+                            Color(0xFFFFE9EF),
+                            Color(0xFFF8E9F0)
                         )
                     )
                 )
         )
 
-        // عکس اصلی بوسه
+        // همان عکس بوسه‌ی اصلی رویارام
         AsyncImage(
             model = "android.resource://com.royaram.app/drawable/royaram_photo_1",
             contentDescription = "رامین و رویا",
             modifier = Modifier
                 .fillMaxHeight()
-                .fillMaxWidth(0.72f)
+                .fillMaxWidth(0.66f)
                 .align(Alignment.CenterStart)
                 .clip(
                     RoundedCornerShape(
                         topStart = 29.dp,
                         bottomStart = 29.dp,
-                        topEnd = 20.dp,
-                        bottomEnd = 20.dp
+                        topEnd = 24.dp,
+                        bottomEnd = 24.dp
                     )
                 ),
-            contentScale = ContentScale.Crop,
-            alignment = Alignment.CenterStart
+            contentScale = ContentScale.Fit,
+            alignment = Alignment.Center
         )
 
         // محو شدن نرم عکس به سمت متن
@@ -446,14 +444,15 @@ fun PremiumHero(
                         colors = listOf(
                             Color.Transparent,
                             Color.Transparent,
-                            Color(0xFF4A2633).copy(alpha = 0.18f),
-                            Color(0xFF321A24).copy(alpha = 0.62f)
+                            Color(0xFFF6E4EA).copy(alpha = 0.18f),
+                            Color(0xFFF6E4EA).copy(alpha = 0.88f),
+                            Color(0xFFF8EAF0).copy(alpha = 0.98f)
                         )
                     )
                 )
         )
 
-        // سایه‌ی پایین برای خوانایی متن
+        // سایه‌ی خیلی ظریف پایین برای عمق بیشتر
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -462,45 +461,47 @@ fun PremiumHero(
                         colors = listOf(
                             Color.Transparent,
                             Color.Transparent,
-                            Color(0xFF321A24).copy(alpha = 0.56f)
+                            Color(0xFF3B202A).copy(alpha = 0.16f)
                         )
                     )
                 )
         )
 
-        // قلب بالای کارت
+        // قلب متحرک
         Text(
             text = "♥",
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .padding(
-                    top = 14.dp,
-                    end = 15.dp
+                    top = 13.dp,
+                    end = 16.dp
                 )
                 .graphicsLayer {
                     scaleX = pulse
                     scaleY = pulse
                 },
-            color = Color.White,
-            fontSize = 25.sp
+            color = DeepRose.copy(alpha = 0.92f),
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Black
         )
 
-        // نوشته‌ی روی عکس
+        // متن اصلی سمت راست
         Column(
             modifier = Modifier
-                .align(Alignment.BottomEnd)
+                .align(Alignment.CenterEnd)
                 .padding(
-                    start = 16.dp,
-                    end = 18.dp,
-                    bottom = 15.dp
+                    start = 8.dp,
+                    end = 17.dp,
+                    top = 20.dp,
+                    bottom = 14.dp
                 ),
             horizontalAlignment = Alignment.End
         ) {
 
             Text(
-                text = "رامین ❤️ رویا",
-                color = Color.White,
-                fontSize = 21.sp,
+                text = "رویارام",
+                color = DeepRose,
+                fontSize = 24.sp,
                 fontWeight = FontWeight.Black
             )
 
@@ -509,25 +510,53 @@ fun PremiumHero(
             )
 
             Text(
-                text = "هر روز یک صفحه‌ی تازه از قصه‌ی ما",
-                color = Color.White.copy(alpha = 0.92f),
-                fontSize = 9.sp
+                text = "قصه‌ی من و تو، برای همیشه",
+                color = TextDark.copy(alpha = 0.82f),
+                fontSize = 9.sp,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.End
             )
 
             Spacer(
-                modifier = Modifier.height(5.dp)
+                modifier = Modifier.height(9.dp)
             )
 
-            Text(
-                text = "$daysTogether روز کنار هم ❤️",
-                color = Color.White,
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Bold
-            )
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(18.dp))
+                    .background(
+                        Color.White.copy(alpha = 0.72f)
+                    )
+                    .padding(
+                        horizontal = 11.dp,
+                        vertical = 7.dp
+                    )
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.End
+                ) {
+                    Text(
+                        text = "رامین ❤️ رویا",
+                        color = DeepRose,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Black
+                    )
+
+                    Spacer(
+                        modifier = Modifier.height(2.dp)
+                    )
+
+                    Text(
+                        text = "$daysTogether روز کنار هم",
+                        color = TextDark,
+                        fontSize = 8.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
         }
     }
 }
-
 @Composable
 fun RelationshipGlassCard(
     daysTogether: Int
