@@ -1120,18 +1120,60 @@ fun DailyWordsCard() {
 
 @Composable
 fun CompactLoveFooter() {
-    Text(
-        text = "ساخته شده با ❤️ برای رامین و رویا",
+    Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(
-                top = 4.dp,
-                bottom = 4.dp
-            ),
-        textAlign = TextAlign.Center,
-        color = SoftText,
-        fontSize = 9.sp
-    )
+            .height(68.dp),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White.copy(alpha = 0.68f)
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 0.dp
+        )
+    ) {
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(
+                    horizontal = 14.dp,
+                    vertical = 8.dp
+                ),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+
+            Text(
+                text = "دوستت دارم...",
+                color = DeepRose,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Black
+            )
+
+            Spacer(
+                modifier = Modifier.height(2.dp)
+            )
+
+            Text(
+                text = "نه فقط امروز، بلکه تا همیشه... ❤️",
+                color = TextDark,
+                fontSize = 9.sp,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(
+                modifier = Modifier.height(2.dp)
+            )
+
+            Text(
+                text = "رامین ❤️ رویا",
+                color = SoftText,
+                fontSize = 7.sp
+            )
+        }
+    }
 }
 
 @Composable
