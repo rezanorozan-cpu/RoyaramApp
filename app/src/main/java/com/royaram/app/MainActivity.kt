@@ -1055,7 +1055,7 @@ fun PremiumCompactCard(
         }
     }
 }
-@Composable
+@@Composable
 fun PremiumSmallPhotoCard(
     modifier: Modifier,
     imageRes: String,
@@ -1069,13 +1069,11 @@ fun PremiumSmallPhotoCard(
             .height(132.dp)
             .clip(RoundedCornerShape(27.dp))
             .shadow(
-                elevation = 10.dp,
+                elevation = 11.dp,
                 shape = RoundedCornerShape(27.dp),
-                ambientColor = Rose.copy(alpha = 0.12f)
+                ambientColor = Rose.copy(alpha = 0.14f)
             )
-            .clickable {
-                onClick()
-            }
+            .clickable { onClick() }
             .background(Color.White)
     ) {
 
@@ -1085,10 +1083,11 @@ fun PremiumSmallPhotoCard(
             modifier = Modifier
                 .fillMaxSize()
                 .clip(RoundedCornerShape(27.dp)),
-            contentScale = ContentScale.Fit,
+            contentScale = ContentScale.Crop,
             alignment = Alignment.Center
         )
 
+        // گرادیان تیره‌ی پایین برای خوانایی
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -1097,30 +1096,62 @@ fun PremiumSmallPhotoCard(
                         colors = listOf(
                             Color.Transparent,
                             Color.Transparent,
-                            Color(0xFF26161D).copy(alpha = 0.82f)
+                            Color(0xFF24151C).copy(alpha = 0.86f)
                         )
                     )
                 )
         )
 
-        Text(
-            text = icon,
+        // هاله‌ی خیلی ظریف
+        Box(
             modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(13.dp),
-            fontSize = 21.sp
+                .fillMaxSize()
+                .background(
+                    Brush.horizontalGradient(
+                        colors = listOf(
+                            Color.White.copy(alpha = 0.03f),
+                            Color.Transparent,
+                            Rose.copy(alpha = 0.04f)
+                        )
+                    )
+                )
         )
 
+        // آیکون
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(11.dp)
+                .size(35.dp)
+                .clip(CircleShape)
+                .background(
+                    Color.White.copy(alpha = 0.22f)
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = icon,
+                fontSize = 17.sp
+            )
+        }
+
+        // متن
         Column(
             modifier = Modifier
                 .align(Alignment.BottomStart)
-                .padding(14.dp)
+                .padding(
+                    start = 13.dp,
+                    end = 13.dp,
+                    bottom = 12.dp
+                )
         ) {
             Text(
                 text = title,
                 color = Color.White,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Black
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Black,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
 
             Spacer(
@@ -1129,8 +1160,9 @@ fun PremiumSmallPhotoCard(
 
             Text(
                 text = subtitle,
-                color = Color.White.copy(alpha = 0.88f),
+                color = Color.White.copy(alpha = 0.90f),
                 fontSize = 8.sp,
+                fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
