@@ -1420,27 +1420,25 @@ fun DailyWordsCard() {
             .height(78.dp),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White.copy(alpha = 0.78f)
+            containerColor = Color.White.copy(alpha = 0.82f)
         ),
         elevation = CardDefaults.cardElevation(
             defaultElevation = 0.dp
         )
     ) {
-
         Row(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(
-                    horizontal = 17.dp,
-                    vertical = 11.dp
+                    horizontal = 15.dp,
+                    vertical = 9.dp
                 ),
             verticalAlignment = Alignment.CenterVertically
         ) {
 
-            // آیکن قلب
             Box(
                 modifier = Modifier
-                    .size(45.dp)
+                    .size(42.dp)
                     .clip(CircleShape)
                     .background(
                         Brush.linearGradient(
@@ -1455,18 +1453,18 @@ fun DailyWordsCard() {
                 Text(
                     text = "♥",
                     color = DeepRose,
-                    fontSize = 20.sp
+                    fontSize = 19.sp,
+                    fontWeight = FontWeight.Black
                 )
             }
 
             Spacer(
-                modifier = Modifier.width(12.dp)
+                modifier = Modifier.width(11.dp)
             )
 
             Column(
                 modifier = Modifier.weight(1f)
             ) {
-
                 Text(
                     text = "کلام امروز",
                     color = DeepRose,
@@ -1475,13 +1473,13 @@ fun DailyWordsCard() {
                 )
 
                 Spacer(
-                    modifier = Modifier.height(4.dp)
+                    modifier = Modifier.height(3.dp)
                 )
 
                 Text(
                     text = "«کنار تو، حتی روزهای معمولی هم قشنگ می‌شن.» ❤️",
                     color = TextDark,
-                    fontSize = 11.sp,
+                    fontSize = 9.sp,
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
@@ -1491,7 +1489,7 @@ fun DailyWordsCard() {
             Text(
                 text = "✦",
                 color = Lavender,
-                fontSize = 16.sp
+                fontSize = 15.sp
             )
         }
     }
