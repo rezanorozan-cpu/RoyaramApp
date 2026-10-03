@@ -1169,7 +1169,7 @@ fun PremiumSmallPhotoCard(
         }
     }
 }
-@Composable
+@@Composable
 fun PremiumWideLoveCard(
     onClick: () -> Unit
 ) {
@@ -1178,58 +1178,116 @@ fun PremiumWideLoveCard(
             .fillMaxWidth()
             .height(96.dp)
             .clip(RoundedCornerShape(27.dp))
-            .clickable {
-                onClick()
-            }
+            .shadow(
+                elevation = 11.dp,
+                shape = RoundedCornerShape(27.dp),
+                ambientColor = Rose.copy(alpha = 0.14f)
+            )
+            .clickable { onClick() }
+            .background(
+                Brush.horizontalGradient(
+                    colors = listOf(
+                        Color(0xFFFFE5ED),
+                        Color(0xFFF4ECFF),
+                        Color(0xFFFFF8FA)
+                    )
+                )
+            )
     ) {
 
-        AsyncImage(
-            model = "android.resource://com.royaram.app/drawable/royaram_photo_5",
-            contentDescription = "کنار هم",
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
-        )
-
+        // هاله‌ی نرم
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
-                    Brush.horizontalGradient(
-                        listOf(
-                            Color(0xFF331B25).copy(alpha = 0.80f),
-                            Color(0xFF331B25).copy(alpha = 0.18f),
+                    Brush.radialGradient(
+                        colors = listOf(
+                            Color.White.copy(alpha = 0.72f),
                             Color.Transparent
                         )
                     )
                 )
         )
 
+        // قلب بزرگ
+        Box(
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .padding(end = 17.dp)
+                .size(55.dp)
+                .clip(CircleShape)
+                .background(
+                    Brush.linearGradient(
+                        colors = listOf(
+                            SoftPink,
+                            PaleLavender
+                        )
+                    )
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "♥",
+                color = DeepRose,
+                fontSize = 25.sp,
+                fontWeight = FontWeight.Black
+            )
+        }
+
+        // متن
         Column(
             modifier = Modifier
                 .align(Alignment.CenterStart)
-                .padding(18.dp)
+                .padding(
+                    start = 17.dp,
+                    end = 82.dp
+                )
         ) {
-
             Text(
-                text = "وقتی دلمون گرفت 🫂",
-                color = Color.White,
-                fontSize = 17.sp,
+                text = "وقتی دلمون گرفت",
+                color = DeepRose,
+                fontSize = 16.sp,
                 fontWeight = FontWeight.Black
             )
 
             Spacer(
-                modifier = Modifier.height(4.dp)
+                modifier = Modifier.height(3.dp)
             )
 
             Text(
-                text = "اینجا همیشه جای امن ماست",
-                color = Color.White.copy(alpha = 0.9f),
-                fontSize = 9.sp
+                text = "اینجا همیشه کنار همیم",
+                color = TextDark.copy(alpha = 0.78f),
+                fontSize = 9.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+
+            Spacer(
+                modifier = Modifier.height(5.dp)
+            )
+
+            Text(
+                text = "برای روزهای سخت، یک جای امن داریم ❤️",
+                color = SoftText,
+                fontSize = 7.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
+
+        // علامت کوچک گوشه
+        Text(
+            text = "♡",
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(
+                    start = 14.dp,
+                    top = 9.dp
+                ),
+            color = Rose.copy(alpha = 0.55f),
+            fontSize = 16.sp
+        )
     }
 }
-
 @Composable
 fun PremiumPrivateCard(
     onClick: () -> Unit
