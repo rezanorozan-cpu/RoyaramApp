@@ -709,35 +709,35 @@ fun PremiumMemoryFeatureCard(
             .height(190.dp)
             .clip(RoundedCornerShape(30.dp))
             .shadow(
-                15.dp,
-                RoundedCornerShape(30.dp),
+                elevation = 15.dp,
+                shape = RoundedCornerShape(30.dp),
                 ambientColor = Rose.copy(alpha = 0.17f)
             )
             .clickable {
                 onClick()
             }
+            .background(Color.White)
     ) {
 
         AsyncImage(
-    model = imageRes,
-    contentDescription = title,
-    modifier = Modifier
-        .fillMaxWidth()
-        .height(112.dp)
-        .clip(RoundedCornerShape(22.dp)),
-    contentScale = ContentScale.Fit,
-    alignment = Alignment.Center
-)
+            model = "android.resource://com.royaram.app/drawable/royaram_photo_2",
+            contentDescription = "خاطرات ما",
+            modifier = Modifier
+                .fillMaxSize()
+                .clip(RoundedCornerShape(30.dp)),
+            contentScale = ContentScale.Fit,
+            alignment = Alignment.Center
+        )
 
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
                     Brush.verticalGradient(
-                        listOf(
+                        colors = listOf(
                             Color.Transparent,
                             Color.Transparent,
-                            Color(0xFF29171E).copy(alpha = 0.76f)
+                            Color(0xFF29171E).copy(alpha = 0.78f)
                         )
                     )
                 )
@@ -768,7 +768,6 @@ fun PremiumMemoryFeatureCard(
                     bottom = 18.dp
                 )
         ) {
-
             Text(
                 text = "خاطرات ما",
                 color = Color.White,
@@ -788,7 +787,6 @@ fun PremiumMemoryFeatureCard(
         }
     }
 }
-
 @Composable
 fun PremiumSplitCards(
     firstTitle: String = "نامه‌های عاشقانه",
@@ -825,7 +823,7 @@ fun PremiumSplitCards(
     }
 }
 
-@Composable
+@@Composable
 fun PremiumSmallPhotoCard(
     modifier: Modifier,
     imageRes: String,
@@ -839,34 +837,35 @@ fun PremiumSmallPhotoCard(
             .height(145.dp)
             .clip(RoundedCornerShape(27.dp))
             .shadow(
-                10.dp,
-                RoundedCornerShape(27.dp),
+                elevation = 10.dp,
+                shape = RoundedCornerShape(27.dp),
                 ambientColor = Rose.copy(alpha = 0.12f)
             )
             .clickable {
                 onClick()
             }
+            .background(Color.White)
     ) {
 
         AsyncImage(
-    model = imageRes,
-    contentDescription = title,
-    modifier = Modifier
-        .fillMaxWidth()
-        .height(78.dp)
-        .clip(RoundedCornerShape(18.dp)),
-    contentScale = ContentScale.Fit,
-    alignment = Alignment.Center
-)
+            model = imageRes,
+            contentDescription = title,
+            modifier = Modifier
+                .fillMaxSize()
+                .clip(RoundedCornerShape(27.dp)),
+            contentScale = ContentScale.Fit,
+            alignment = Alignment.Center
+        )
 
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
                     Brush.verticalGradient(
-                        listOf(
+                        colors = listOf(
                             Color.Transparent,
-                            Color(0xFF26161D).copy(alpha = 0.78f)
+                            Color.Transparent,
+                            Color(0xFF26161D).copy(alpha = 0.82f)
                         )
                     )
                 )
@@ -885,7 +884,6 @@ fun PremiumSmallPhotoCard(
                 .align(Alignment.BottomStart)
                 .padding(14.dp)
         ) {
-
             Text(
                 text = title,
                 color = Color.White,
@@ -907,7 +905,6 @@ fun PremiumSmallPhotoCard(
         }
     }
 }
-
 @Composable
 fun PremiumWideLoveCard(
     onClick: () -> Unit
