@@ -719,11 +719,15 @@ fun PremiumMemoryFeatureCard(
     ) {
 
         AsyncImage(
-            model = "android.resource://com.royaram.app/drawable/royaram_photo_2",
-            contentDescription = "خاطرات ما",
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
-        )
+    model = imageRes,
+    contentDescription = title,
+    modifier = Modifier
+        .fillMaxWidth()
+        .height(112.dp)
+        .clip(RoundedCornerShape(22.dp)),
+    contentScale = ContentScale.Fit,
+    alignment = Alignment.Center
+)
 
         Box(
             modifier = Modifier
@@ -845,11 +849,15 @@ fun PremiumSmallPhotoCard(
     ) {
 
         AsyncImage(
-            model = imageRes,
-            contentDescription = title,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop
-        )
+    model = imageRes,
+    contentDescription = title,
+    modifier = Modifier
+        .fillMaxWidth()
+        .height(78.dp)
+        .clip(RoundedCornerShape(18.dp)),
+    contentScale = ContentScale.Fit,
+    alignment = Alignment.Center
+)
 
         Box(
             modifier = Modifier
