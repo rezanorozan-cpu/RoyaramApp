@@ -278,20 +278,16 @@ fun HomeScreen(
                 )
             }
 
-            // چت + رویدادهای خاص
-            item {
-                PremiumSplitCards(
-                    firstTitle = "چت دونفره",
-                    firstSubtitle = "حرف‌های من و تو ❤️",
-                    firstIcon = "💬",
-                    secondTitle = "رویدادهای خاص",
-                    secondSubtitle = "تاریخ‌های مهم ما ✨",
-                    secondIcon = "✨",
-                    onLettersClick = onChatClick,
-                    onMusicClick = onSpecialClick
-                )
-            }
-
+            // سه بخش مستقل: چت، رویدادها، پوشه‌ها
+item {
+    PremiumTripleCards(
+        onChatClick = onChatClick,
+        onEventsClick = onSpecialClick,
+        onFoldersClick = {
+            onToast("پوشه‌های ما 📁 به‌زودی")
+        }
+    )
+}
             // بخش خصوصی
             item {
                 PremiumPrivateCard(
@@ -822,7 +818,123 @@ fun PremiumSplitCards(
         )
     }
 }
+@Composable
+fun PremiumTripleCards(
+    onChatClick: () -> Unit,
+    onEventsClick: () -> Unit,
+    onFoldersClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(7.dp)
+    ) {
 
+        PremiumCompactCard(
+            modifier = Modifier.weight(1f),
+            icon = "💬",
+            title = "چت",
+            subtitle = "حرف‌های ما",
+            onClick = onChatClick
+        )
+
+        PremiumCompactCard(
+            modifier = Modifier.weight(1f),
+            icon = "✨",
+            title = "رویدادها",
+            subtitle = "تاریخ‌های خاص",
+            onClick = onEventsClick
+        )
+
+        PremiumCompactCard(
+            modifier = Modifier.weight(1f),
+            icon = "📁",
+            title = "پوشه‌ها",
+            subtitle = "دنیای ما",
+            onClick = onFoldersClick
+        )
+    }
+}
+
+@Composable
+fun PremiumCompactCard(
+    modifier: Modifier,
+    icon: String,
+    title: String,
+    subtitle: String,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = modifier
+            .height(92.dp)
+            .clickable {
+                onClick()
+            },
+        shape = RoundedCornerShape(23.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White.copy(alpha = 0.82f)
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 0.dp
+        )
+    ) {
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(
+                    horizontal = 7.dp,
+                    vertical = 10.dp
+                ),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+
+            Box(
+                modifier = Modifier
+                    .size(34.dp)
+                    .clip(CircleShape)
+                    .background(
+                        Brush.linearGradient(
+                            colors = listOf(
+                                SoftPink,
+                                PaleLavender
+                            )
+                        )
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = icon,
+                    fontSize = 16.sp
+                )
+            }
+
+            Spacer(
+                modifier = Modifier.height(5.dp)
+            )
+
+            Text(
+                text = title,
+                color = TextDark,
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Black,
+                maxLines = 1
+            )
+
+            Spacer(
+                modifier = Modifier.height(2.dp)
+            )
+
+            Text(
+                text = subtitle,
+                color = SoftText,
+                fontSize = 7.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
 @Composable
 fun PremiumSmallPhotoCard(
     modifier: Modifier,
