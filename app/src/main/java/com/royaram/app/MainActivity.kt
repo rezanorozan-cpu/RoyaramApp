@@ -756,7 +756,6 @@ fun SectionTitle(
         )
     }
 }
-
 @Composable
 fun PremiumMemoryFeatureCard(
     onClick: () -> Unit
@@ -767,26 +766,26 @@ fun PremiumMemoryFeatureCard(
             .height(178.dp)
             .clip(RoundedCornerShape(30.dp))
             .shadow(
-                elevation = 15.dp,
+                elevation = 16.dp,
                 shape = RoundedCornerShape(30.dp),
-                ambientColor = Rose.copy(alpha = 0.17f)
+                ambientColor = Rose.copy(alpha = 0.18f)
             )
-            .clickable {
-                onClick()
-            }
+            .clickable { onClick() }
             .background(Color.White)
     ) {
 
+        // عکس خاطرات
         AsyncImage(
             model = "android.resource://com.royaram.app/drawable/royaram_photo_2",
             contentDescription = "خاطرات ما",
             modifier = Modifier
                 .fillMaxSize()
                 .clip(RoundedCornerShape(30.dp)),
-            contentScale = ContentScale.Fit,
+            contentScale = ContentScale.Crop,
             alignment = Alignment.Center
         )
 
+        // لایه‌ی شیشه‌ای و گرادیان برای خوانایی متن
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -795,53 +794,112 @@ fun PremiumMemoryFeatureCard(
                         colors = listOf(
                             Color.Transparent,
                             Color.Transparent,
-                            Color(0xFF29171E).copy(alpha = 0.78f)
+                            Color(0xFF24151C).copy(alpha = 0.80f)
                         )
                     )
                 )
         )
 
+        // هاله‌ی لطیف صورتی
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.horizontalGradient(
+                        colors = listOf(
+                            Rose.copy(alpha = 0.05f),
+                            Color.Transparent,
+                            Color.Transparent
+                        )
+                    )
+                )
+        )
+
+        // نشان قلب
         Box(
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                .padding(15.dp)
-                .size(42.dp)
+                .padding(14.dp)
+                .size(43.dp)
                 .clip(CircleShape)
-                .background(Color.White.copy(alpha = 0.22f)),
+                .background(
+                    Color.White.copy(alpha = 0.24f)
+                ),
             contentAlignment = Alignment.Center
         ) {
             Text(
                 text = "♡",
                 color = Color.White,
-                fontSize = 22.sp
+                fontSize = 23.sp,
+                fontWeight = FontWeight.Black
             )
         }
 
+        // متن کارت
         Column(
             modifier = Modifier
                 .align(Alignment.BottomStart)
                 .padding(
-                    start = 19.dp,
-                    end = 19.dp,
-                    bottom = 18.dp
+                    start = 18.dp,
+                    end = 18.dp,
+                    bottom = 16.dp
                 )
         ) {
+
             Text(
                 text = "خاطرات ما",
                 color = Color.White,
-                fontSize = 23.sp,
+                fontSize = 22.sp,
                 fontWeight = FontWeight.Black
             )
 
             Spacer(
-                modifier = Modifier.height(4.dp)
+                modifier = Modifier.height(3.dp)
             )
 
             Text(
                 text = "لحظه‌هایی که دلمون نمی‌خواد هیچ‌وقت فراموش بشن",
-                color = Color.White.copy(alpha = 0.90f),
-                fontSize = 10.sp
+                color = Color.White.copy(alpha = 0.92f),
+                fontSize = 9.sp,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
+
+            Spacer(
+                modifier = Modifier.height(7.dp)
+            )
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .height(22.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(
+                            Color.White.copy(alpha = 0.18f)
+                        )
+                        .padding(horizontal = 9.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "لحظه‌های قشنگمون",
+                        color = Color.White,
+                        fontSize = 7.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                Spacer(
+                    modifier = Modifier.width(7.dp)
+                )
+
+                Text(
+                    text = "❤️",
+                    fontSize = 11.sp
+                )
+            }
         }
     }
 }
