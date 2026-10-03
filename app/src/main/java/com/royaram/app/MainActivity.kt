@@ -564,16 +564,15 @@ fun RelationshipGlassCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(116.dp),
-        shape = RoundedCornerShape(27.dp),
+            .height(126.dp),
+        shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White.copy(alpha = 0.78f)
+            containerColor = Color.White.copy(alpha = 0.82f)
         ),
         elevation = CardDefaults.cardElevation(
             defaultElevation = 0.dp
         )
     ) {
-
         Row(
             modifier = Modifier
                 .fillMaxSize()
@@ -584,90 +583,15 @@ fun RelationshipGlassCard(
             verticalAlignment = Alignment.CenterVertically
         ) {
 
-            // سمت چپ: تاریخ شروع
+            // بخش تاریخ
             Column(
-                modifier = Modifier.width(94.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-
-                Text(
-                    text = "تاریخ آشنایی ما",
-                    color = DeepRose,
-                    fontSize = 9.sp,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Spacer(
-                    modifier = Modifier.height(7.dp)
-                )
-
-                Text(
-                    text = "۱۴۰۵/۰۳/۲۰",
-                    color = TextDark,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Black
-                )
-
-                Spacer(
-                    modifier = Modifier.height(3.dp)
-                )
-
-                Text(
-                    text = "۲۰ خرداد ۱۴۰۵",
-                    color = SoftText,
-                    fontSize = 8.sp
-                )
-            }
-
-            // جداکننده
-            Box(
-                modifier = Modifier
-                    .width(1.dp)
-                    .height(65.dp)
-                    .background(
-                        Rose.copy(alpha = 0.18f)
-                    )
-            )
-
-            Spacer(
-                modifier = Modifier.width(13.dp)
-            )
-
-            // مرکز: تعداد روزها
-            Column(
-                modifier = Modifier.weight(1f),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-
-                Text(
-                    text = daysTogether.toString(),
-                    color = DeepRose,
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Black
-                )
-
-                Text(
-                    text = "روز کنار هم ❤️",
-                    color = SoftText,
-                    fontSize = 9.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
-
-            Spacer(
-                modifier = Modifier.width(10.dp)
-            )
-
-            // سمت راست: جمله عاشقانه
-            Column(
-                modifier = Modifier.width(92.dp),
+                modifier = Modifier.weight(0.95f),
                 horizontalAlignment = Alignment.End
             ) {
-
                 Text(
-                    text = "از اون روز...",
-                    color = Lavender,
-                    fontSize = 9.sp,
+                    text = "تاریخ آشنایی ما",
+                    color = SoftText,
+                    fontSize = 10.sp,
                     fontWeight = FontWeight.Bold
                 )
 
@@ -676,11 +600,108 @@ fun RelationshipGlassCard(
                 )
 
                 Text(
-                    text = "هر روزمون\nیک خاطره‌ست",
+                    text = "۱۴۰۵/۰۳/۲۰",
+                    color = DeepRose,
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Black
+                )
+
+                Spacer(
+                    modifier = Modifier.height(7.dp)
+                )
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "از همون روز...",
+                        color = SoftText,
+                        fontSize = 8.sp
+                    )
+
+                    Spacer(
+                        modifier = Modifier.width(5.dp)
+                    )
+
+                    Text(
+                        text = "♥",
+                        color = Rose,
+                        fontSize = 12.sp
+                    )
+                }
+            }
+
+            // جداکننده‌ی ظریف
+            Box(
+                modifier = Modifier
+                    .width(1.dp)
+                    .height(67.dp)
+                    .background(
+                        SoftPink.copy(alpha = 0.75f)
+                    )
+            )
+
+            // شمارش روزها
+            Column(
+                modifier = Modifier.weight(1.05f),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+
+                Box(
+                    modifier = Modifier
+                        .size(61.dp)
+                        .clip(CircleShape)
+                        .background(
+                            Brush.linearGradient(
+                                colors = listOf(
+                                    SoftPink,
+                                    PaleLavender
+                                )
+                            )
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = daysTogether.toString(),
+                            color = DeepRose,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Black
+                        )
+
+                        Text(
+                            text = "روز",
+                            color = SoftText,
+                            fontSize = 7.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+
+                Spacer(
+                    modifier = Modifier.height(5.dp)
+                )
+
+                Text(
+                    text = "کنار هم ❤️",
                     color = TextDark,
+                    fontSize = 8.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            // متن عاشقانه
+            Column(
+                modifier = Modifier.weight(1.05f),
+                horizontalAlignment = Alignment.End
+            ) {
+                Text(
+                    text = "هر روز با تو",
+                    color = DeepRose,
                     fontSize = 11.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    textAlign = TextAlign.End
+                    fontWeight = FontWeight.Black
                 )
 
                 Spacer(
@@ -688,10 +709,22 @@ fun RelationshipGlassCard(
                 )
 
                 Text(
-                    text = "و قصه‌مون ادامه داره ✨",
-                    color = SoftText,
-                    fontSize = 7.sp,
+                    text = "یک صفحه‌ی تازه\nاز قصه‌ی ماست...",
+                    color = TextDark.copy(alpha = 0.82f),
+                    fontSize = 9.sp,
+                    lineHeight = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
                     textAlign = TextAlign.End
+                )
+
+                Spacer(
+                    modifier = Modifier.height(5.dp)
+                )
+
+                Text(
+                    text = "رامین ❤️ رویا",
+                    color = SoftText,
+                    fontSize = 8.sp
                 )
             }
         }
