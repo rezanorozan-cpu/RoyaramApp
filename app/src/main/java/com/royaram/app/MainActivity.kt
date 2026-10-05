@@ -31,8 +31,8 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Mail
 import androidx.compose.material.icons.filled.MusicNote
 import androidx.compose.material.icons.filled.PhotoLibrary
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -53,7 +53,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.util.Calendar
-import java.util.concurrent.TimeUnit
 import kotlin.math.max
 
 private val Pink = Color(0xFFE85D86)
@@ -234,8 +233,6 @@ data class PersianDate(
 /*
  * =========================================================
  * تبدیل تاریخ شمسی به روز مطلق
- *
- * برای محاسبات روزشمار استفاده می‌شود.
  * =========================================================
  */
 
@@ -263,11 +260,11 @@ private fun persianToJulianDay(
 
     return (
         day +
-                monthDays +
-                ((epYear * 682 - 110) / 2816) +
-                (epYear - 1) * 365 +
-                (epBase / 2820) * 1029983 +
-                1948320
+            monthDays +
+            ((epYear * 682 - 110) / 2816) +
+            (epYear - 1) * 365 +
+            (epBase / 2820) * 1029983 +
+            1948320
         ).toLong()
 }
 
@@ -333,21 +330,20 @@ private fun gregorianToPersian(
             31, 31, 30, 31, 30, 31
         )
 
-    var gyTemp = gy - 1600
-    var gmTemp = gm - 1
+    val gyTemp = gy - 1600
+    val gmTemp = gm - 1
     val gdTemp = gd - 1
 
     var gDayNo =
         365 * gyTemp +
-                (gyTemp + 3) / 4 -
-                (gyTemp + 99) / 100 +
-                (gyTemp + 399) / 400
+            (gyTemp + 3) / 4 -
+            (gyTemp + 99) / 100 +
+            (gyTemp + 399) / 400
 
     var i = 0
 
     while (i < gmTemp) {
-        gDayNo +=
-            gDaysInMonth[i]
+        gDayNo += gDaysInMonth[i]
         i++
     }
 
@@ -355,10 +351,10 @@ private fun gregorianToPersian(
         gmTemp > 1 &&
         (
             gy % 4 == 0 &&
-                    (
-                        gy % 100 != 0 ||
-                                gy % 400 == 0
-                        )
+                (
+                    gy % 100 != 0 ||
+                        gy % 400 == 0
+                    )
             )
     ) {
         gDayNo++
@@ -434,11 +430,11 @@ private fun daysBetweenPersian(
             second.month,
             second.day
         ) -
-                persianToJulianDay(
-                    first.year,
-                    first.month,
-                    first.day
-                )
+            persianToJulianDay(
+                first.year,
+                first.month,
+                first.day
+            )
         )
 }
 
@@ -584,10 +580,6 @@ fun HomeScreen(
             todayPersianDate()
         }
 
-    /*
-     * روزهای گذشته از شروع آشنایی
-     */
-
     val startDate =
         PersianDate(
             START_YEAR,
@@ -603,11 +595,6 @@ fun HomeScreen(
                 today
             )
         )
-
-
-    /*
-     * تولد رامین
-     */
 
     val raminBirthday =
         nextBirthday(
@@ -625,11 +612,6 @@ fun HomeScreen(
             )
         )
 
-
-    /*
-     * تولد رویا
-     */
-
     val royaBirthday =
         nextBirthday(
             ROYA_BIRTH_MONTH,
@@ -646,11 +628,6 @@ fun HomeScreen(
             )
         )
 
-
-    /*
-     * ماهگرد
-     */
-
     val nextMonthDay =
         nextMonthlyAnniversary(
             today
@@ -665,11 +642,6 @@ fun HomeScreen(
             )
         )
 
-
-    /*
-     * سالگرد
-     */
-
     val nextYearAnniversary =
         nextYearlyAnniversary(
             today
@@ -683,11 +655,6 @@ fun HomeScreen(
                 nextYearAnniversary
             )
         )
-
-
-    /*
-     * وضعیت پریودی ثبت‌شده
-     */
 
     val periodStart =
         PersianDate(
@@ -724,7 +691,6 @@ fun HomeScreen(
                 "در بازه ثبت‌شده"
             }
         }
-
 
     val folders =
         listOf(
@@ -766,7 +732,6 @@ fun HomeScreen(
             )
         )
 
-
     Column(
         modifier =
             Modifier
@@ -792,7 +757,6 @@ fun HomeScreen(
             modifier =
                 Modifier.height(12.dp)
         )
-
 
         /*
          * =================================================
@@ -890,12 +854,10 @@ fun HomeScreen(
             }
         }
 
-
         Spacer(
             modifier =
                 Modifier.height(10.dp)
         )
-
 
         /*
          * =================================================
@@ -960,11 +922,6 @@ fun HomeScreen(
                         Modifier.height(7.dp)
                 )
 
-
-                /*
-                 * ردیف اول
-                 */
-
                 Row(
                     modifier =
                         Modifier.fillMaxWidth(),
@@ -1008,16 +965,10 @@ fun HomeScreen(
                     )
                 }
 
-
                 Spacer(
                     modifier =
                         Modifier.height(8.dp)
                 )
-
-
-                /*
-                 * ردیف تولدها
-                 */
 
                 Row(
                     modifier =
@@ -1050,16 +1001,10 @@ fun HomeScreen(
                     )
                 }
 
-
                 Spacer(
                     modifier =
                         Modifier.height(8.dp)
                 )
-
-
-                /*
-                 * پریودی
-                 */
 
                 Box(
                     modifier =
@@ -1102,7 +1047,7 @@ fun HomeScreen(
                         Text(
                             text =
                                 "بازه ثبت‌شده پریودی: " +
-                                        "۱۴۰۵/۰۷/۰۳ تا ۱۴۰۵/۰۷/۱۰",
+                                    "۱۴۰۵/۰۷/۰۳ تا ۱۴۰۵/۰۷/۱۰",
 
                             fontSize =
                                 9.sp,
@@ -1115,7 +1060,6 @@ fun HomeScreen(
                         )
                     }
                 }
-
 
                 Spacer(
                     modifier =
@@ -1141,12 +1085,10 @@ fun HomeScreen(
             }
         }
 
-
         Spacer(
             modifier =
                 Modifier.height(14.dp)
         )
-
 
         /*
          * =================================================
@@ -1216,12 +1158,10 @@ fun HomeScreen(
             }
         }
 
-
         Spacer(
             modifier =
                 Modifier.height(8.dp)
         )
-
 
         /*
          * =================================================
@@ -1258,12 +1198,10 @@ fun HomeScreen(
             )
         }
 
-
         Spacer(
             modifier =
                 Modifier.height(10.dp)
         )
-
 
         /*
          * =================================================
@@ -1336,12 +1274,10 @@ fun HomeScreen(
             }
         }
 
-
         Spacer(
             modifier =
                 Modifier.height(12.dp)
         )
-
 
         Text(
             text =
@@ -1359,7 +1295,6 @@ fun HomeScreen(
             modifier =
                 Modifier.fillMaxWidth()
         )
-
 
         Spacer(
             modifier =
@@ -1431,7 +1366,9 @@ fun CounterItem(
 
 
 /*
+ * =========================================================
  * خط جداکننده
+ * =========================================================
  */
 
 @Composable
@@ -1491,7 +1428,6 @@ fun FolderCard(
             FolderType.SETTINGS ->
                 Icons.Default.Settings
         }
-
 
     Card(
         modifier =
