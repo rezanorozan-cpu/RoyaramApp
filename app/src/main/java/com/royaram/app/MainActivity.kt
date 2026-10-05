@@ -5,11 +5,6 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -26,19 +21,19 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Mail
 import androidx.compose.material.icons.filled.MusicNote
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.PhotoLibrary
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -46,12 +41,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -61,18 +56,21 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.util.Calendar
+import kotlin.math.max
 
 private val Pink = Color(0xFFE85D86)
-private val LightPink = Color(0xFFFFE7EF)
 private val DeepPink = Color(0xFFB83D63)
+private val LightPink = Color(0xFFFFE7EF)
+private val SoftPink = Color(0xFFFFF1F5)
 private val TextDark = Color(0xFF33252B)
 private val SoftText = Color(0xFF82747A)
-private val BackgroundPink = Color(0xFFFFF4F7)
+private val Background = Color(0xFFFFF7F9)
 
-private val RelationshipStartDate: Calendar = Calendar.getInstance().apply {
-    set(2026, Calendar.JUNE, 10, 0, 0, 0)
-    set(Calendar.MILLISECOND, 0)
-}
+private val RelationshipStartDate: Calendar =
+    Calendar.getInstance().apply {
+        set(2026, Calendar.JUNE, 10, 0, 0, 0)
+        set(Calendar.MILLISECOND, 0)
+    }
 
 class MainActivity : ComponentActivity() {
 
@@ -80,12 +78,14 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
+
             RoyaramApp(
                 onChatClick = {
                     startActivity(
                         Intent(this, ChatActivity::class.java)
                     )
                 },
+
                 onMemoriesClick = {
                     Toast.makeText(
                         this,
@@ -93,6 +93,7 @@ class MainActivity : ComponentActivity() {
                         Toast.LENGTH_SHORT
                     ).show()
                 },
+
                 onLettersClick = {
                     Toast.makeText(
                         this,
@@ -100,6 +101,7 @@ class MainActivity : ComponentActivity() {
                         Toast.LENGTH_SHORT
                     ).show()
                 },
+
                 onMusicClick = {
                     Toast.makeText(
                         this,
@@ -107,13 +109,15 @@ class MainActivity : ComponentActivity() {
                         Toast.LENGTH_SHORT
                     ).show()
                 },
+
                 onSadClick = {
                     Toast.makeText(
                         this,
-                        "وقتی دلمون گرفت، اینجا کنار همیم ❤️",
+                        "وقتی دلمون گرفت ❤️",
                         Toast.LENGTH_SHORT
                     ).show()
                 },
+
                 onSpecialClick = {
                     Toast.makeText(
                         this,
@@ -121,6 +125,7 @@ class MainActivity : ComponentActivity() {
                         Toast.LENGTH_SHORT
                     ).show()
                 },
+
                 onPrivateClick = {
                     Toast.makeText(
                         this,
@@ -128,10 +133,11 @@ class MainActivity : ComponentActivity() {
                         Toast.LENGTH_SHORT
                     ).show()
                 },
+
                 onSettingsClick = {
                     Toast.makeText(
                         this,
-                        "تنظیمات رویارام 💗",
+                        "تنظیمات رویارام ⚙️",
                         Toast.LENGTH_SHORT
                     ).show()
                 }
@@ -151,7 +157,9 @@ fun RoyaramApp(
     onPrivateClick: () -> Unit,
     onSettingsClick: () -> Unit
 ) {
+
     MaterialTheme {
+
         HomeScreen(
             onChatClick = onChatClick,
             onMemoriesClick = onMemoriesClick,
@@ -165,13 +173,13 @@ fun RoyaramApp(
     }
 }
 
-data class HomeCard(
+data class FolderItem(
     val title: String,
     val subtitle: String,
-    val type: CardType
+    val type: FolderType
 )
 
-enum class CardType {
+enum class FolderType {
     MEMORIES,
     LETTERS,
     MUSIC,
@@ -194,70 +202,65 @@ fun HomeScreen(
     onSettingsClick: () -> Unit
 ) {
 
-    val today = Calendar.getInstance()
-
-    val daysTogether = remember(today.timeInMillis) {
-        val difference =
-            today.timeInMillis - RelationshipStartDate.timeInMillis
-
-        (difference / (1000L * 60L * 60L * 24L)).toInt()
-            .coerceAtLeast(0)
+    val today = remember {
+        Calendar.getInstance()
     }
 
-    val pulse = rememberInfiniteTransition(
-        label = "heartPulse"
-    )
+    val daysTogether = remember {
 
-    val heartScale by pulse.animateFloat(
-        initialValue = 0.96f,
-        targetValue = 1.05f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1300),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "heartScale"
-    )
+        val difference =
+            today.timeInMillis -
+                    RelationshipStartDate.timeInMillis
 
-    val cards = listOf(
-        HomeCard(
+        max(
+            0,
+            (difference /
+                    (1000L * 60L * 60L * 24L)).toInt()
+        )
+    }
+
+    val folders = listOf(
+
+        FolderItem(
             "خاطرات ما",
             "لحظه‌های قشنگمون",
-            CardType.MEMORIES
+            FolderType.MEMORIES
         ),
-        HomeCard(
+
+        FolderItem(
             "نامه‌های عاشقانه",
-            "حرف‌هایی از ته قلبمون",
-            CardType.LETTERS
+            "حرف‌هایی از قلبمون",
+            FolderType.LETTERS
         ),
-        HomeCard(
+
+        FolderItem(
             "آهنگ ما",
-            "صدای قصه‌ی عشق ما",
-            CardType.MUSIC
+            "صدای قصه‌ی ما",
+            FolderType.MUSIC
         ),
-        HomeCard(
+
+        FolderItem(
             "وقتی دلمون گرفت",
-            "اینجا همیشه کنار همیم",
-            CardType.SAD
+            "همیشه کنار هم",
+            FolderType.SAD
         ),
-        HomeCard(
+
+        FolderItem(
             "چت دونفره",
-            "حرف‌های من و تو ❤️",
-            CardType.CHAT
+            "حرف‌های من و تو",
+            FolderType.CHAT
         ),
-        HomeCard(
+
+        FolderItem(
             "لحظه‌های خاص",
-            "تاریخ‌های مهم ما ✨",
-            CardType.SPECIAL
+            "تاریخ‌های مهم ما",
+            FolderType.SPECIAL
         ),
-        HomeCard(
+
+        FolderItem(
             "بخش خصوصی",
-            "فقط برای من و تو 🔐",
-            CardType.PRIVATE
-        ),
-        HomeCard(
-            "تنظیمات",
-            "شخصی‌سازی رویارام",
-            CardType.SETTINGS
+            "فقط من و تو",
+            FolderType.PRIVATE
         )
     )
 
@@ -267,181 +270,281 @@ fun HomeScreen(
             .background(
                 Brush.verticalGradient(
                     listOf(
-                        Color(0xFFFFE4ED),
-                        BackgroundPink,
+                        Color(0xFFFFE8EF),
+                        Background,
                         Color.White
                     )
                 )
             )
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp)
+            .verticalScroll(
+                rememberScrollState()
+            )
+            .padding(
+                horizontal = 12.dp
+            )
     ) {
 
-        Spacer(modifier = Modifier.height(18.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End
-        ) {
-            Icon(
-                imageVector = Icons.Default.Settings,
-                contentDescription = "تنظیمات",
-                tint = DeepPink,
-                modifier = Modifier
-                    .size(30.dp)
-                    .clickable {
-                        onSettingsClick()
-                    }
-            )
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = "رویارام",
-            fontSize = 34.sp,
-            fontWeight = FontWeight.Bold,
-            color = DeepPink,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth()
+        Spacer(
+            modifier = Modifier.height(14.dp)
         )
 
-        Text(
-            text = "قصه‌ی من و تو، برای همیشه",
-            fontSize = 15.sp,
-            color = SoftText,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(18.dp))
+        /*
+         * ==========================================
+         * بنر بالایی
+         * ==========================================
+         */
 
         Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(32.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(125.dp),
+
+            shape = RoundedCornerShape(24.dp),
+
             colors = CardDefaults.cardColors(
-                containerColor = Color.White.copy(alpha = 0.88f)
+                containerColor = Color.White
             ),
+
             elevation = CardDefaults.cardElevation(
-                defaultElevation = 8.dp
+                defaultElevation = 6.dp
             )
         ) {
 
-            Column(
+            Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(18.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                    .fillMaxSize()
+                    .clip(
+                        RoundedCornerShape(24.dp)
+                    )
             ) {
 
                 Image(
                     painter = painterResource(
                         id = R.drawable.couple_main
                     ),
+
                     contentDescription = "رامین و رویا",
-                    contentScale = ContentScale.Crop,
+
+                    /*
+                     * مهم:
+                     * هیچ قسمتی از عکس بریده نمی‌شود.
+                     */
+                    contentScale = ContentScale.Fit,
+
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .height(205.dp)
+                        .fillMaxSize()
                 )
 
-                Spacer(modifier = Modifier.height(14.dp))
-
-                Icon(
-                    imageVector = Icons.Default.Favorite,
-                    contentDescription = null,
-                    tint = Pink,
+                Box(
                     modifier = Modifier
-                        .size(38.dp)
-                        .scale(heartScale)
+                        .fillMaxSize()
+                        .background(
+                            Brush.horizontalGradient(
+                                listOf(
+                                    Color.Black.copy(alpha = 0.08f),
+                                    Color.Transparent,
+                                    Color.Black.copy(alpha = 0.08f)
+                                )
+                            )
+                        )
                 )
 
-                Spacer(modifier = Modifier.height(6.dp))
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 8.dp),
 
-                Text(
-                    text = "رامین ❤️ رویا",
-                    fontSize = 25.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = TextDark
-                )
+                    horizontalAlignment =
+                        Alignment.CenterHorizontally
+                ) {
 
-                Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "رامین ❤️ رویا",
+                        color = Color.White,
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Bold
+                    )
 
-                Text(
-                    text = "هر روز یک صفحه‌ی تازه از قصه‌ی ما",
-                    fontSize = 14.sp,
-                    color = SoftText
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Text(
-                    text = "$daysTogether",
-                    fontSize = 34.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = DeepPink
-                )
-
-                Text(
-                    text = "❤️ روز کنار هم",
-                    fontSize = 14.sp,
-                    color = SoftText
-                )
+                    Text(
+                        text = "قصه‌ی من و تو",
+                        color = Color.White.copy(alpha = 0.92f),
+                        fontSize = 11.sp
+                    )
+                }
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Text(
-            text = "دنیای دونفره‌ی ما",
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold,
-            color = TextDark
+        Spacer(
+            modifier = Modifier.height(10.dp)
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        /*
+         * ==========================================
+         * کادر روزشمار
+         * ==========================================
+         */
 
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
+        Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(620.dp),
-            contentPadding = PaddingValues(bottom = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+                .height(88.dp),
+
+            shape = RoundedCornerShape(22.dp),
+
+            colors = CardDefaults.cardColors(
+                containerColor =
+                    Color.White.copy(alpha = 0.94f)
+            ),
+
+            elevation = CardDefaults.cardElevation(
+                defaultElevation = 4.dp
+            )
+        ) {
+
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(
+                        horizontal = 14.dp
+                    ),
+
+                verticalAlignment =
+                    Alignment.CenterVertically,
+
+                horizontalArrangement =
+                    Arrangement.SpaceEvenly
+            ) {
+
+                /*
+                 * روزشمار آشنایی
+                 */
+
+                Column(
+                    horizontalAlignment =
+                        Alignment.CenterHorizontally
+                ) {
+
+                    Text(
+                        text = "❤️",
+                        fontSize = 17.sp
+                    )
+
+                    Text(
+                        text = "$daysTogether",
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = DeepPink
+                    )
+
+                    Text(
+                        text = "روز آشنایی",
+                        fontSize = 11.sp,
+                        color = SoftText
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .height(48.dp)
+                        .size(width = 1.dp, height = 48.dp)
+                        .background(
+                            LightPink
+                        )
+                )
+
+                /*
+                 * روزشمار تولد
+                 */
+
+                Column(
+                    horizontalAlignment =
+                        Alignment.CenterHorizontally
+                ) {
+
+                    Text(
+                        text = "🎂",
+                        fontSize = 17.sp
+                    )
+
+                    Text(
+                        text = "به‌زودی",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = DeepPink
+                    )
+
+                    Text(
+                        text = "تا تولد",
+                        fontSize = 11.sp,
+                        color = SoftText
+                    )
+                }
+            }
+        }
+
+        Spacer(
+            modifier = Modifier.height(14.dp)
+        )
+
+        /*
+         * ==========================================
+         * هفت پوشه
+         *
+         * دو ردیف سه‌تایی
+         * ردیف سوم یک پوشه
+         * ==========================================
+         */
+
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(3),
+
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(430.dp),
+
+            contentPadding =
+                PaddingValues(0.dp),
+
+            horizontalArrangement =
+                Arrangement.spacedBy(8.dp),
+
+            verticalArrangement =
+                Arrangement.spacedBy(8.dp),
+
             userScrollEnabled = false
         ) {
 
-            items(cards) { card ->
+            itemsIndexed(folders) { _, folder ->
 
-                CoupleCard(
-                    card = card,
+                FolderCard(
+                    folder = folder,
+
                     onClick = {
 
-                        when (card.type) {
+                        when (folder.type) {
 
-                            CardType.MEMORIES ->
+                            FolderType.MEMORIES ->
                                 onMemoriesClick()
 
-                            CardType.LETTERS ->
+                            FolderType.LETTERS ->
                                 onLettersClick()
 
-                            CardType.MUSIC ->
+                            FolderType.MUSIC ->
                                 onMusicClick()
 
-                            CardType.SAD ->
+                            FolderType.SAD ->
                                 onSadClick()
 
-                            CardType.CHAT ->
+                            FolderType.CHAT ->
                                 onChatClick()
 
-                            CardType.SPECIAL ->
+                            FolderType.SPECIAL ->
                                 onSpecialClick()
 
-                            CardType.PRIVATE ->
+                            FolderType.PRIVATE ->
                                 onPrivateClick()
 
-                            CardType.SETTINGS ->
+                            FolderType.SETTINGS ->
                                 onSettingsClick()
                         }
                     }
@@ -449,136 +552,334 @@ fun HomeScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(10.dp))
+        /*
+         * ==========================================
+         * ردیف سوم:
+         * یک پوشه + جملات عاشقانه
+         * ==========================================
+         */
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+
+            horizontalArrangement =
+                Arrangement.spacedBy(8.dp)
+        ) {
+
+            FolderCard(
+                folder = FolderItem(
+                    "بخش خصوصی",
+                    "فقط من و تو",
+                    FolderType.PRIVATE
+                ),
+
+                modifier = Modifier.weight(1f),
+
+                onClick = {
+                    onPrivateClick()
+                }
+            )
+
+            LoveQuoteCard(
+                modifier = Modifier.weight(1f)
+            )
+        }
+
+        Spacer(
+            modifier = Modifier.height(14.dp)
+        )
+
+        /*
+         * تنظیمات کوچک پایین
+         */
 
         Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(26.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable {
+                    onSettingsClick()
+                },
+
+            shape = RoundedCornerShape(18.dp),
+
             colors = CardDefaults.cardColors(
-                containerColor = Color.White.copy(alpha = 0.85f)
+                containerColor =
+                    Color.White.copy(alpha = 0.78f)
             )
         ) {
 
-            Column(
-                modifier = Modifier.padding(18.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp),
+
+                verticalAlignment =
+                    Alignment.CenterVertically,
+
+                horizontalArrangement =
+                    Arrangement.Center
             ) {
 
+                Icon(
+                    imageVector =
+                        Icons.Default.Settings,
+
+                    contentDescription =
+                        "تنظیمات",
+
+                    tint = DeepPink,
+
+                    modifier = Modifier
+                        .size(19.dp)
+                )
+
+                Spacer(
+                    modifier = Modifier.size(6.dp)
+                )
+
                 Text(
-                    text = "«کنار تو، حتی روزهای معمولی هم قشنگ می‌شن.» ❤️",
-                    fontSize = 15.sp,
-                    color = TextDark,
-                    textAlign = TextAlign.Center
+                    text = "تنظیمات رویارام",
+                    fontSize = 12.sp,
+                    color = SoftText
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(
+            modifier = Modifier.height(14.dp)
+        )
 
         Text(
             text = "ساخته شده با ❤️ برای رامین و رویا",
-            fontSize = 12.sp,
+
+            fontSize = 11.sp,
+
             color = SoftText,
+
             textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth()
+
+            modifier = Modifier
+                .fillMaxWidth()
         )
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(
+            modifier = Modifier.height(18.dp)
+        )
     }
 }
 
 @Composable
-fun CoupleCard(
-    card: HomeCard,
+fun FolderCard(
+    folder: FolderItem,
+    modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
 
-    val icon = when (card.type) {
+    val icon = when (folder.type) {
 
-        CardType.MEMORIES ->
+        FolderType.MEMORIES ->
             Icons.Default.PhotoLibrary
 
-        CardType.LETTERS ->
+        FolderType.LETTERS ->
             Icons.Default.Mail
 
-        CardType.MUSIC ->
+        FolderType.MUSIC ->
             Icons.Default.MusicNote
 
-        CardType.SAD ->
+        FolderType.SAD ->
             Icons.Default.Favorite
 
-        CardType.CHAT ->
+        FolderType.CHAT ->
             Icons.Default.Chat
 
-        CardType.SPECIAL ->
+        FolderType.SPECIAL ->
             Icons.Default.Star
 
-        CardType.PRIVATE ->
+        FolderType.PRIVATE ->
             Icons.Default.Lock
 
-        CardType.SETTINGS ->
+        FolderType.SETTINGS ->
             Icons.Default.Settings
     }
 
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .height(178.dp)
+            .height(130.dp)
             .clickable {
                 onClick()
             },
-        shape = RoundedCornerShape(28.dp),
+
+        shape = RoundedCornerShape(20.dp),
+
         colors = CardDefaults.cardColors(
-            containerColor = Color.White.copy(alpha = 0.88f)
+            containerColor =
+                Color.White.copy(alpha = 0.94f)
         ),
+
         elevation = CardDefaults.cardElevation(
-            defaultElevation = 5.dp
+            defaultElevation = 3.dp
         )
     ) {
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(8.dp),
+
+            verticalArrangement =
+                Arrangement.Center,
+
+            horizontalAlignment =
+                Alignment.CenterHorizontally
         ) {
 
             Box(
                 modifier = Modifier
-                    .size(58.dp)
+                    .size(45.dp)
                     .background(
-                        color = LightPink,
-                        shape = RoundedCornerShape(20.dp)
+                        color = SoftPink,
+                        shape = RoundedCornerShape(15.dp)
                     ),
-                contentAlignment = Alignment.Center
+
+                contentAlignment =
+                    Alignment.Center
             ) {
 
                 Icon(
                     imageVector = icon,
-                    contentDescription = card.title,
+
+                    contentDescription =
+                        folder.title,
+
                     tint = DeepPink,
-                    modifier = Modifier.size(30.dp)
+
+                    modifier = Modifier
+                        .size(23.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Text(
-                text = card.title,
-                fontSize = 17.sp,
-                fontWeight = FontWeight.Bold,
-                color = TextDark,
-                textAlign = TextAlign.Center
+            Spacer(
+                modifier = Modifier.height(7.dp)
             )
 
-            Spacer(modifier = Modifier.height(5.dp))
+            Text(
+                text = folder.title,
+
+                fontSize = 12.sp,
+
+                fontWeight =
+                    FontWeight.Bold,
+
+                color = TextDark,
+
+                textAlign =
+                    TextAlign.Center,
+
+                maxLines = 1
+            )
+
+            Spacer(
+                modifier = Modifier.height(2.dp)
+            )
 
             Text(
-                text = card.subtitle,
-                fontSize = 12.sp,
+                text = folder.subtitle,
+
+                fontSize = 9.sp,
+
                 color = SoftText,
-                textAlign = TextAlign.Center
+
+                textAlign =
+                    TextAlign.Center,
+
+                maxLines = 1
+            )
+        }
+    }
+}
+
+@Composable
+fun LoveQuoteCard(
+    modifier: Modifier = Modifier
+) {
+
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(130.dp),
+
+        shape = RoundedCornerShape(20.dp),
+
+        colors = CardDefaults.cardColors(
+            containerColor =
+                Color(0xFFFFEAF1)
+        ),
+
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 3.dp
+        )
+    ) {
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(10.dp),
+
+            verticalArrangement =
+                Arrangement.Center,
+
+            horizontalAlignment =
+                Alignment.CenterHorizontally
+        ) {
+
+            Icon(
+                imageVector =
+                    Icons.Default.Favorite,
+
+                contentDescription = null,
+
+                tint = Pink,
+
+                modifier = Modifier
+                    .size(24.dp)
+            )
+
+            Spacer(
+                modifier = Modifier.height(6.dp)
+            )
+
+            Text(
+                text =
+                    "حرف‌های عاشقانه",
+
+                fontSize = 13.sp,
+
+                fontWeight =
+                    FontWeight.Bold,
+
+                color = DeepPink,
+
+                textAlign =
+                    TextAlign.Center
+            )
+
+            Spacer(
+                modifier = Modifier.height(5.dp)
+            )
+
+            Text(
+                text =
+                    "«کنار تو،\nحتی روزهای معمولی قشنگن.» ❤️",
+
+                fontSize = 9.sp,
+
+                color = TextDark,
+
+                lineHeight = 13.sp,
+
+                textAlign =
+                    TextAlign.Center
             )
         }
     }
