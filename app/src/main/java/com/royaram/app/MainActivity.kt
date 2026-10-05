@@ -5,7 +5,6 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -43,9 +42,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.background
+import androidx.compose.ui.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -53,6 +54,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.util.Calendar
+import java.util.concurrent.TimeUnit
 import kotlin.math.max
 
 private val Pink = Color(0xFFE85D86)
@@ -63,11 +65,30 @@ private val TextDark = Color(0xFF33252B)
 private val SoftText = Color(0xFF82747A)
 private val Background = Color(0xFFFFF7F9)
 
-private val RelationshipStartDate =
-    Calendar.getInstance().apply {
-        set(2026, Calendar.JUNE, 10, 0, 0, 0)
-        set(Calendar.MILLISECOND, 0)
-    }
+/*
+ * =========================================================
+ * تاریخ‌های اصلی رویارام - شمسی
+ * =========================================================
+ */
+
+private const val START_YEAR = 1405
+private const val START_MONTH = 3
+private const val START_DAY = 20
+
+private const val RAMIN_BIRTH_MONTH = 6
+private const val RAMIN_BIRTH_DAY = 20
+
+private const val ROYA_BIRTH_MONTH = 9
+private const val ROYA_BIRTH_DAY = 15
+
+private const val PERIOD_START_YEAR = 1405
+private const val PERIOD_START_MONTH = 7
+private const val PERIOD_START_DAY = 3
+
+private const val PERIOD_END_YEAR = 1405
+private const val PERIOD_END_MONTH = 7
+private const val PERIOD_END_DAY = 10
+
 
 class MainActivity : ComponentActivity() {
 
@@ -79,7 +100,10 @@ class MainActivity : ComponentActivity() {
             RoyaramApp(
                 onChatClick = {
                     startActivity(
-                        Intent(this, ChatActivity::class.java)
+                        Intent(
+                            this,
+                            ChatActivity::class.java
+                        )
                     )
                 },
 
@@ -143,6 +167,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+
 @Composable
 fun RoyaramApp(
     onChatClick: () -> Unit,
@@ -155,6 +180,7 @@ fun RoyaramApp(
     onSettingsClick: () -> Unit
 ) {
     MaterialTheme {
+
         HomeScreen(
             onChatClick = onChatClick,
             onMemoriesClick = onMemoriesClick,
@@ -167,6 +193,13 @@ fun RoyaramApp(
         )
     }
 }
+
+
+/*
+ * =========================================================
+ * مدل پوشه‌ها
+ * =========================================================
+ */
 
 data class FolderItem(
     val title: String,
@@ -185,752 +218,302 @@ enum class FolderType {
     SETTINGS
 }
 
-@Composable
-fun HomeScreen(
-    onChatClick: () -> Unit,
-    onMemoriesClick: () -> Unit,
-    onLettersClick: () -> Unit,
-    onMusicClick: () -> Unit,
-    onSadClick: () -> Unit,
-    onSpecialClick: () -> Unit,
-    onPrivateClick: () -> Unit,
-    onSettingsClick: () -> Unit
-) {
 
-    val today = remember {
+/*
+ * =========================================================
+ * مدل تاریخ شمسی
+ * =========================================================
+ */
+
+data class PersianDate(
+    val year: Int,
+    val month: Int,
+    val day: Int
+)
+
+
+/*
+ * =========================================================
+ * تبدیل تاریخ شمسی به روز مطلق
+ *
+ * برای محاسبات روزشمار استفاده می‌شود.
+ * =========================================================
+ */
+
+private fun persianToJulianDay(
+    year: Int,
+    month: Int,
+    day: Int
+): Long {
+
+    val epBase =
+        year - if (year >= 0) 474 else 473
+
+    val epYear =
+        474 + mod(
+            epBase,
+            2820
+        )
+
+    val monthDays =
+        if (month <= 7) {
+            (month - 1) * 31
+        } else {
+            (month - 1) * 30 + 6
+        }
+
+    return (
+        day +
+                monthDays +
+                ((epYear * 682 - 110) / 2816) +
+                (epYear - 1) * 365 +
+                (epBase / 2820) * 1029983 +
+                1948320
+        ).toLong()
+}
+
+
+private fun mod(
+    a: Int,
+    b: Int
+): Int {
+
+    val result = a % b
+
+    return if (result >= 0) {
+        result
+    } else {
+        result + b
+    }
+}
+
+
+/*
+ * =========================================================
+ * امروز به تاریخ شمسی
+ * =========================================================
+ */
+
+private fun todayPersianDate(): PersianDate {
+
+    val calendar =
         Calendar.getInstance()
-    }
 
-    val daysTogether = remember {
+    val gy =
+        calendar.get(Calendar.YEAR)
 
-        val difference =
-            today.timeInMillis -
-                    RelationshipStartDate.timeInMillis
+    val gm =
+        calendar.get(Calendar.MONTH) + 1
 
-        max(
-            0,
-            (difference /
-                    (1000L * 60L * 60L * 24L)).toInt()
-        )
-    }
+    val gd =
+        calendar.get(Calendar.DAY_OF_MONTH)
 
-    /*
-     * دقیقاً ۶ پوشه:
-     * ردیف اول = ۳
-     * ردیف دوم = ۳
-     *
-     * ردیف سوم جداگانه:
-     * یک پوشه + جملات عاشقانه
-     */
-    val folders = listOf(
-
-        FolderItem(
-            "خاطرات ما",
-            "لحظه‌های قشنگمون",
-            FolderType.MEMORIES
-        ),
-
-        FolderItem(
-            "نامه‌های عاشقانه",
-            "حرف‌هایی از قلبمون",
-            FolderType.LETTERS
-        ),
-
-        FolderItem(
-            "آهنگ ما",
-            "صدای قصه‌ی ما",
-            FolderType.MUSIC
-        ),
-
-        FolderItem(
-            "وقتی دلمون گرفت",
-            "همیشه کنار هم",
-            FolderType.SAD
-        ),
-
-        FolderItem(
-            "چت دونفره",
-            "حرف‌های من و تو",
-            FolderType.CHAT
-        ),
-
-        FolderItem(
-            "لحظه‌های خاص",
-            "تاریخ‌های مهم ما",
-            FolderType.SPECIAL
-        )
+    return gregorianToPersian(
+        gy,
+        gm,
+        gd
     )
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                Brush.verticalGradient(
-                    listOf(
-                        Color(0xFFFFE8EF),
-                        Background,
-                        Color.White
-                    )
-                )
-            )
-            .verticalScroll(
-                rememberScrollState()
-            )
-            .padding(
-                horizontal = 12.dp
-            )
-    ) {
-
-        Spacer(
-            modifier = Modifier.height(12.dp)
-        )
-
-        /*
-         * =========================================
-         * بنر اصلی لاکچری
-         * =========================================
-         */
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(132.dp)
-                .clip(
-                    RoundedCornerShape(24.dp)
-                )
-        ) {
-
-            /*
-             * تصویر اصلی
-             *
-             * Fit = هیچ قسمتی از عکس بریده نمی‌شود
-             */
-            Image(
-                painter = painterResource(
-                    id = R.drawable.couple_main
-                ),
-
-                contentDescription = "رامین و رویا",
-
-                contentScale = ContentScale.Fit,
-
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Color.White
-                    )
-            )
-
-            /*
-             * لایه ظریف روی عکس
-             */
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.verticalGradient(
-                            listOf(
-                                Color.Transparent,
-                                Color.Black.copy(
-                                    alpha = 0.12f
-                                )
-                            )
-                        )
-                    )
-            )
-
-            /*
-             * نوشته روی بنر
-             */
-            Column(
-                modifier = Modifier
-                    .align(
-                        Alignment.BottomCenter
-                    )
-                    .padding(
-                        bottom = 8.dp
-                    ),
-
-                horizontalAlignment =
-                    Alignment.CenterHorizontally
-            ) {
-
-                Text(
-                    text = "رامین ❤️ رویا",
-
-                    color = Color.White,
-
-                    fontSize = 17.sp,
-
-                    fontWeight =
-                        FontWeight.Bold,
-
-                    textAlign =
-                        TextAlign.Center
-                )
-
-                Text(
-                    text = "قصه‌ی من و تو",
-
-                    color =
-                        Color.White.copy(
-                            alpha = 0.94f
-                        ),
-
-                    fontSize = 10.sp,
-
-                    textAlign =
-                        TextAlign.Center
-                )
-            }
-        }
-
-        Spacer(
-            modifier = Modifier.height(10.dp)
-        )
-
-        /*
-         * =========================================
-         * روزشمار
-         * =========================================
-         */
-
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(88.dp),
-
-            shape =
-                RoundedCornerShape(22.dp),
-
-            colors =
-                CardDefaults.cardColors(
-                    containerColor =
-                        Color.White.copy(
-                            alpha = 0.95f
-                        )
-                ),
-
-            elevation =
-                CardDefaults.cardElevation(
-                    defaultElevation = 4.dp
-                )
-        ) {
-
-            Row(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(
-                        horizontal = 12.dp
-                    ),
-
-                verticalAlignment =
-                    Alignment.CenterVertically,
-
-                horizontalArrangement =
-                    Arrangement.SpaceEvenly
-            ) {
-
-                Column(
-                    horizontalAlignment =
-                        Alignment.CenterHorizontally
-                ) {
-
-                    Text(
-                        text = "❤️",
-                        fontSize = 16.sp
-                    )
-
-                    Text(
-                        text = "$daysTogether",
-
-                        fontSize = 21.sp,
-
-                        fontWeight =
-                            FontWeight.Bold,
-
-                        color = DeepPink
-                    )
-
-                    Text(
-                        text = "روز آشنایی",
-
-                        fontSize = 10.sp,
-
-                        color = SoftText
-                    )
-                }
-
-                Box(
-                    modifier = Modifier
-                        .size(
-                            width = 1.dp,
-                            height = 48.dp
-                        )
-                        .background(
-                            LightPink
-                        )
-                )
-
-                Column(
-                    horizontalAlignment =
-                        Alignment.CenterHorizontally
-                ) {
-
-                    Text(
-                        text = "🎂",
-                        fontSize = 16.sp
-                    )
-
-                    Text(
-                        text = "به‌زودی",
-
-                        fontSize = 15.sp,
-
-                        fontWeight =
-                            FontWeight.Bold,
-
-                        color = DeepPink
-                    )
-
-                    Text(
-                        text = "تا تولد",
-
-                        fontSize = 10.sp,
-
-                        color = SoftText
-                    )
-                }
-            }
-        }
-
-        Spacer(
-            modifier = Modifier.height(14.dp)
-        )
-
-        /*
-         * =========================================
-         * دو ردیف سه‌تایی
-         * =========================================
-         */
-
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(3),
-
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(268.dp),
-
-            contentPadding =
-                PaddingValues(0.dp),
-
-            horizontalArrangement =
-                Arrangement.spacedBy(8.dp),
-
-            verticalArrangement =
-                Arrangement.spacedBy(8.dp),
-
-            userScrollEnabled = false
-        ) {
-
-            items(folders) { folder ->
-
-                FolderCard(
-                    folder = folder,
-
-                    onClick = {
-
-                        when (folder.type) {
-
-                            FolderType.MEMORIES ->
-                                onMemoriesClick()
-
-                            FolderType.LETTERS ->
-                                onLettersClick()
-
-                            FolderType.MUSIC ->
-                                onMusicClick()
-
-                            FolderType.SAD ->
-                                onSadClick()
-
-                            FolderType.CHAT ->
-                                onChatClick()
-
-                            FolderType.SPECIAL ->
-                                onSpecialClick()
-
-                            else -> Unit
-                        }
-                    }
-                )
-            }
-        }
-
-        Spacer(
-            modifier = Modifier.height(8.dp)
-        )
-
-        /*
-         * =========================================
-         * ردیف سوم
-         * یک پوشه + جملات عاشقانه
-         * =========================================
-         */
-
-        Row(
-            modifier =
-                Modifier.fillMaxWidth(),
-
-            horizontalArrangement =
-                Arrangement.spacedBy(8.dp)
-        ) {
-
-            FolderCard(
-                folder = FolderItem(
-                    "بخش خصوصی",
-                    "فقط من و تو",
-                    FolderType.PRIVATE
-                ),
-
-                modifier =
-                    Modifier.weight(1f),
-
-                onClick = {
-                    onPrivateClick()
-                }
-            )
-
-            LoveQuoteCard(
-                modifier =
-                    Modifier.weight(1f)
-            )
-        }
-
-        Spacer(
-            modifier = Modifier.height(10.dp)
-        )
-
-        /*
-         * تنظیمات
-         */
-
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable {
-                    onSettingsClick()
-                },
-
-            shape =
-                RoundedCornerShape(18.dp),
-
-            colors =
-                CardDefaults.cardColors(
-                    containerColor =
-                        Color.White.copy(
-                            alpha = 0.78f
-                        )
-                )
-        ) {
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(11.dp),
-
-                verticalAlignment =
-                    Alignment.CenterVertically,
-
-                horizontalArrangement =
-                    Arrangement.Center
-            ) {
-
-                Icon(
-                    imageVector =
-                        Icons.Default.Settings,
-
-                    contentDescription =
-                        "تنظیمات",
-
-                    tint = DeepPink,
-
-                    modifier =
-                        Modifier.size(18.dp)
-                )
-
-                Spacer(
-                    modifier =
-                        Modifier.size(6.dp)
-                )
-
-                Text(
-                    text =
-                        "تنظیمات رویارام",
-
-                    fontSize = 12.sp,
-
-                    color = SoftText
-                )
-            }
-        }
-
-        Spacer(
-            modifier =
-                Modifier.height(12.dp)
-        )
-
-        Text(
-            text =
-                "ساخته شده با ❤️ برای رامین و رویا",
-
-            fontSize = 10.sp,
-
-            color = SoftText,
-
-            textAlign =
-                TextAlign.Center,
-
-            modifier =
-                Modifier.fillMaxWidth()
-        )
-
-        Spacer(
-            modifier =
-                Modifier.height(16.dp)
-        )
-    }
 }
 
-@Composable
-fun FolderCard(
-    folder: FolderItem,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
-) {
 
-    val icon = when (folder.type) {
+/*
+ * =========================================================
+ * تبدیل میلادی به شمسی
+ * =========================================================
+ */
 
-        FolderType.MEMORIES ->
-            Icons.Default.PhotoLibrary
+private fun gregorianToPersian(
+    gy: Int,
+    gm: Int,
+    gd: Int
+): PersianDate {
 
-        FolderType.LETTERS ->
-            Icons.Default.Mail
+    val gDaysInMonth =
+        intArrayOf(
+            31, 28, 31, 30, 31, 30,
+            31, 31, 30, 31, 30, 31
+        )
 
-        FolderType.MUSIC ->
-            Icons.Default.MusicNote
+    var gyTemp = gy - 1600
+    var gmTemp = gm - 1
+    val gdTemp = gd - 1
 
-        FolderType.SAD ->
-            Icons.Default.Favorite
+    var gDayNo =
+        365 * gyTemp +
+                (gyTemp + 3) / 4 -
+                (gyTemp + 99) / 100 +
+                (gyTemp + 399) / 400
 
-        FolderType.CHAT ->
-            Icons.Default.Chat
+    var i = 0
 
-        FolderType.SPECIAL ->
-            Icons.Default.Star
-
-        FolderType.PRIVATE ->
-            Icons.Default.Lock
-
-        FolderType.SETTINGS ->
-            Icons.Default.Settings
+    while (i < gmTemp) {
+        gDayNo +=
+            gDaysInMonth[i]
+        i++
     }
 
-    Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(130.dp)
-            .clickable {
-                onClick()
-            },
-
-        shape =
-            RoundedCornerShape(20.dp),
-
-        colors =
-            CardDefaults.cardColors(
-                containerColor =
-                    Color.White.copy(
-                        alpha = 0.95f
-                    )
-            ),
-
-        elevation =
-            CardDefaults.cardElevation(
-                defaultElevation = 3.dp
+    if (
+        gmTemp > 1 &&
+        (
+            gy % 4 == 0 &&
+                    (
+                        gy % 100 != 0 ||
+                                gy % 400 == 0
+                        )
             )
     ) {
-
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(7.dp),
-
-            verticalArrangement =
-                Arrangement.Center,
-
-            horizontalAlignment =
-                Alignment.CenterHorizontally
-        ) {
-
-            Box(
-                modifier = Modifier
-                    .size(43.dp)
-                    .background(
-                        SoftPink,
-                        RoundedCornerShape(14.dp)
-                    ),
-
-                contentAlignment =
-                    Alignment.Center
-            ) {
-
-                Icon(
-                    imageVector = icon,
-
-                    contentDescription =
-                        folder.title,
-
-                    tint = DeepPink,
-
-                    modifier =
-                        Modifier.size(22.dp)
-                )
-            }
-
-            Spacer(
-                modifier =
-                    Modifier.height(6.dp)
-            )
-
-            Text(
-                text =
-                    folder.title,
-
-                fontSize = 11.sp,
-
-                fontWeight =
-                    FontWeight.Bold,
-
-                color = TextDark,
-
-                textAlign =
-                    TextAlign.Center,
-
-                maxLines = 1
-            )
-
-            Spacer(
-                modifier =
-                    Modifier.height(2.dp)
-            )
-
-            Text(
-                text =
-                    folder.subtitle,
-
-                fontSize = 8.sp,
-
-                color = SoftText,
-
-                textAlign =
-                    TextAlign.Center,
-
-                maxLines = 1
-            )
-        }
+        gDayNo++
     }
+
+    gDayNo += gdTemp
+
+    var jDayNo =
+        gDayNo - 79
+
+    val jNp =
+        jDayNo / 12053
+
+    var jDay =
+        jDayNo % 12053
+
+    var jy =
+        979 + 33 * jNp + 4 * (jDay / 1461)
+
+    jDay %= 1461
+
+    if (jDay >= 366) {
+
+        jy +=
+            (jDay - 1) / 365
+
+        jDay =
+            (jDay - 1) % 365
+    }
+
+    val jm: Int
+    val jd: Int
+
+    if (jDay < 186) {
+
+        jm =
+            1 + jDay / 31
+
+        jd =
+            1 + jDay % 31
+
+    } else {
+
+        jm =
+            7 + (jDay - 186) / 30
+
+        jd =
+            1 + (jDay - 186) % 30
+    }
+
+    return PersianDate(
+        jy,
+        jm,
+        jd
+    )
 }
 
-@Composable
-fun LoveQuoteCard(
-    modifier: Modifier = Modifier
-) {
 
-    Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(130.dp),
+/*
+ * =========================================================
+ * تعداد روزهای بین دو تاریخ شمسی
+ * =========================================================
+ */
 
-        shape =
-            RoundedCornerShape(20.dp),
+private fun daysBetweenPersian(
+    first: PersianDate,
+    second: PersianDate
+): Long {
 
-        colors =
-            CardDefaults.cardColors(
-                containerColor =
-                    Color(0xFFFFEAF1)
-            ),
+    return (
+        persianToJulianDay(
+            second.year,
+            second.month,
+            second.day
+        ) -
+                persianToJulianDay(
+                    first.year,
+                    first.month,
+                    first.day
+                )
+        )
+}
 
-        elevation =
-            CardDefaults.cardElevation(
-                defaultElevation = 3.dp
-            )
-    ) {
 
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(9.dp),
+/*
+ * =========================================================
+ * تاریخ تولد بعدی
+ * =========================================================
+ */
 
-            verticalArrangement =
-                Arrangement.Center,
+private fun nextBirthday(
+    birthMonth: Int,
+    birthDay: Int,
+    today: PersianDate
+): PersianDate {
 
-            horizontalAlignment =
-                Alignment.CenterHorizontally
-        ) {
+    val thisYearBirthday =
+        PersianDate(
+            today.year,
+            birthMonth,
+            birthDay
+        )
 
-            Icon(
-                imageVector =
-                    Icons.Default.Favorite,
+    val birthdayPassed =
+        daysBetweenPersian(
+            today,
+            thisYearBirthday
+        ) < 0
 
-                contentDescription = null,
+    return if (birthdayPassed) {
 
-                tint = Pink,
+        PersianDate(
+            today.year + 1,
+            birthMonth,
+            birthDay
+        )
 
-                modifier =
-                    Modifier.size(23.dp)
-            )
+    } else {
 
-            Spacer(
-                modifier =
-                    Modifier.height(5.dp)
-            )
-
-            Text(
-                text =
-                    "حرف‌های عاشقانه",
-
-                fontSize = 12.sp,
-
-                fontWeight =
-                    FontWeight.Bold,
-
-                color = DeepPink,
-
-                textAlign =
-                    TextAlign.Center
-            )
-
-            Spacer(
-                modifier =
-                    Modifier.height(4.dp)
-            )
-
-            Text(
-                text =
-                    "«کنار تو،\nحتی روزهای معمولی قشنگن.» ❤️",
-
-                fontSize = 8.sp,
-
-                color = TextDark,
-
-                lineHeight = 12.sp,
-
-                textAlign =
-                    TextAlign.Center
-            )
-        }
+        thisYearBirthday
     }
 }
 
 
+/*
+ * =========================================================
+ * ماهگرد بعدی
+ * روز ثابت = ۲۰ هر ماه
+ * =========================================================
+ */
+
+private fun nextMonthlyAnniversary(
+    today: PersianDate
+): PersianDate {
+
+    return if (today.day < START_DAY) {
+
+        PersianDate(
+            today.year,
+            today.month,
+            START_DAY
+        )
+
+    } else {
+
+        if (today.month == 12) {
+
+            PersianDate(
+                today.year + 1,
+                1,
+                START_DAY
+            )
+
+        } else {
+
+            PersianDate(
+                today.year
