@@ -516,4 +516,1204 @@ private fun nextMonthlyAnniversary(
         } else {
 
             PersianDate(
-                today.year
+                today.year,
+                today.month + 1,
+                START_DAY
+            )
+        }
+    }
+}
+
+
+/*
+ * =========================================================
+ * سالگرد بعدی
+ * =========================================================
+ */
+
+private fun nextYearlyAnniversary(
+    today: PersianDate
+): PersianDate {
+
+    val anniversary =
+        PersianDate(
+            today.year,
+            START_MONTH,
+            START_DAY
+        )
+
+    return if (
+        daysBetweenPersian(
+            today,
+            anniversary
+        ) < 0
+    ) {
+
+        PersianDate(
+            today.year + 1,
+            START_MONTH,
+            START_DAY
+        )
+
+    } else {
+
+        anniversary
+    }
+}
+
+
+/*
+ * =========================================================
+ * صفحه اصلی
+ * =========================================================
+ */
+
+@Composable
+fun HomeScreen(
+    onChatClick: () -> Unit,
+    onMemoriesClick: () -> Unit,
+    onLettersClick: () -> Unit,
+    onMusicClick: () -> Unit,
+    onSadClick: () -> Unit,
+    onSpecialClick: () -> Unit,
+    onPrivateClick: () -> Unit,
+    onSettingsClick: () -> Unit
+) {
+
+    val today =
+        remember {
+            todayPersianDate()
+        }
+
+    /*
+     * روزهای گذشته از شروع آشنایی
+     */
+
+    val startDate =
+        PersianDate(
+            START_YEAR,
+            START_MONTH,
+            START_DAY
+        )
+
+    val daysTogether =
+        max(
+            0L,
+            daysBetweenPersian(
+                startDate,
+                today
+            )
+        )
+
+
+    /*
+     * تولد رامین
+     */
+
+    val raminBirthday =
+        nextBirthday(
+            RAMIN_BIRTH_MONTH,
+            RAMIN_BIRTH_DAY,
+            today
+        )
+
+    val daysToRaminBirthday =
+        max(
+            0L,
+            daysBetweenPersian(
+                today,
+                raminBirthday
+            )
+        )
+
+
+    /*
+     * تولد رویا
+     */
+
+    val royaBirthday =
+        nextBirthday(
+            ROYA_BIRTH_MONTH,
+            ROYA_BIRTH_DAY,
+            today
+        )
+
+    val daysToRoyaBirthday =
+        max(
+            0L,
+            daysBetweenPersian(
+                today,
+                royaBirthday
+            )
+        )
+
+
+    /*
+     * ماهگرد
+     */
+
+    val nextMonthDay =
+        nextMonthlyAnniversary(
+            today
+        )
+
+    val daysToMonthAnniversary =
+        max(
+            0L,
+            daysBetweenPersian(
+                today,
+                nextMonthDay
+            )
+        )
+
+
+    /*
+     * سالگرد
+     */
+
+    val nextYearAnniversary =
+        nextYearlyAnniversary(
+            today
+        )
+
+    val daysToYearAnniversary =
+        max(
+            0L,
+            daysBetweenPersian(
+                today,
+                nextYearAnniversary
+            )
+        )
+
+
+    /*
+     * وضعیت پریودی ثبت‌شده
+     */
+
+    val periodStart =
+        PersianDate(
+            PERIOD_START_YEAR,
+            PERIOD_START_MONTH,
+            PERIOD_START_DAY
+        )
+
+    val periodEnd =
+        PersianDate(
+            PERIOD_END_YEAR,
+            PERIOD_END_MONTH,
+            PERIOD_END_DAY
+        )
+
+    val periodStatus =
+        when {
+
+            daysBetweenPersian(
+                periodStart,
+                today
+            ) < 0 -> {
+                "شروع: ۱۴۰۵/۰۷/۰۳"
+            }
+
+            daysBetweenPersian(
+                today,
+                periodEnd
+            ) >= 0 -> {
+                "پایان: ۱۴۰۵/۰۷/۱۰"
+            }
+
+            else -> {
+                "در بازه ثبت‌شده"
+            }
+        }
+
+
+    val folders =
+        listOf(
+
+            FolderItem(
+                "خاطرات ما",
+                "لحظه‌های قشنگمون",
+                FolderType.MEMORIES
+            ),
+
+            FolderItem(
+                "نامه‌های عاشقانه",
+                "حرف‌هایی از قلبمون",
+                FolderType.LETTERS
+            ),
+
+            FolderItem(
+                "آهنگ ما",
+                "صدای قصه‌ی ما",
+                FolderType.MUSIC
+            ),
+
+            FolderItem(
+                "وقتی دلمون گرفت",
+                "همیشه کنار هم",
+                FolderType.SAD
+            ),
+
+            FolderItem(
+                "چت دونفره",
+                "حرف‌های من و تو",
+                FolderType.CHAT
+            ),
+
+            FolderItem(
+                "لحظه‌های خاص",
+                "تاریخ‌های مهم ما",
+                FolderType.SPECIAL
+            )
+        )
+
+
+    Column(
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        listOf(
+                            Color(0xFFFFE8EF),
+                            Background,
+                            Color.White
+                        )
+                    )
+                )
+                .verticalScroll(
+                    rememberScrollState()
+                )
+                .padding(
+                    horizontal = 12.dp
+                )
+    ) {
+
+        Spacer(
+            modifier =
+                Modifier.height(12.dp)
+        )
+
+
+        /*
+         * =================================================
+         * بنر اصلی
+         * =================================================
+         */
+
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(132.dp)
+                    .clip(
+                        RoundedCornerShape(24.dp)
+                    )
+        ) {
+
+            androidx.compose.foundation.Image(
+                painter =
+                    painterResource(
+                        id =
+                            R.drawable.couple_main
+                    ),
+
+                contentDescription =
+                    "رامین و رویا",
+
+                contentScale =
+                    ContentScale.Fit,
+
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .background(
+                            Color.White
+                        )
+            )
+
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(
+                                    Color.Transparent,
+                                    Color.Black.copy(
+                                        alpha = 0.12f
+                                    )
+                                )
+                            )
+                        )
+            )
+
+            Column(
+                modifier =
+                    Modifier
+                        .align(
+                            Alignment.BottomCenter
+                        )
+                        .padding(
+                            bottom = 8.dp
+                        ),
+
+                horizontalAlignment =
+                    Alignment.CenterHorizontally
+            ) {
+
+                Text(
+                    text =
+                        "رامین ❤️ رویا",
+
+                    color =
+                        Color.White,
+
+                    fontSize =
+                        17.sp,
+
+                    fontWeight =
+                        FontWeight.Bold
+                )
+
+                Text(
+                    text =
+                        "قصه‌ی من و تو",
+
+                    color =
+                        Color.White.copy(
+                            alpha = 0.94f
+                        ),
+
+                    fontSize =
+                        10.sp
+                )
+            }
+        }
+
+
+        Spacer(
+            modifier =
+                Modifier.height(10.dp)
+        )
+
+
+        /*
+         * =================================================
+         * کادر اصلی روزشمار
+         * =================================================
+         */
+
+        Card(
+            modifier =
+                Modifier
+                    .fillMaxWidth(),
+
+            shape =
+                RoundedCornerShape(22.dp),
+
+            colors =
+                CardDefaults.cardColors(
+                    containerColor =
+                        Color.White.copy(
+                            alpha = 0.96f
+                        )
+                ),
+
+            elevation =
+                CardDefaults.cardElevation(
+                    defaultElevation = 4.dp
+                )
+        ) {
+
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            vertical = 10.dp,
+                            horizontal = 8.dp
+                        )
+            ) {
+
+                Text(
+                    text =
+                        "دنیای تاریخ‌های ما",
+
+                    modifier =
+                        Modifier.fillMaxWidth(),
+
+                    textAlign =
+                        TextAlign.Center,
+
+                    fontSize =
+                        13.sp,
+
+                    fontWeight =
+                        FontWeight.Bold,
+
+                    color =
+                        DeepPink
+                )
+
+                Spacer(
+                    modifier =
+                        Modifier.height(7.dp)
+                )
+
+
+                /*
+                 * ردیف اول
+                 */
+
+                Row(
+                    modifier =
+                        Modifier.fillMaxWidth(),
+
+                    horizontalArrangement =
+                        Arrangement.SpaceEvenly
+                ) {
+
+                    CounterItem(
+                        icon = "❤️",
+                        value =
+                            daysTogether.toString(),
+                        label =
+                            "روز کنار هم",
+                        modifier =
+                            Modifier.weight(1f)
+                    )
+
+                    CounterDivider()
+
+                    CounterItem(
+                        icon = "🌙",
+                        value =
+                            daysToMonthAnniversary.toString(),
+                        label =
+                            "روز تا ماهگرد",
+                        modifier =
+                            Modifier.weight(1f)
+                    )
+
+                    CounterDivider()
+
+                    CounterItem(
+                        icon = "💕",
+                        value =
+                            daysToYearAnniversary.toString(),
+                        label =
+                            "روز تا سالگرد",
+                        modifier =
+                            Modifier.weight(1f)
+                    )
+                }
+
+
+                Spacer(
+                    modifier =
+                        Modifier.height(8.dp)
+                )
+
+
+                /*
+                 * ردیف تولدها
+                 */
+
+                Row(
+                    modifier =
+                        Modifier.fillMaxWidth(),
+
+                    horizontalArrangement =
+                        Arrangement.SpaceEvenly
+                ) {
+
+                    CounterItem(
+                        icon = "🎂",
+                        value =
+                            daysToRaminBirthday.toString(),
+                        label =
+                            "تا تولد رامین",
+                        modifier =
+                            Modifier.weight(1f)
+                    )
+
+                    CounterDivider()
+
+                    CounterItem(
+                        icon = "🎂",
+                        value =
+                            daysToRoyaBirthday.toString(),
+                        label =
+                            "تا تولد رویا",
+                        modifier =
+                            Modifier.weight(1f)
+                    )
+                }
+
+
+                Spacer(
+                    modifier =
+                        Modifier.height(8.dp)
+                )
+
+
+                /*
+                 * پریودی
+                 */
+
+                Box(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .background(
+                                Color(0xFFFFF0F4),
+                                RoundedCornerShape(14.dp)
+                            )
+                            .padding(
+                                vertical = 7.dp,
+                                horizontal = 10.dp
+                            )
+                ) {
+
+                    Row(
+                        modifier =
+                            Modifier.fillMaxWidth(),
+
+                        horizontalArrangement =
+                            Arrangement.Center,
+
+                        verticalAlignment =
+                            Alignment.CenterVertically
+                    ) {
+
+                        Text(
+                            text =
+                                "🩷",
+
+                            fontSize =
+                                14.sp
+                        )
+
+                        Spacer(
+                            modifier =
+                                Modifier.size(5.dp)
+                        )
+
+                        Text(
+                            text =
+                                "بازه ثبت‌شده پریودی: " +
+                                        "۱۴۰۵/۰۷/۰۳ تا ۱۴۰۵/۰۷/۱۰",
+
+                            fontSize =
+                                9.sp,
+
+                            color =
+                                SoftText,
+
+                            textAlign =
+                                TextAlign.Center
+                        )
+                    }
+                }
+
+
+                Spacer(
+                    modifier =
+                        Modifier.height(3.dp)
+                )
+
+                Text(
+                    text =
+                        periodStatus,
+
+                    modifier =
+                        Modifier.fillMaxWidth(),
+
+                    textAlign =
+                        TextAlign.Center,
+
+                    fontSize =
+                        8.sp,
+
+                    color =
+                        SoftText
+                )
+            }
+        }
+
+
+        Spacer(
+            modifier =
+                Modifier.height(14.dp)
+        )
+
+
+        /*
+         * =================================================
+         * دو ردیف سه‌تایی پوشه‌ها
+         * =================================================
+         */
+
+        LazyVerticalGrid(
+            columns =
+                GridCells.Fixed(3),
+
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(268.dp),
+
+            contentPadding =
+                PaddingValues(0.dp),
+
+            horizontalArrangement =
+                Arrangement.spacedBy(8.dp),
+
+            verticalArrangement =
+                Arrangement.spacedBy(8.dp),
+
+            userScrollEnabled =
+                false
+        ) {
+
+            items(
+                folders
+            ) { folder ->
+
+                FolderCard(
+                    folder =
+                        folder,
+
+                    onClick = {
+
+                        when (
+                            folder.type
+                        ) {
+
+                            FolderType.MEMORIES ->
+                                onMemoriesClick()
+
+                            FolderType.LETTERS ->
+                                onLettersClick()
+
+                            FolderType.MUSIC ->
+                                onMusicClick()
+
+                            FolderType.SAD ->
+                                onSadClick()
+
+                            FolderType.CHAT ->
+                                onChatClick()
+
+                            FolderType.SPECIAL ->
+                                onSpecialClick()
+
+                            else ->
+                                Unit
+                        }
+                    }
+                )
+            }
+        }
+
+
+        Spacer(
+            modifier =
+                Modifier.height(8.dp)
+        )
+
+
+        /*
+         * =================================================
+         * ردیف سوم
+         * =================================================
+         */
+
+        Row(
+            modifier =
+                Modifier.fillMaxWidth(),
+
+            horizontalArrangement =
+                Arrangement.spacedBy(8.dp)
+        ) {
+
+            FolderCard(
+                folder =
+                    FolderItem(
+                        "بخش خصوصی",
+                        "فقط من و تو",
+                        FolderType.PRIVATE
+                    ),
+
+                modifier =
+                    Modifier.weight(1f),
+
+                onClick =
+                    onPrivateClick
+            )
+
+            LoveQuoteCard(
+                modifier =
+                    Modifier.weight(1f)
+            )
+        }
+
+
+        Spacer(
+            modifier =
+                Modifier.height(10.dp)
+        )
+
+
+        /*
+         * =================================================
+         * تنظیمات
+         * =================================================
+         */
+
+        Card(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        onSettingsClick()
+                    },
+
+            shape =
+                RoundedCornerShape(18.dp),
+
+            colors =
+                CardDefaults.cardColors(
+                    containerColor =
+                        Color.White.copy(
+                            alpha = 0.78f
+                        )
+                )
+        ) {
+
+            Row(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(11.dp),
+
+                verticalAlignment =
+                    Alignment.CenterVertically,
+
+                horizontalArrangement =
+                    Arrangement.Center
+            ) {
+
+                Icon(
+                    imageVector =
+                        Icons.Default.Settings,
+
+                    contentDescription =
+                        "تنظیمات",
+
+                    tint =
+                        DeepPink,
+
+                    modifier =
+                        Modifier.size(18.dp)
+                )
+
+                Spacer(
+                    modifier =
+                        Modifier.size(6.dp)
+                )
+
+                Text(
+                    text =
+                        "تنظیمات رویارام",
+
+                    fontSize =
+                        12.sp,
+
+                    color =
+                        SoftText
+                )
+            }
+        }
+
+
+        Spacer(
+            modifier =
+                Modifier.height(12.dp)
+        )
+
+
+        Text(
+            text =
+                "ساخته شده با ❤️ برای رامین و رویا",
+
+            fontSize =
+                10.sp,
+
+            color =
+                SoftText,
+
+            textAlign =
+                TextAlign.Center,
+
+            modifier =
+                Modifier.fillMaxWidth()
+        )
+
+
+        Spacer(
+            modifier =
+                Modifier.height(16.dp)
+        )
+    }
+}
+
+
+/*
+ * =========================================================
+ * آیتم روزشمار
+ * =========================================================
+ */
+
+@Composable
+fun CounterItem(
+    icon: String,
+    value: String,
+    label: String,
+    modifier: Modifier = Modifier
+) {
+
+    Column(
+        modifier =
+            modifier,
+
+        horizontalAlignment =
+            Alignment.CenterHorizontally
+    ) {
+
+        Text(
+            text =
+                icon,
+
+            fontSize =
+                15.sp
+        )
+
+        Text(
+            text =
+                value,
+
+            fontSize =
+                18.sp,
+
+            fontWeight =
+                FontWeight.Bold,
+
+            color =
+                DeepPink
+        )
+
+        Text(
+            text =
+                label,
+
+            fontSize =
+                8.sp,
+
+            color =
+                SoftText,
+
+            textAlign =
+                TextAlign.Center
+        )
+    }
+}
+
+
+/*
+ * خط جداکننده
+ */
+
+@Composable
+fun CounterDivider() {
+
+    Box(
+        modifier =
+            Modifier
+                .size(
+                    width = 1.dp,
+                    height = 36.dp
+                )
+                .background(
+                    LightPink
+                )
+    )
+}
+
+
+/*
+ * =========================================================
+ * کارت پوشه
+ * =========================================================
+ */
+
+@Composable
+fun FolderCard(
+    folder: FolderItem,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+
+    val icon: ImageVector =
+        when (folder.type) {
+
+            FolderType.MEMORIES ->
+                Icons.Default.PhotoLibrary
+
+            FolderType.LETTERS ->
+                Icons.Default.Mail
+
+            FolderType.MUSIC ->
+                Icons.Default.MusicNote
+
+            FolderType.SAD ->
+                Icons.Default.Favorite
+
+            FolderType.CHAT ->
+                Icons.Default.Chat
+
+            FolderType.SPECIAL ->
+                Icons.Default.Star
+
+            FolderType.PRIVATE ->
+                Icons.Default.Lock
+
+            FolderType.SETTINGS ->
+                Icons.Default.Settings
+        }
+
+
+    Card(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .height(130.dp)
+                .clickable {
+                    onClick()
+                },
+
+        shape =
+            RoundedCornerShape(20.dp),
+
+        colors =
+            CardDefaults.cardColors(
+                containerColor =
+                    Color.White.copy(
+                        alpha = 0.95f
+                    )
+            ),
+
+        elevation =
+            CardDefaults.cardElevation(
+                defaultElevation = 3.dp
+            )
+    ) {
+
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(7.dp),
+
+            verticalArrangement =
+                Arrangement.Center,
+
+            horizontalAlignment =
+                Alignment.CenterHorizontally
+        ) {
+
+            Box(
+                modifier =
+                    Modifier
+                        .size(43.dp)
+                        .background(
+                            SoftPink,
+                            RoundedCornerShape(14.dp)
+                        ),
+
+                contentAlignment =
+                    Alignment.Center
+            ) {
+
+                Icon(
+                    imageVector =
+                        icon,
+
+                    contentDescription =
+                        folder.title,
+
+                    tint =
+                        DeepPink,
+
+                    modifier =
+                        Modifier.size(22.dp)
+                )
+            }
+
+            Spacer(
+                modifier =
+                    Modifier.height(6.dp)
+            )
+
+            Text(
+                text =
+                    folder.title,
+
+                fontSize =
+                    11.sp,
+
+                fontWeight =
+                    FontWeight.Bold,
+
+                color =
+                    TextDark,
+
+                textAlign =
+                    TextAlign.Center,
+
+                maxLines =
+                    1
+            )
+
+            Spacer(
+                modifier =
+                    Modifier.height(2.dp)
+            )
+
+            Text(
+                text =
+                    folder.subtitle,
+
+                fontSize =
+                    8.sp,
+
+                color =
+                    SoftText,
+
+                textAlign =
+                    TextAlign.Center,
+
+                maxLines =
+                    1
+            )
+        }
+    }
+}
+
+
+/*
+ * =========================================================
+ * کادر جملات عاشقانه
+ * =========================================================
+ */
+
+@Composable
+fun LoveQuoteCard(
+    modifier: Modifier = Modifier
+) {
+
+    Card(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .height(130.dp),
+
+        shape =
+            RoundedCornerShape(20.dp),
+
+        colors =
+            CardDefaults.cardColors(
+                containerColor =
+                    Color(0xFFFFEAF1)
+            ),
+
+        elevation =
+            CardDefaults.cardElevation(
+                defaultElevation = 3.dp
+            )
+    ) {
+
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(9.dp),
+
+            verticalArrangement =
+                Arrangement.Center,
+
+            horizontalAlignment =
+                Alignment.CenterHorizontally
+        ) {
+
+            Icon(
+                imageVector =
+                    Icons.Default.Favorite,
+
+                contentDescription =
+                    null,
+
+                tint =
+                    Pink,
+
+                modifier =
+                    Modifier.size(23.dp)
+            )
+
+            Spacer(
+                modifier =
+                    Modifier.height(5.dp)
+            )
+
+            Text(
+                text =
+                    "حرف‌های عاشقانه",
+
+                fontSize =
+                    12.sp,
+
+                fontWeight =
+                    FontWeight.Bold,
+
+                color =
+                    DeepPink,
+
+                textAlign =
+                    TextAlign.Center
+            )
+
+            Spacer(
+                modifier =
+                    Modifier.height(4.dp)
+            )
+
+            Text(
+                text =
+                    "«کنار تو،\nحتی روزهای معمولی قشنگن.» ❤️",
+
+                fontSize =
+                    8.sp,
+
+                color =
+                    TextDark,
+
+                lineHeight =
+                    12.sp,
+
+                textAlign =
+                    TextAlign.Center
+            )
+        }
+    }
+}
