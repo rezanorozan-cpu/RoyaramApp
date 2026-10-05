@@ -21,7 +21,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -40,10 +40,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -66,7 +63,7 @@ private val TextDark = Color(0xFF33252B)
 private val SoftText = Color(0xFF82747A)
 private val Background = Color(0xFFFFF7F9)
 
-private val RelationshipStartDate: Calendar =
+private val RelationshipStartDate =
     Calendar.getInstance().apply {
         set(2026, Calendar.JUNE, 10, 0, 0, 0)
         set(Calendar.MILLISECOND, 0)
@@ -157,9 +154,7 @@ fun RoyaramApp(
     onPrivateClick: () -> Unit,
     onSettingsClick: () -> Unit
 ) {
-
     MaterialTheme {
-
         HomeScreen(
             onChatClick = onChatClick,
             onMemoriesClick = onMemoriesClick,
@@ -219,6 +214,14 @@ fun HomeScreen(
         )
     }
 
+    /*
+     * دقیقاً ۶ پوشه:
+     * ردیف اول = ۳
+     * ردیف دوم = ۳
+     *
+     * ردیف سوم جداگانه:
+     * یک پوشه + جملات عاشقانه
+     */
     val folders = listOf(
 
         FolderItem(
@@ -255,12 +258,6 @@ fun HomeScreen(
             "لحظه‌های خاص",
             "تاریخ‌های مهم ما",
             FolderType.SPECIAL
-        ),
-
-        FolderItem(
-            "بخش خصوصی",
-            "فقط من و تو",
-            FolderType.PRIVATE
         )
     )
 
@@ -285,92 +282,106 @@ fun HomeScreen(
     ) {
 
         Spacer(
-            modifier = Modifier.height(14.dp)
+            modifier = Modifier.height(12.dp)
         )
 
         /*
-         * ==========================================
-         * بنر بالایی
-         * ==========================================
+         * =========================================
+         * بنر اصلی لاکچری
+         * =========================================
          */
 
-        Card(
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(125.dp),
-
-            shape = RoundedCornerShape(24.dp),
-
-            colors = CardDefaults.cardColors(
-                containerColor = Color.White
-            ),
-
-            elevation = CardDefaults.cardElevation(
-                defaultElevation = 6.dp
-            )
+                .height(132.dp)
+                .clip(
+                    RoundedCornerShape(24.dp)
+                )
         ) {
 
+            /*
+             * تصویر اصلی
+             *
+             * Fit = هیچ قسمتی از عکس بریده نمی‌شود
+             */
+            Image(
+                painter = painterResource(
+                    id = R.drawable.couple_main
+                ),
+
+                contentDescription = "رامین و رویا",
+
+                contentScale = ContentScale.Fit,
+
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Color.White
+                    )
+            )
+
+            /*
+             * لایه ظریف روی عکس
+             */
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .clip(
-                        RoundedCornerShape(24.dp)
-                    )
-            ) {
-
-                Image(
-                    painter = painterResource(
-                        id = R.drawable.couple_main
-                    ),
-
-                    contentDescription = "رامین و رویا",
-
-                    /*
-                     * مهم:
-                     * هیچ قسمتی از عکس بریده نمی‌شود.
-                     */
-                    contentScale = ContentScale.Fit,
-
-                    modifier = Modifier
-                        .fillMaxSize()
-                )
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            Brush.horizontalGradient(
-                                listOf(
-                                    Color.Black.copy(alpha = 0.08f),
-                                    Color.Transparent,
-                                    Color.Black.copy(alpha = 0.08f)
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(
+                                Color.Transparent,
+                                Color.Black.copy(
+                                    alpha = 0.12f
                                 )
                             )
                         )
+                    )
+            )
+
+            /*
+             * نوشته روی بنر
+             */
+            Column(
+                modifier = Modifier
+                    .align(
+                        Alignment.BottomCenter
+                    )
+                    .padding(
+                        bottom = 8.dp
+                    ),
+
+                horizontalAlignment =
+                    Alignment.CenterHorizontally
+            ) {
+
+                Text(
+                    text = "رامین ❤️ رویا",
+
+                    color = Color.White,
+
+                    fontSize = 17.sp,
+
+                    fontWeight =
+                        FontWeight.Bold,
+
+                    textAlign =
+                        TextAlign.Center
                 )
 
-                Column(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(bottom = 8.dp),
+                Text(
+                    text = "قصه‌ی من و تو",
 
-                    horizontalAlignment =
-                        Alignment.CenterHorizontally
-                ) {
+                    color =
+                        Color.White.copy(
+                            alpha = 0.94f
+                        ),
 
-                    Text(
-                        text = "رامین ❤️ رویا",
-                        color = Color.White,
-                        fontSize = 17.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                    fontSize = 10.sp,
 
-                    Text(
-                        text = "قصه‌ی من و تو",
-                        color = Color.White.copy(alpha = 0.92f),
-                        fontSize = 11.sp
-                    )
-                }
+                    textAlign =
+                        TextAlign.Center
+                )
             }
         }
 
@@ -379,9 +390,9 @@ fun HomeScreen(
         )
 
         /*
-         * ==========================================
-         * کادر روزشمار
-         * ==========================================
+         * =========================================
+         * روزشمار
+         * =========================================
          */
 
         Card(
@@ -389,23 +400,28 @@ fun HomeScreen(
                 .fillMaxWidth()
                 .height(88.dp),
 
-            shape = RoundedCornerShape(22.dp),
+            shape =
+                RoundedCornerShape(22.dp),
 
-            colors = CardDefaults.cardColors(
-                containerColor =
-                    Color.White.copy(alpha = 0.94f)
-            ),
+            colors =
+                CardDefaults.cardColors(
+                    containerColor =
+                        Color.White.copy(
+                            alpha = 0.95f
+                        )
+                ),
 
-            elevation = CardDefaults.cardElevation(
-                defaultElevation = 4.dp
-            )
+            elevation =
+                CardDefaults.cardElevation(
+                    defaultElevation = 4.dp
+                )
         ) {
 
             Row(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(
-                        horizontal = 14.dp
+                        horizontal = 12.dp
                     ),
 
                 verticalAlignment =
@@ -415,10 +431,6 @@ fun HomeScreen(
                     Arrangement.SpaceEvenly
             ) {
 
-                /*
-                 * روزشمار آشنایی
-                 */
-
                 Column(
                     horizontalAlignment =
                         Alignment.CenterHorizontally
@@ -426,35 +438,39 @@ fun HomeScreen(
 
                     Text(
                         text = "❤️",
-                        fontSize = 17.sp
+                        fontSize = 16.sp
                     )
 
                     Text(
                         text = "$daysTogether",
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold,
+
+                        fontSize = 21.sp,
+
+                        fontWeight =
+                            FontWeight.Bold,
+
                         color = DeepPink
                     )
 
                     Text(
                         text = "روز آشنایی",
-                        fontSize = 11.sp,
+
+                        fontSize = 10.sp,
+
                         color = SoftText
                     )
                 }
 
                 Box(
                     modifier = Modifier
-                        .height(48.dp)
-                        .size(width = 1.dp, height = 48.dp)
+                        .size(
+                            width = 1.dp,
+                            height = 48.dp
+                        )
                         .background(
                             LightPink
                         )
                 )
-
-                /*
-                 * روزشمار تولد
-                 */
 
                 Column(
                     horizontalAlignment =
@@ -463,19 +479,25 @@ fun HomeScreen(
 
                     Text(
                         text = "🎂",
-                        fontSize = 17.sp
+                        fontSize = 16.sp
                     )
 
                     Text(
                         text = "به‌زودی",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
+
+                        fontSize = 15.sp,
+
+                        fontWeight =
+                            FontWeight.Bold,
+
                         color = DeepPink
                     )
 
                     Text(
                         text = "تا تولد",
-                        fontSize = 11.sp,
+
+                        fontSize = 10.sp,
+
                         color = SoftText
                     )
                 }
@@ -487,12 +509,9 @@ fun HomeScreen(
         )
 
         /*
-         * ==========================================
-         * هفت پوشه
-         *
+         * =========================================
          * دو ردیف سه‌تایی
-         * ردیف سوم یک پوشه
-         * ==========================================
+         * =========================================
          */
 
         LazyVerticalGrid(
@@ -500,7 +519,7 @@ fun HomeScreen(
 
             modifier = Modifier
                 .fillMaxWidth()
-                .height(430.dp),
+                .height(268.dp),
 
             contentPadding =
                 PaddingValues(0.dp),
@@ -514,7 +533,7 @@ fun HomeScreen(
             userScrollEnabled = false
         ) {
 
-            itemsIndexed(folders) { _, folder ->
+            items(folders) { folder ->
 
                 FolderCard(
                     folder = folder,
@@ -541,26 +560,27 @@ fun HomeScreen(
                             FolderType.SPECIAL ->
                                 onSpecialClick()
 
-                            FolderType.PRIVATE ->
-                                onPrivateClick()
-
-                            FolderType.SETTINGS ->
-                                onSettingsClick()
+                            else -> Unit
                         }
                     }
                 )
             }
         }
 
+        Spacer(
+            modifier = Modifier.height(8.dp)
+        )
+
         /*
-         * ==========================================
-         * ردیف سوم:
+         * =========================================
+         * ردیف سوم
          * یک پوشه + جملات عاشقانه
-         * ==========================================
+         * =========================================
          */
 
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier =
+                Modifier.fillMaxWidth(),
 
             horizontalArrangement =
                 Arrangement.spacedBy(8.dp)
@@ -573,7 +593,8 @@ fun HomeScreen(
                     FolderType.PRIVATE
                 ),
 
-                modifier = Modifier.weight(1f),
+                modifier =
+                    Modifier.weight(1f),
 
                 onClick = {
                     onPrivateClick()
@@ -581,16 +602,17 @@ fun HomeScreen(
             )
 
             LoveQuoteCard(
-                modifier = Modifier.weight(1f)
+                modifier =
+                    Modifier.weight(1f)
             )
         }
 
         Spacer(
-            modifier = Modifier.height(14.dp)
+            modifier = Modifier.height(10.dp)
         )
 
         /*
-         * تنظیمات کوچک پایین
+         * تنظیمات
          */
 
         Card(
@@ -600,18 +622,22 @@ fun HomeScreen(
                     onSettingsClick()
                 },
 
-            shape = RoundedCornerShape(18.dp),
+            shape =
+                RoundedCornerShape(18.dp),
 
-            colors = CardDefaults.cardColors(
-                containerColor =
-                    Color.White.copy(alpha = 0.78f)
-            )
+            colors =
+                CardDefaults.cardColors(
+                    containerColor =
+                        Color.White.copy(
+                            alpha = 0.78f
+                        )
+                )
         ) {
 
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(12.dp),
+                    .padding(11.dp),
 
                 verticalAlignment =
                     Alignment.CenterVertically,
@@ -629,41 +655,49 @@ fun HomeScreen(
 
                     tint = DeepPink,
 
-                    modifier = Modifier
-                        .size(19.dp)
+                    modifier =
+                        Modifier.size(18.dp)
                 )
 
                 Spacer(
-                    modifier = Modifier.size(6.dp)
+                    modifier =
+                        Modifier.size(6.dp)
                 )
 
                 Text(
-                    text = "تنظیمات رویارام",
+                    text =
+                        "تنظیمات رویارام",
+
                     fontSize = 12.sp,
+
                     color = SoftText
                 )
             }
         }
 
         Spacer(
-            modifier = Modifier.height(14.dp)
+            modifier =
+                Modifier.height(12.dp)
         )
 
         Text(
-            text = "ساخته شده با ❤️ برای رامین و رویا",
+            text =
+                "ساخته شده با ❤️ برای رامین و رویا",
 
-            fontSize = 11.sp,
+            fontSize = 10.sp,
 
             color = SoftText,
 
-            textAlign = TextAlign.Center,
+            textAlign =
+                TextAlign.Center,
 
-            modifier = Modifier
-                .fillMaxWidth()
+            modifier =
+                Modifier.fillMaxWidth()
         )
 
         Spacer(
-            modifier = Modifier.height(18.dp)
+            modifier =
+                Modifier.height(16.dp)
         )
     }
 }
@@ -710,22 +744,27 @@ fun FolderCard(
                 onClick()
             },
 
-        shape = RoundedCornerShape(20.dp),
+        shape =
+            RoundedCornerShape(20.dp),
 
-        colors = CardDefaults.cardColors(
-            containerColor =
-                Color.White.copy(alpha = 0.94f)
-        ),
+        colors =
+            CardDefaults.cardColors(
+                containerColor =
+                    Color.White.copy(
+                        alpha = 0.95f
+                    )
+            ),
 
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 3.dp
-        )
+        elevation =
+            CardDefaults.cardElevation(
+                defaultElevation = 3.dp
+            )
     ) {
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(8.dp),
+                .padding(7.dp),
 
             verticalArrangement =
                 Arrangement.Center,
@@ -736,10 +775,10 @@ fun FolderCard(
 
             Box(
                 modifier = Modifier
-                    .size(45.dp)
+                    .size(43.dp)
                     .background(
-                        color = SoftPink,
-                        shape = RoundedCornerShape(15.dp)
+                        SoftPink,
+                        RoundedCornerShape(14.dp)
                     ),
 
                 contentAlignment =
@@ -754,19 +793,21 @@ fun FolderCard(
 
                     tint = DeepPink,
 
-                    modifier = Modifier
-                        .size(23.dp)
+                    modifier =
+                        Modifier.size(22.dp)
                 )
             }
 
             Spacer(
-                modifier = Modifier.height(7.dp)
+                modifier =
+                    Modifier.height(6.dp)
             )
 
             Text(
-                text = folder.title,
+                text =
+                    folder.title,
 
-                fontSize = 12.sp,
+                fontSize = 11.sp,
 
                 fontWeight =
                     FontWeight.Bold,
@@ -780,13 +821,15 @@ fun FolderCard(
             )
 
             Spacer(
-                modifier = Modifier.height(2.dp)
+                modifier =
+                    Modifier.height(2.dp)
             )
 
             Text(
-                text = folder.subtitle,
+                text =
+                    folder.subtitle,
 
-                fontSize = 9.sp,
+                fontSize = 8.sp,
 
                 color = SoftText,
 
@@ -809,22 +852,25 @@ fun LoveQuoteCard(
             .fillMaxWidth()
             .height(130.dp),
 
-        shape = RoundedCornerShape(20.dp),
+        shape =
+            RoundedCornerShape(20.dp),
 
-        colors = CardDefaults.cardColors(
-            containerColor =
-                Color(0xFFFFEAF1)
-        ),
+        colors =
+            CardDefaults.cardColors(
+                containerColor =
+                    Color(0xFFFFEAF1)
+            ),
 
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 3.dp
-        )
+        elevation =
+            CardDefaults.cardElevation(
+                defaultElevation = 3.dp
+            )
     ) {
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(10.dp),
+                .padding(9.dp),
 
             verticalArrangement =
                 Arrangement.Center,
@@ -841,19 +887,20 @@ fun LoveQuoteCard(
 
                 tint = Pink,
 
-                modifier = Modifier
-                    .size(24.dp)
+                modifier =
+                    Modifier.size(23.dp)
             )
 
             Spacer(
-                modifier = Modifier.height(6.dp)
+                modifier =
+                    Modifier.height(5.dp)
             )
 
             Text(
                 text =
                     "حرف‌های عاشقانه",
 
-                fontSize = 13.sp,
+                fontSize = 12.sp,
 
                 fontWeight =
                     FontWeight.Bold,
@@ -865,18 +912,19 @@ fun LoveQuoteCard(
             )
 
             Spacer(
-                modifier = Modifier.height(5.dp)
+                modifier =
+                    Modifier.height(4.dp)
             )
 
             Text(
                 text =
                     "«کنار تو،\nحتی روزهای معمولی قشنگن.» ❤️",
 
-                fontSize = 9.sp,
+                fontSize = 8.sp,
 
                 color = TextDark,
 
-                lineHeight = 13.sp,
+                lineHeight = 12.sp,
 
                 textAlign =
                     TextAlign.Center
@@ -884,3 +932,5 @@ fun LoveQuoteCard(
         }
     }
 }
+
+
