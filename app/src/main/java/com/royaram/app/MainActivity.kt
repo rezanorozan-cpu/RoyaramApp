@@ -1318,49 +1318,117 @@ fun CounterItem(
     modifier: Modifier = Modifier
 ) {
 
-    Column(
-        modifier =
-            modifier,
+    val isMainCounter =
+        label == "روز کنار هم"
 
-        horizontalAlignment =
-            Alignment.CenterHorizontally
+    Card(
+        modifier =
+            modifier
+                .padding(
+                    horizontal = 3.dp
+                ),
+
+        shape =
+            RoundedCornerShape(
+                16.dp
+            ),
+
+        colors =
+            CardDefaults.cardColors(
+                containerColor =
+                    if (isMainCounter) {
+                        Color(0xFFFFE4ED)
+                    } else {
+                        Color(0xFFFFF8FA)
+                    }
+            ),
+
+        elevation =
+            CardDefaults.cardElevation(
+                defaultElevation =
+                    if (isMainCounter) {
+                        3.dp
+                    } else {
+                        1.dp
+                    }
+            )
     ) {
 
-        Text(
-            text =
-                icon,
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        vertical = 6.dp,
+                        horizontal = 3.dp
+                    ),
 
-            fontSize =
-                15.sp
-        )
+            horizontalAlignment =
+                Alignment.CenterHorizontally
+        ) {
 
-        Text(
-            text =
-                value,
+            Text(
+                text = icon,
 
-            fontSize =
-                18.sp,
+                fontSize =
+                    if (isMainCounter) {
+                        15.sp
+                    } else {
+                        13.sp
+                    }
+            )
 
-            fontWeight =
-                FontWeight.Bold,
+            Spacer(
+                modifier =
+                    Modifier.height(1.dp)
+            )
 
-            color =
-                DeepPink
-        )
+            Text(
+                text =
+                    persianDigits(
+                        value
+                    ),
 
-        Text(
-            text =
-                label,
+                fontSize =
+                    if (isMainCounter) {
+                        20.sp
+                    } else {
+                        17.sp
+                    },
 
-            fontSize =
-                8.sp,
+                fontWeight =
+                    FontWeight.ExtraBold,
 
-            color =
-                SoftText,
+                color =
+                    if (isMainCounter) {
+                        DeepPink
+                    } else {
+                        Pink
+                    },
 
-            textAlign =
-                TextAlign.Center
-        )
+                textAlign =
+                    TextAlign.Center
+            )
+
+            Text(
+                text = label,
+
+                fontSize =
+                    7.sp,
+
+                fontWeight =
+                    FontWeight.Medium,
+
+                color =
+                    SoftText,
+
+                textAlign =
+                    TextAlign.Center,
+
+                maxLines =
+                    1
+            )
+        }
     }
 }
 
