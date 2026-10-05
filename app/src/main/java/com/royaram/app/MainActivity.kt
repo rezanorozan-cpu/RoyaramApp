@@ -1447,11 +1447,17 @@ fun CounterDivider() {
             Modifier
                 .size(
                     width = 1.dp,
-                    height = 36.dp
+                    height = 42.dp
                 )
                 .background(
-                    LightPink
-                )
+                    Brush.verticalGradient(
+                        listOf(
+                            Color.Transparent,
+                            LightPink,
+                            Color.Transparent
+                        )
+                    )
+        )
     )
 }
 
