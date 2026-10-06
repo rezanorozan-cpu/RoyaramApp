@@ -2,7 +2,6 @@ package com.royaram.app
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -72,38 +71,85 @@ data class LuxuryMemory(
     val description: String = "",
     val date: String = "",
     val imageUrl: String = "",
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = 0L
 )
 
 @Composable
 fun MemoriesScreen(
     onBack: () -> Unit
 ) {
-    val firestore = remember { FirebaseFirestore.getInstance() }
-    val storage = remember { FirebaseStorage.getInstance() }
+    val firestore = remember {
+        FirebaseFirestore.getInstance()
+    }
 
-    var memories by remember { mutableStateOf<List<LuxuryMemory>>(emptyList()) }
-    var showAddDialog by remember { mutableStateOf(false) }
+    val storage = remember {
+        FirebaseStorage.getInstance()
+    }
 
-    var selectedImage by remember { mutableStateOf<Uri?>(null) }
+    var memories by remember {
+        mutableStateOf<List<LuxuryMemory>>(emptyList())
+    }
+
+    var showAddDialog by remember {
+        mutableStateOf(false)
+    }
+
+    var selectedImage by remember {
+        mutableStateOf<Uri?>(null)
+    }
 
     val imagePicker = rememberLauncherForActivityResult(
-    contract = ActivityResultContracts.PickVisualMedia()
-) { uri ->
-    selectedImage = uri
-}
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            selectedImage = uri
+        }
+    }
 
     LaunchedEffect(Unit) {
         firestore.collection("memories")
-            .orderBy("createdAt", Query.Direction.DESCENDING)
-            .addSnapshotListener { snapshot, _ ->
-                if (snapshot != null) {
-                    memories = snapshot.documents.mapNotNull { document ->
-                        document.toObject(LuxuryMemory::class.java)?.copy(
-                            id = document.id
+            .orderBy(
+                "createdAt",
+                Query.Direction.DESCENDING
+            )
+            .addSnapshotListener { snapshot, error ->
+
+                if (error != null || snapshot == null) {
+                    return@addSnapshotListener
+                }
+
+                val safeMemories = mutableListOf<LuxuryMemory>()
+
+                for (document in snapshot.documents) {
+                    try {
+                        val memory = LuxuryMemory(
+                            id = document.id,
+                            title = document
+                                .getString("title")
+                                .orEmpty(),
+                            description = document
+                                .getString("description")
+                                .orEmpty(),
+                            date = document
+                                .getString("date")
+                                .orEmpty(),
+                            imageUrl = document
+                                .getString("imageUrl")
+                                .orEmpty(),
+                            createdAt = document
+                                .getLong("createdAt")
+                                ?: 0L
                         )
+
+                        safeMemories.add(memory)
+
+                    } catch (_: Exception) {
+                        // اگر یک رکورد خراب باشد،
+                        // باعث بسته شدن برنامه نمی‌شود.
                     }
                 }
+
+                memories = safeMemories
             }
     }
 
@@ -150,6 +196,7 @@ fun MemoriesScreen(
                 Column(
                     modifier = Modifier.weight(1f)
                 ) {
+
                     Text(
                         text = "خاطرات ما",
                         color = MemoryText,
@@ -182,6 +229,7 @@ fun MemoriesScreen(
                         },
                     contentAlignment = Alignment.Center
                 ) {
+
                     Icon(
                         imageVector = Icons.Default.Add,
                         contentDescription = "افزودن خاطره",
@@ -211,6 +259,7 @@ fun MemoriesScreen(
                                 .background(Color.White),
                             contentAlignment = Alignment.Center
                         ) {
+
                             Icon(
                                 imageVector = Icons.Default.PhotoLibrary,
                                 contentDescription = null,
@@ -219,7 +268,9 @@ fun MemoriesScreen(
                             )
                         }
 
-                        Spacer(modifier = Modifier.height(18.dp))
+                        Spacer(
+                            modifier = Modifier.height(18.dp)
+                        )
 
                         Text(
                             text = "هنوز خاطره‌ای ثبت نشده",
@@ -228,7 +279,9 @@ fun MemoriesScreen(
                             fontWeight = FontWeight.Bold
                         )
 
-                        Spacer(modifier = Modifier.height(7.dp))
+                        Spacer(
+                            modifier = Modifier.height(7.dp)
+                        )
 
                         Text(
                             text = "اولین لحظه قشنگتون رو به آلبوم اضافه کنید ❤️",
@@ -236,7 +289,9 @@ fun MemoriesScreen(
                             fontSize = 13.sp
                         )
 
-                        Spacer(modifier = Modifier.height(20.dp))
+                        Spacer(
+                            modifier = Modifier.height(20.dp)
+                        )
 
                         Button(
                             onClick = {
@@ -244,14 +299,19 @@ fun MemoriesScreen(
                                 showAddDialog = true
                             }
                         ) {
+
                             Icon(
                                 imageVector = Icons.Default.Add,
                                 contentDescription = null
                             )
 
-                            Spacer(modifier = Modifier.size(6.dp))
+                            Spacer(
+                                modifier = Modifier.size(6.dp)
+                            )
 
-                            Text("افزودن اولین خاطره")
+                            Text(
+                                text = "افزودن اولین خاطره"
+                            )
                         }
                     }
                 }
@@ -273,7 +333,9 @@ fun MemoriesScreen(
 
                     items(
                         items = memories,
-                        key = { it.id }
+                        key = {
+                            it.id
+                        }
                     ) { memory ->
 
                         MemoryCard(
@@ -289,17 +351,18 @@ fun MemoriesScreen(
 
         AddMemoryDialog(
             selectedImage = selectedImage,
+
             onChooseImage = {
-    imagePicker.launch(
-        PickVisualMediaRequest(
-            ActivityResultContracts.PickVisualMedia.ImageOnly
-        )
-    )
-},
+                imagePicker.launch(
+                    arrayOf("image/*")
+                )
+            },
+
             onDismiss = {
                 showAddDialog = false
                 selectedImage = null
             },
+
             onSave = { title, description, date ->
 
                 val imageUri = selectedImage
@@ -308,15 +371,19 @@ fun MemoriesScreen(
                     return@AddMemoryDialog
                 }
 
-                val fileName = "memories/${UUID.randomUUID()}.jpg"
+                val fileName =
+                    "memories/${UUID.randomUUID()}.jpg"
 
                 storage.reference
                     .child(fileName)
                     .putFile(imageUri)
                     .continueWithTask { task ->
+
                         if (!task.isSuccessful) {
                             throw task.exception
-                                ?: Exception("خطا در آپلود عکس")
+                                ?: Exception(
+                                    "خطا در آپلود عکس"
+                                )
                         }
 
                         storage.reference
@@ -325,19 +392,22 @@ fun MemoriesScreen(
                     }
                     .addOnSuccessListener { downloadUri ->
 
-                        val memory = LuxuryMemory(
-                            title = title,
-                            description = description,
-                            date = date,
-                            imageUrl = downloadUri.toString(),
-                            createdAt = System.currentTimeMillis()
+                        val memory = hashMapOf(
+                            "title" to title,
+                            "description" to description,
+                            "date" to date,
+                            "imageUrl" to downloadUri.toString(),
+                            "createdAt" to System.currentTimeMillis()
                         )
 
-                        firestore.collection("memories")
+                        firestore
+                            .collection("memories")
                             .add(memory)
+                            .addOnSuccessListener {
 
-                        showAddDialog = false
-                        selectedImage = null
+                                showAddDialog = false
+                                selectedImage = null
+                            }
                     }
             }
         )
@@ -352,7 +422,9 @@ private fun MemoryCard(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(24.dp))
+            .clip(
+                RoundedCornerShape(24.dp)
+            )
             .background(Color.White)
     ) {
 
@@ -382,9 +454,14 @@ private fun MemoryCard(
                     .padding(9.dp)
                     .size(32.dp)
                     .clip(CircleShape)
-                    .background(Color.White.copy(alpha = 0.85f)),
+                    .background(
+                        Color.White.copy(
+                            alpha = 0.85f
+                        )
+                    ),
                 contentAlignment = Alignment.Center
             ) {
+
                 Icon(
                     imageVector = Icons.Default.Favorite,
                     contentDescription = null,
@@ -411,7 +488,9 @@ private fun MemoryCard(
 
             if (memory.description.isNotBlank()) {
 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(
+                    modifier = Modifier.height(4.dp)
+                )
 
                 Text(
                     text = memory.description,
@@ -421,7 +500,9 @@ private fun MemoryCard(
                 )
             }
 
-            Spacer(modifier = Modifier.height(7.dp))
+            Spacer(
+                modifier = Modifier.height(7.dp)
+            )
 
             Row(
                 verticalAlignment = Alignment.CenterVertically
@@ -434,7 +515,9 @@ private fun MemoryCard(
                     modifier = Modifier.size(14.dp)
                 )
 
-                Spacer(modifier = Modifier.size(4.dp))
+                Spacer(
+                    modifier = Modifier.size(4.dp)
+                )
 
                 Text(
                     text = memory.date,
@@ -454,22 +537,32 @@ private fun AddMemoryDialog(
     onSave: (String, String, String) -> Unit
 ) {
 
-    var title by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
+    var title by remember {
+        mutableStateOf("")
+    }
+
+    var description by remember {
+        mutableStateOf("")
+    }
 
     val today = remember {
+
         SimpleDateFormat(
             "yyyy/MM/dd",
             Locale.getDefault()
         ).format(Date())
     }
 
-    var date by remember { mutableStateOf(today) }
+    var date by remember {
+        mutableStateOf(today)
+    }
 
     AlertDialog(
+
         onDismissRequest = onDismiss,
 
         title = {
+
             Text(
                 text = "خاطره‌ی جدید ❤️",
                 fontWeight = FontWeight.Bold
@@ -484,8 +577,12 @@ private fun AddMemoryDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(170.dp)
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(Color(0xFFFFF0F4))
+                        .clip(
+                            RoundedCornerShape(20.dp)
+                        )
+                        .background(
+                            Color(0xFFFFF0F4)
+                        )
                         .clickable {
                             onChooseImage()
                         },
@@ -504,11 +601,13 @@ private fun AddMemoryDialog(
                     } else {
 
                         Column(
-                            horizontalAlignment = Alignment.CenterHorizontally
+                            horizontalAlignment =
+                                Alignment.CenterHorizontally
                         ) {
 
                             Icon(
-                                imageVector = Icons.Default.PhotoLibrary,
+                                imageVector =
+                                    Icons.Default.PhotoLibrary,
                                 contentDescription = null,
                                 tint = MemoryPink,
                                 modifier = Modifier.size(42.dp)
@@ -527,7 +626,9 @@ private fun AddMemoryDialog(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(
+                    modifier = Modifier.height(14.dp)
+                )
 
                 OutlinedTextField(
                     value = title,
@@ -541,7 +642,9 @@ private fun AddMemoryDialog(
                     singleLine = true
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(
+                    modifier = Modifier.height(8.dp)
+                )
 
                 OutlinedTextField(
                     value = date,
@@ -555,7 +658,9 @@ private fun AddMemoryDialog(
                     singleLine = true
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(
+                    modifier = Modifier.height(8.dp)
+                )
 
                 OutlinedTextField(
                     value = description,
@@ -575,10 +680,12 @@ private fun AddMemoryDialog(
 
             TextButton(
                 onClick = {
+
                     if (
                         selectedImage != null &&
                         title.isNotBlank()
                     ) {
+
                         onSave(
                             title.trim(),
                             description.trim(),
@@ -587,6 +694,7 @@ private fun AddMemoryDialog(
                     }
                 }
             ) {
+
                 Text(
                     text = "ذخیره خاطره",
                     color = MemoryDeepPink
@@ -599,6 +707,7 @@ private fun AddMemoryDialog(
             TextButton(
                 onClick = onDismiss
             ) {
+
                 Text("لغو")
             }
         }
