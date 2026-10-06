@@ -1,8 +1,7 @@
 package com.royaram.app
 
 import android.net.Uri
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -43,13 +42,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import coil.compose.AsyncImage
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
@@ -98,6 +99,10 @@ fun MemoriesScreen(
         mutableStateOf<Uri?>(null)
     }
 
+    var errorMessage by remember {
+        mutableStateOf("")
+    }
+
     val imagePicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
@@ -114,7 +119,11 @@ fun MemoriesScreen(
             )
             .addSnapshotListener { snapshot, error ->
 
-                if (error != null || snapshot == null) {
+                if (error != null) {
+                    return@addSnapshotListener
+                }
+
+                if (snapshot == null) {
                     return@addSnapshotListener
                 }
 
@@ -144,8 +153,7 @@ fun MemoriesScreen(
                         safeMemories.add(memory)
 
                     } catch (_: Exception) {
-                        // اگر یک رکورد خراب باشد،
-                        // باعث بسته شدن برنامه نمی‌شود.
+                        // رکورد خراب نادیده گرفته می‌شود
                     }
                 }
 
@@ -225,6 +233,7 @@ fun MemoriesScreen(
                         )
                         .clickable {
                             selectedImage = null
+                            errorMessage = ""
                             showAddDialog = true
                         },
                     contentAlignment = Alignment.Center
@@ -296,6 +305,7 @@ fun MemoriesScreen(
                         Button(
                             onClick = {
                                 selectedImage = null
+                                errorMessage = ""
                                 showAddDialog = true
                             }
                         ) {
@@ -352,6 +362,8 @@ fun MemoriesScreen(
         AddMemoryDialog(
             selectedImage = selectedImage,
 
+            errorMessage = errorMessage,
+
             onChooseImage = {
                 imagePicker.launch(
                     arrayOf("image/*")
@@ -361,54 +373,89 @@ fun MemoriesScreen(
             onDismiss = {
                 showAddDialog = false
                 selectedImage = null
+                errorMessage = ""
             },
 
-            onSave = { title, description, date ->
+            onSave = { title, description, date, setSaving ->
+
+                errorMessage = ""
 
                 val imageUri = selectedImage
 
-                if (imageUri == null) {
-                    return@AddMemoryDialog
+                val saveMemoryToFirestore: (String) -> Unit = { imageUrl ->
+
+                    val memory = hashMapOf(
+                        "title" to title,
+                        "description" to description,
+                        "date" to date,
+                        "imageUrl" to imageUrl,
+                        "createdAt" to System.currentTimeMillis()
+                    )
+
+                    firestore
+                        .collection("memories")
+                        .add(memory)
+                        .addOnSuccessListener {
+
+                            setSaving(false)
+
+                            showAddDialog = false
+                            selectedImage = null
+                            errorMessage = ""
+
+                        }
+                        .addOnFailureListener { exception ->
+
+                            setSaving(false)
+
+                            errorMessage =
+                                exception.message
+                                    ?: "خطا در ذخیره خاطره"
+
+                        }
                 }
 
-                val fileName =
-                    "memories/${UUID.randomUUID()}.jpg"
+                if (imageUri == null) {
 
-                storage.reference
-                    .child(fileName)
-                    .putFile(imageUri)
-                    .continueWithTask { task ->
+                    // ذخیره بدون عکس
+                    saveMemoryToFirestore("")
 
-                        if (!task.isSuccessful) {
-                            throw task.exception
-                                ?: Exception(
-                                    "خطا در آپلود عکس"
-                                )
-                        }
+                } else {
 
-                        storage.reference
-                            .child(fileName)
-                            .downloadUrl
-                    }
-                    .addOnSuccessListener { downloadUri ->
+                    val fileName =
+                        "memories/${UUID.randomUUID()}.jpg"
 
-                        val memory = hashMapOf(
-                            "title" to title,
-                            "description" to description,
-                            "date" to date,
-                            "imageUrl" to downloadUri.toString(),
-                            "createdAt" to System.currentTimeMillis()
-                        )
+                    val storageRef =
+                        storage.reference.child(fileName)
 
-                        firestore
-                            .collection("memories")
-                            .add(memory)
-                            .addOnSuccessListener {
+                    storageRef
+                        .putFile(imageUri)
+                        .continueWithTask { task ->
 
-                                showAddDialog = false
-                                selectedImage = null
+                            if (!task.isSuccessful) {
+                                throw task.exception
+                                    ?: Exception(
+                                        "خطا در آپلود عکس"
+                                    )
                             }
-                    }
+
+                            storageRef.downloadUrl
+                        }
+                        .addOnSuccessListener { downloadUri ->
+
+                            saveMemoryToFirestore(
+                                downloadUri.toString()
+                            )
+                        }
+                        .addOnFailureListener { exception ->
+
+                            setSaving(false)
+
+                            errorMessage =
+                                exception.message
+                                    ?: "آپلود عکس انجام نشد"
+                        }
+                }
             }
         )
     }
@@ -434,19 +481,46 @@ private fun MemoryCard(
                 .aspectRatio(0.92f)
         ) {
 
-            AsyncImage(
-                model = memory.imageUrl,
-                contentDescription = memory.title,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clip(
-                        RoundedCornerShape(
-                            topStart = 24.dp,
-                            topEnd = 24.dp
-                        )
-                    ),
-                contentScale = ContentScale.Crop
-            )
+            if (memory.imageUrl.isNotBlank()) {
+
+                AsyncImage(
+                    model = memory.imageUrl,
+                    contentDescription = memory.title,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(
+                            RoundedCornerShape(
+                                topStart = 24.dp,
+                                topEnd = 24.dp
+                            )
+                        ),
+                    contentScale = ContentScale.Crop
+                )
+
+            } else {
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.linearGradient(
+                                listOf(
+                                    Color(0xFFFFE5EE),
+                                    Color(0xFFFFF7FA)
+                                )
+                            )
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+
+                    Icon(
+                        imageVector = Icons.Default.Favorite,
+                        contentDescription = null,
+                        tint = MemoryPink,
+                        modifier = Modifier.size(48.dp)
+                    )
+                }
+            }
 
             Box(
                 modifier = Modifier
@@ -532,9 +606,15 @@ private fun MemoryCard(
 @Composable
 private fun AddMemoryDialog(
     selectedImage: Uri?,
+    errorMessage: String,
     onChooseImage: () -> Unit,
     onDismiss: () -> Unit,
-    onSave: (String, String, String) -> Unit
+    onSave: (
+        String,
+        String,
+        String,
+        (Boolean) -> Unit
+    ) -> Unit
 ) {
 
     var title by remember {
@@ -557,9 +637,17 @@ private fun AddMemoryDialog(
         mutableStateOf(today)
     }
 
+    var isSaving by remember {
+        mutableStateOf(false)
+    }
+
     AlertDialog(
 
-        onDismissRequest = onDismiss,
+        onDismissRequest = {
+            if (!isSaving) {
+                onDismiss()
+            }
+        },
 
         title = {
 
@@ -584,7 +672,9 @@ private fun AddMemoryDialog(
                             Color(0xFFFFF0F4)
                         )
                         .clickable {
-                            onChooseImage()
+                            if (!isSaving) {
+                                onChooseImage()
+                            }
                         },
                     contentAlignment = Alignment.Center
                 ) {
@@ -622,6 +712,16 @@ private fun AddMemoryDialog(
                                 color = MemoryDeepPink,
                                 fontWeight = FontWeight.Bold
                             )
+
+                            Spacer(
+                                modifier = Modifier.height(4.dp)
+                            )
+
+                            Text(
+                                text = "اختیاری",
+                                color = MemorySoftText,
+                                fontSize = 11.sp
+                            )
                         }
                     }
                 }
@@ -639,7 +739,8 @@ private fun AddMemoryDialog(
                     label = {
                         Text("عنوان خاطره")
                     },
-                    singleLine = true
+                    singleLine = true,
+                    enabled = !isSaving
                 )
 
                 Spacer(
@@ -655,7 +756,8 @@ private fun AddMemoryDialog(
                     label = {
                         Text("تاریخ")
                     },
-                    singleLine = true
+                    singleLine = true,
+                    enabled = !isSaving
                 )
 
                 Spacer(
@@ -671,32 +773,68 @@ private fun AddMemoryDialog(
                     label = {
                         Text("توضیح کوتاه")
                     },
-                    maxLines = 3
+                    maxLines = 3,
+                    enabled = !isSaving
                 )
+
+                if (errorMessage.isNotBlank()) {
+
+                    Spacer(
+                        modifier = Modifier.height(10.dp)
+                    )
+
+                    Text(
+                        text = errorMessage,
+                        color = Color(0xFFD32F2F),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+
+                if (isSaving) {
+
+                    Spacer(
+                        modifier = Modifier.height(10.dp)
+                    )
+
+                    Text(
+                        text = "در حال ذخیره خاطره... ❤️",
+                        color = MemoryDeepPink,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
         },
 
         confirmButton = {
 
             TextButton(
+                enabled =
+                    !isSaving &&
+                    title.isNotBlank(),
+
                 onClick = {
 
-                    if (
-                        selectedImage != null &&
-                        title.isNotBlank()
-                    ) {
+                    isSaving = true
 
-                        onSave(
-                            title.trim(),
-                            description.trim(),
-                            date.trim()
-                        )
+                    onSave(
+                        title.trim(),
+                        description.trim(),
+                        date.trim()
+                    ) { saving ->
+
+                        isSaving = saving
                     }
                 }
             ) {
 
                 Text(
-                    text = "ذخیره خاطره",
+                    text = if (isSaving) {
+                        "در حال ذخیره..."
+                    } else {
+                        "ذخیره خاطره"
+                    },
                     color = MemoryDeepPink
                 )
             }
@@ -705,6 +843,7 @@ private fun AddMemoryDialog(
         dismissButton = {
 
             TextButton(
+                enabled = !isSaving,
                 onClick = onDismiss
             ) {
 
