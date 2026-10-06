@@ -277,7 +277,8 @@ private fun mod(
     b: Int
 ): Int {
 
-    val result = a % b
+    val result =
+        a % b
 
     return if (result >= 0) {
         result
@@ -767,12 +768,6 @@ fun HomeScreen(
                 Modifier.height(12.dp)
         )
 
-        /*
-         * =================================================
-         * بنر اصلی
-         * =================================================
-         */
-
         Box(
             modifier =
                 Modifier
@@ -868,12 +863,6 @@ fun HomeScreen(
                 Modifier.height(10.dp)
         )
 
-        /*
-         * =================================================
-         * روزشمار لاکچری
-         * =================================================
-         */
-
         Card(
             modifier =
                 Modifier
@@ -960,6 +949,8 @@ fun HomeScreen(
                             daysToMonthAnniversary.toString(),
                         label =
                             "روز تا ماهگرد",
+                        date =
+                            "${nextMonthDay.year}/${nextMonthDay.month}/${nextMonthDay.day}",
                         modifier =
                             Modifier.weight(1f)
                     )
@@ -972,6 +963,8 @@ fun HomeScreen(
                             daysToYearAnniversary.toString(),
                         label =
                             "روز تا سالگرد",
+                        date =
+                            "${nextYearAnniversary.year}/${nextYearAnniversary.month}/${nextYearAnniversary.day}",
                         modifier =
                             Modifier.weight(1f)
                     )
@@ -1113,12 +1106,6 @@ fun HomeScreen(
                 Modifier.height(14.dp)
         )
 
-        /*
-         * =================================================
-         * دو ردیف سه‌تایی پوشه‌ها
-         * =================================================
-         */
-
         LazyVerticalGrid(
             columns =
                 GridCells.Fixed(3),
@@ -1186,12 +1173,6 @@ fun HomeScreen(
                 Modifier.height(8.dp)
         )
 
-        /*
-         * =================================================
-         * ردیف سوم
-         * =================================================
-         */
-
         Row(
             modifier =
                 Modifier.fillMaxWidth(),
@@ -1225,12 +1206,6 @@ fun HomeScreen(
             modifier =
                 Modifier.height(10.dp)
         )
-
-        /*
-         * =================================================
-         * تنظیمات
-         * =================================================
-         */
 
         Card(
             modifier =
@@ -1329,7 +1304,7 @@ fun HomeScreen(
 
 /*
  * =========================================================
- * آیتم اصلی روزشمار
+ * کارت‌های روزشمار لاکچری
  * =========================================================
  */
 
@@ -1338,6 +1313,7 @@ fun CounterItem(
     icon: String,
     value: String,
     label: String,
+    date: String? = null,
     modifier: Modifier = Modifier
 ) {
 
@@ -1349,110 +1325,170 @@ fun CounterItem(
             modifier
                 .padding(
                     horizontal = 3.dp
+                )
+                .height(
+                    if (isMainCounter) {
+                        94.dp
+                    } else {
+                        102.dp
+                    }
                 ),
 
         shape =
-            RoundedCornerShape(
-                16.dp
-            ),
+            RoundedCornerShape(22.dp),
 
         colors =
             CardDefaults.cardColors(
                 containerColor =
-                    if (isMainCounter) {
-                        Color(0xFFFFE4ED)
-                    } else {
-                        Color(0xFFFFF8FA)
-                    }
+                    Color.Transparent
             ),
 
         elevation =
             CardDefaults.cardElevation(
-                defaultElevation =
-                    if (isMainCounter) {
-                        3.dp
-                    } else {
-                        1.dp
-                    }
+                defaultElevation = 0.dp
             )
     ) {
 
-        Column(
+        Box(
             modifier =
                 Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        vertical = 6.dp,
-                        horizontal = 3.dp
-                    ),
+                    .fillMaxSize()
+                    .background(
+                        Brush.linearGradient(
+                            if (isMainCounter) {
 
-            horizontalAlignment =
-                Alignment.CenterHorizontally
+                                listOf(
+                                    Color(0xFFFFDCE8),
+                                    Color(0xFFFFEAF2),
+                                    Color(0xFFFFF7FA)
+                                )
+
+                            } else if (
+                                label == "روز تا ماهگرد"
+                            ) {
+
+                                listOf(
+                                    Color(0xFFF0E3FF),
+                                    Color(0xFFF8EEFF),
+                                    Color(0xFFFFF7FB)
+                                )
+
+                            } else {
+
+                                listOf(
+                                    Color(0xFFFFE1EB),
+                                    Color(0xFFFFEDF4),
+                                    Color(0xFFF9F0FF)
+                                )
+                            }
+                        ),
+                        RoundedCornerShape(22.dp)
+                    )
+                    .padding(
+                        horizontal = 6.dp,
+                        vertical = 7.dp
+                    )
         ) {
 
-            Text(
-                text =
-                    icon,
-
-                fontSize =
-                    if (isMainCounter) {
-                        15.sp
-                    } else {
-                        13.sp
-                    }
-            )
-
-            Spacer(
+            Column(
                 modifier =
-                    Modifier.height(1.dp)
-            )
+                    Modifier.fillMaxSize(),
 
-            Text(
-                text =
-                    persianDigits(
-                        value
-                    ),
+                horizontalAlignment =
+                    Alignment.CenterHorizontally,
 
-                fontSize =
-                    if (isMainCounter) {
-                        20.sp
-                    } else {
-                        17.sp
-                    },
+                verticalArrangement =
+                    Arrangement.Center
+            ) {
 
-                fontWeight =
-                    FontWeight.ExtraBold,
+                Text(
+                    text =
+                        icon,
 
-                color =
-                    if (isMainCounter) {
-                        DeepPink
-                    } else {
-                        Pink
-                    },
+                    fontSize =
+                        if (isMainCounter) {
+                            16.sp
+                        } else {
+                            15.sp
+                        }
+                )
 
-                textAlign =
-                    TextAlign.Center
-            )
+                Spacer(
+                    modifier =
+                        Modifier.height(2.dp)
+                )
 
-            Text(
-                text =
-                    label,
+                Text(
+                    text =
+                        persianDigits(
+                            value
+                        ),
 
-                fontSize =
-                    7.sp,
+                    fontSize =
+                        if (isMainCounter) {
+                            23.sp
+                        } else {
+                            21.sp
+                        },
 
-                fontWeight =
-                    FontWeight.Medium,
+                    fontWeight =
+                        FontWeight.ExtraBold,
 
-                color =
-                    SoftText,
+                    color =
+                        DeepPink,
 
-                textAlign =
-                    TextAlign.Center,
+                    textAlign =
+                        TextAlign.Center
+                )
 
-                maxLines =
-                    1
-            )
+                Text(
+                    text =
+                        label,
+
+                    fontSize =
+                        7.sp,
+
+                    fontWeight =
+                        FontWeight.Bold,
+
+                    color =
+                        SoftText,
+
+                    textAlign =
+                        TextAlign.Center,
+
+                    maxLines =
+                        1
+                )
+
+                if (date != null) {
+
+                    Spacer(
+                        modifier =
+                            Modifier.height(2.dp)
+                    )
+
+                    Text(
+                        text =
+                            "بعدی • " +
+                                persianDigits(
+                                    date
+                                ),
+
+                        fontSize =
+                            6.sp,
+
+                        color =
+                            SoftText,
+
+                        textAlign =
+                            TextAlign.Center,
+
+                        maxLines =
+                            1
+                    )
+                }
+            }
         }
     }
 }
@@ -1471,98 +1507,163 @@ fun BirthdayCounterItem(
     date: String,
     modifier: Modifier = Modifier
 ) {
+
     Card(
-        modifier = modifier
-            .padding(horizontal = 3.dp)
-            .height(94.dp),
-        shape = RoundedCornerShape(22.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.Transparent
-        ),
-        elevation = CardDefaults.cardElevation(
-            defaultElevation = 0.dp
-        )
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.linearGradient(
-                        listOf(
-                            Color(0xFFFFE5EE),
-                            Color(0xFFF7E8FF),
-                            Color(0xFFFFF7FA)
-                        )
-                    ),
-                    RoundedCornerShape(22.dp)
-                )
+        modifier =
+            modifier
                 .padding(
-                    horizontal = 8.dp,
-                    vertical = 7.dp
+                    horizontal = 3.dp
                 )
+                .height(94.dp),
+
+        shape =
+            RoundedCornerShape(22.dp),
+
+        colors =
+            CardDefaults.cardColors(
+                containerColor =
+                    Color.Transparent
+            ),
+
+        elevation =
+            CardDefaults.cardElevation(
+                defaultElevation = 0.dp
+            )
+    ) {
+
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.linearGradient(
+                            listOf(
+                                Color(0xFFFFE5EE),
+                                Color(0xFFF7E8FF),
+                                Color(0xFFFFF7FA)
+                            )
+                        ),
+                        RoundedCornerShape(22.dp)
+                    )
+                    .padding(
+                        horizontal = 8.dp,
+                        vertical = 7.dp
+                    )
         ) {
+
             Column(
-                modifier = Modifier.fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+                modifier =
+                    Modifier.fillMaxSize(),
+
+                horizontalAlignment =
+                    Alignment.CenterHorizontally,
+
+                verticalArrangement =
+                    Arrangement.Center
             ) {
 
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
+                    verticalAlignment =
+                        Alignment.CenterVertically,
+
+                    horizontalArrangement =
+                        Arrangement.Center
                 ) {
+
                     Text(
-                        text = "🎂",
-                        fontSize = 13.sp
+                        text =
+                            "🎂",
+
+                        fontSize =
+                            13.sp
                     )
 
                     Spacer(
-                        modifier = Modifier.size(4.dp)
+                        modifier =
+                            Modifier.size(4.dp)
                     )
 
                     Text(
-                        text = "تولد $name",
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = DeepPink
+                        text =
+                            "تولد $name",
+
+                        fontSize =
+                            10.sp,
+
+                        fontWeight =
+                            FontWeight.Bold,
+
+                        color =
+                            DeepPink
                     )
                 }
 
                 Spacer(
-                    modifier = Modifier.height(1.dp)
+                    modifier =
+                        Modifier.height(1.dp)
                 )
 
                 Row(
-                    verticalAlignment = Alignment.Bottom,
-                    horizontalArrangement = Arrangement.Center
+                    verticalAlignment =
+                        Alignment.Bottom,
+
+                    horizontalArrangement =
+                        Arrangement.Center
                 ) {
+
                     Text(
-                        text = persianDigits(value),
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = DeepPink
+                        text =
+                            persianDigits(
+                                value
+                            ),
+
+                        fontSize =
+                            22.sp,
+
+                        fontWeight =
+                            FontWeight.ExtraBold,
+
+                        color =
+                            DeepPink
                     )
 
                     Spacer(
-                        modifier = Modifier.size(3.dp)
+                        modifier =
+                            Modifier.size(3.dp)
                     )
 
                     Text(
-                        text = "روز",
-                        fontSize = 8.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = SoftText,
-                        modifier = Modifier.padding(
-                            bottom = 3.dp
-                        )
+                        text =
+                            "روز",
+
+                        fontSize =
+                            8.sp,
+
+                        fontWeight =
+                            FontWeight.Medium,
+
+                        color =
+                            SoftText,
+
+                        modifier =
+                            Modifier.padding(
+                                bottom = 3.dp
+                            )
                     )
                 }
 
                 Text(
-                    text = "تا تولد • $date",
-                    fontSize = 7.sp,
-                    color = SoftText,
-                    textAlign = TextAlign.Center
+                    text =
+                        "تا تولد • $date",
+
+                    fontSize =
+                        7.sp,
+
+                    color =
+                        SoftText,
+
+                    textAlign =
+                        TextAlign.Center
                 )
             }
         }
