@@ -289,8 +289,12 @@ fun MemoriesScreen(
         AddMemoryDialog(
             selectedImage = selectedImage,
             onChooseImage = {
-                imagePicker.launch("image/*")
-            },
+    imagePicker.launch(
+        PickVisualMediaRequest(
+            ActivityResultContracts.PickVisualMedia.ImageOnly
+        )
+    )
+},
             onDismiss = {
                 showAddDialog = false
                 selectedImage = null
