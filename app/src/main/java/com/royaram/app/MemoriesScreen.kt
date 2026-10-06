@@ -87,10 +87,10 @@ fun MemoriesScreen(
     var selectedImage by remember { mutableStateOf<Uri?>(null) }
 
     val imagePicker = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri ->
-        selectedImage = uri
-    }
+    contract = ActivityResultContracts.PickVisualMedia()
+) { uri ->
+    selectedImage = uri
+}
 
     LaunchedEffect(Unit) {
         firestore.collection("memories")
