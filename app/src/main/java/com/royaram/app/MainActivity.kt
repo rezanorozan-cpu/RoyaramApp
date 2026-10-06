@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -96,6 +97,7 @@ class MainActivity : ComponentActivity() {
         setContent {
 
             RoyaramApp(
+
                 onChatClick = {
                     startActivity(
                         Intent(
@@ -177,6 +179,7 @@ fun RoyaramApp(
     onPrivateClick: () -> Unit,
     onSettingsClick: () -> Unit
 ) {
+
     MaterialTheme {
 
         HomeScreen(
@@ -330,9 +333,14 @@ private fun gregorianToPersian(
             31, 31, 30, 31, 30, 31
         )
 
-    val gyTemp = gy - 1600
-    val gmTemp = gm - 1
-    val gdTemp = gd - 1
+    val gyTemp =
+        gy - 1600
+
+    val gmTemp =
+        gm - 1
+
+    val gdTemp =
+        gd - 1
 
     var gDayNo =
         365 * gyTemp +
@@ -372,7 +380,9 @@ private fun gregorianToPersian(
         jDayNo % 12053
 
     var jy =
-        979 + 33 * jNp + 4 * (jDay / 1461)
+        979 +
+            33 * jNp +
+            4 * (jDay / 1461)
 
     jDay %= 1461
 
@@ -482,7 +492,6 @@ private fun nextBirthday(
 /*
  * =========================================================
  * ماهگرد بعدی
- * روز ثابت = ۲۰ هر ماه
  * =========================================================
  */
 
@@ -774,7 +783,7 @@ fun HomeScreen(
                     )
         ) {
 
-            androidx.compose.foundation.Image(
+            Image(
                 painter =
                     painterResource(
                         id =
@@ -833,7 +842,7 @@ fun HomeScreen(
                         Color.White,
 
                     fontSize =
-                        17.sp,
+                        16.sp,
 
                     fontWeight =
                         FontWeight.Bold
@@ -841,7 +850,7 @@ fun HomeScreen(
 
                 Text(
                     text =
-                        "قصه‌ی من و تو",
+                        "قصه‌ی من و تو، برای همیشه",
 
                     color =
                         Color.White.copy(
@@ -861,7 +870,7 @@ fun HomeScreen(
 
         /*
          * =================================================
-         * کادر اصلی روزشمار
+         * روزشمار لاکچری
          * =================================================
          */
 
@@ -927,7 +936,10 @@ fun HomeScreen(
                         Modifier.fillMaxWidth(),
 
                     horizontalArrangement =
-                        Arrangement.SpaceEvenly
+                        Arrangement.SpaceEvenly,
+
+                    verticalAlignment =
+                        Alignment.CenterVertically
                 ) {
 
                     CounterItem(
@@ -975,24 +987,42 @@ fun HomeScreen(
                         Modifier.fillMaxWidth(),
 
                     horizontalArrangement =
-                        Arrangement.SpaceEvenly
+                        Arrangement.SpaceEvenly,
+
+                    verticalAlignment =
+                        Alignment.CenterVertically
                 ) {
 
                     BirthdayCounterItem(
-    name = "رامین",
-    value = daysToRaminBirthday.toString(),
-    date = "۲۰ شهریور",
-    modifier = Modifier.weight(1f)
-)
+                        name =
+                            "رامین",
 
-CounterDivider()
+                        value =
+                            daysToRaminBirthday.toString(),
 
-BirthdayCounterItem(
-    name = "رویا",
-    value = daysToRoyaBirthday.toString(),
-    date = "۱۵ آذر",
-    modifier = Modifier.weight(1f)
-)
+                        date =
+                            "۲۰ شهریور",
+
+                        modifier =
+                            Modifier.weight(1f)
+                    )
+
+                    CounterDivider()
+
+                    BirthdayCounterItem(
+                        name =
+                            "رویا",
+
+                        value =
+                            daysToRoyaBirthday.toString(),
+
+                        date =
+                            "۱۵ آذر",
+
+                        modifier =
+                            Modifier.weight(1f)
+                    )
+                }
 
                 Spacer(
                     modifier =
@@ -1299,7 +1329,7 @@ BirthdayCounterItem(
 
 /*
  * =========================================================
- * آیتم روزشمار
+ * آیتم اصلی روزشمار
  * =========================================================
  */
 
@@ -1361,7 +1391,8 @@ fun CounterItem(
         ) {
 
             Text(
-                text = icon,
+                text =
+                    icon,
 
                 fontSize =
                     if (isMainCounter) {
@@ -1404,7 +1435,8 @@ fun CounterItem(
             )
 
             Text(
-                text = label,
+                text =
+                    label,
 
                 fontSize =
                     7.sp,
@@ -1423,6 +1455,145 @@ fun CounterItem(
             )
         }
     }
+}
+
+
+/*
+ * =========================================================
+ * کارت تولد
+ * =========================================================
+ */
+
+@Composable
+fun BirthdayCounterItem(
+    name: String,
+    value: String,
+    date: String,
+    modifier: Modifier = Modifier
+) {
+
+    Card(
+        modifier =
+            modifier
+                .padding(
+                    horizontal = 3.dp
+                ),
+
+        shape =
+            RoundedCornerShape(
+                16.dp
+            ),
+
+        colors =
+            CardDefaults.cardColors(
+                containerColor =
+                    Color(0xFFFFF5F8)
+            ),
+
+        elevation =
+            CardDefaults.cardElevation(
+                defaultElevation = 2.dp
+            )
+    ) {
+
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        vertical = 7.dp,
+                        horizontal = 4.dp
+                    ),
+
+            horizontalAlignment =
+                Alignment.CenterHorizontally
+        ) {
+
+            Text(
+                text =
+                    "🎂",
+
+                fontSize =
+                    15.sp
+            )
+
+            Text(
+                text =
+                    name,
+
+                fontSize =
+                    11.sp,
+
+                fontWeight =
+                    FontWeight.Bold,
+
+                color =
+                    DeepPink
+            )
+
+            Text(
+                text =
+                    persianDigits(
+                        value
+                    ),
+
+                fontSize =
+                    18.sp,
+
+                fontWeight =
+                    FontWeight.ExtraBold,
+
+                color =
+                    Pink
+            )
+
+            Text(
+                text =
+                    "روز تا تولد",
+
+                fontSize =
+                    7.sp,
+
+                color =
+                    SoftText
+            )
+
+            Text(
+                text =
+                    date,
+
+                fontSize =
+                    7.sp,
+
+                color =
+                    SoftText
+            )
+        }
+    }
+}
+
+
+/*
+ * =========================================================
+ * تبدیل اعداد انگلیسی به فارسی
+ * =========================================================
+ */
+
+private fun persianDigits(
+    number: String
+): String {
+
+    return number
+        .replace("0", "۰")
+        .replace("1", "۱")
+        .replace("2", "۲")
+        .replace("3", "۳")
+        .replace("4", "۴")
+        .replace("5", "۵")
+        .replace("6", "۶")
+        .replace("7", "۷")
+        .replace("8", "۸")
+        .replace("9", "۹")
 }
 
 
@@ -1450,28 +1621,9 @@ fun CounterDivider() {
                             Color.Transparent
                         )
                     )
-        )
+                )
     )
 }
-private fun persianDigits(
-    number: String
-): String {
-
-    return number
-        .replace("0", "۰")
-        .replace("1", "۱")
-        .replace("2", "۲")
-        .replace("3", "۳")
-        .replace("4", "۴")
-        .replace("5", "۵")
-        .replace("6", "۶")
-        .replace("7", "۷")
-        .replace("8", "۸")
-        .replace("9", "۹")
-}
-
-
-
 
 
 /*
