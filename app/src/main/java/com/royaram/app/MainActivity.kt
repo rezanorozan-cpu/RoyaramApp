@@ -89,15 +89,15 @@ class MainActivity : ComponentActivity() {
 
         setContent {
 
-            var showMemories by remember {
+            val showMemories = remember {
                 mutableStateOf(false)
             }
 
-            if (showMemories) {
+            if (showMemories.value) {
 
                 MemoriesScreen(
                     onBack = {
-                        showMemories = false
+                        showMemories.value = false
                     }
                 )
 
@@ -107,13 +107,13 @@ class MainActivity : ComponentActivity() {
                     onChatClick = {
                         startActivity(
                             Intent(
-                                this,
+                                this@MainActivity,
                                 ChatActivity::class.java
                             )
                         )
                     },
                     onMemoriesClick = {
-                        showMemories = true
+                        showMemories.value = true
                     },
                     onLettersClick = {
                         toast("نامه‌های عاشقانه 💌")
@@ -137,6 +137,15 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    private fun toast(message: String) {
+        Toast.makeText(
+            this,
+            message,
+            Toast.LENGTH_SHORT
+        ).show()
+    }
+}
 
     private fun toast(message: String) {
         Toast.makeText(
