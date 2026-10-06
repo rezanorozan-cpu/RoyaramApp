@@ -978,28 +978,21 @@ fun HomeScreen(
                         Arrangement.SpaceEvenly
                 ) {
 
-                    CounterItem(
-                        icon = "🎂",
-                        value =
-                            daysToRaminBirthday.toString(),
-                        label =
-                            "تا تولد رامین",
-                        modifier =
-                            Modifier.weight(1f)
-                    )
+                    BirthdayCounterItem(
+    name = "رامین",
+    value = daysToRaminBirthday.toString(),
+    date = "۲۰ شهریور",
+    modifier = Modifier.weight(1f)
+)
 
-                    CounterDivider()
+CounterDivider()
 
-                    CounterItem(
-                        icon = "🎂",
-                        value =
-                            daysToRoyaBirthday.toString(),
-                        label =
-                            "تا تولد رویا",
-                        modifier =
-                            Modifier.weight(1f)
-                    )
-                }
+BirthdayCounterItem(
+    name = "رویا",
+    value = daysToRoyaBirthday.toString(),
+    date = "۱۵ آذر",
+    modifier = Modifier.weight(1f)
+)
 
                 Spacer(
                     modifier =
