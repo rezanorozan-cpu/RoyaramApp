@@ -147,24 +147,6 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-    private fun toast(message: String) {
-        Toast.makeText(
-            this,
-            message,
-            Toast.LENGTH_SHORT
-        ).show()
-    }
-}
-
-    private fun toast(message: String) {
-        Toast.makeText(
-            this,
-            message,
-            Toast.LENGTH_SHORT
-        ).show()
-    }
-}
-
 
 @Composable
 fun RoyaramApp(
