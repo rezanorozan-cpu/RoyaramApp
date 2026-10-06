@@ -87,39 +87,64 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-            RoyaramApp(
-                onChatClick = {
-                    startActivity(
-                        Intent(
-                            this,
-                            ChatActivity::class.java
+
+            var showMemories by remember {
+                mutableStateOf(false)
+            }
+
+            if (showMemories) {
+
+                MemoriesScreen(
+                    onBack = {
+                        showMemories = false
+                    }
+                )
+
+            } else {
+
+                RoyaramApp(
+                    onChatClick = {
+                        startActivity(
+                            Intent(
+                                this,
+                                ChatActivity::class.java
+                            )
                         )
-                    )
-                },
-                onMemoriesClick = {
-                    toast("خاطرات ما 💕")
-                },
-                onLettersClick = {
-                    toast("نامه‌های عاشقانه 💌")
-                },
-                onMusicClick = {
-                    toast("آهنگ ما 🎵")
-                },
-                onSadClick = {
-                    toast("وقتی دلمون گرفت ❤️")
-                },
-                onSpecialClick = {
-                    toast("لحظه‌های خاص ✨")
-                },
-                onPrivateClick = {
-                    toast("بخش خصوصی 🔐")
-                },
-                onSettingsClick = {
-                    toast("تنظیمات رویارام ⚙️")
-                }
-            )
+                    },
+                    onMemoriesClick = {
+                        showMemories = true
+                    },
+                    onLettersClick = {
+                        toast("نامه‌های عاشقانه 💌")
+                    },
+                    onMusicClick = {
+                        toast("آهنگ ما 🎵")
+                    },
+                    onSadClick = {
+                        toast("وقتی دلمون گرفت ❤️")
+                    },
+                    onSpecialClick = {
+                        toast("لحظه‌های خاص ✨")
+                    },
+                    onPrivateClick = {
+                        toast("بخش خصوصی 🔐")
+                    },
+                    onSettingsClick = {
+                        toast("تنظیمات رویارام ⚙️")
+                    }
+                )
+            }
         }
     }
+
+    private fun toast(message: String) {
+        Toast.makeText(
+            this,
+            message,
+            Toast.LENGTH_SHORT
+        ).show()
+    }
+}
 
     private fun toast(message: String) {
         Toast.makeText(
