@@ -1471,103 +1471,100 @@ fun BirthdayCounterItem(
     date: String,
     modifier: Modifier = Modifier
 ) {
-
     Card(
-        modifier =
-            modifier
-                .padding(
-                    horizontal = 3.dp
-                ),
-
-        shape =
-            RoundedCornerShape(
-                16.dp
-            ),
-
-        colors =
-            CardDefaults.cardColors(
-                containerColor =
-                    Color(0xFFFFF5F8)
-            ),
-
-        elevation =
-            CardDefaults.cardElevation(
-                defaultElevation = 2.dp
-            )
+        modifier = modifier
+            .padding(horizontal = 3.dp)
+            .height(94.dp),
+        shape = RoundedCornerShape(22.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.Transparent
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 0.dp
+        )
     ) {
-
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        vertical = 7.dp,
-                        horizontal = 4.dp
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.linearGradient(
+                        listOf(
+                            Color(0xFFFFE5EE),
+                            Color(0xFFF7E8FF),
+                            Color(0xFFFFF7FA)
+                        )
                     ),
-
-            horizontalAlignment =
-                Alignment.CenterHorizontally
+                    RoundedCornerShape(22.dp)
+                )
+                .padding(
+                    horizontal = 8.dp,
+                    vertical = 7.dp
+                )
         ) {
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
 
-            Text(
-                text =
-                    "🎂",
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = "🎂",
+                        fontSize = 13.sp
+                    )
 
-                fontSize =
-                    15.sp
-            )
+                    Spacer(
+                        modifier = Modifier.size(4.dp)
+                    )
 
-            Text(
-                text =
-                    name,
+                    Text(
+                        text = "تولد $name",
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = DeepPink
+                    )
+                }
 
-                fontSize =
-                    11.sp,
+                Spacer(
+                    modifier = Modifier.height(1.dp)
+                )
 
-                fontWeight =
-                    FontWeight.Bold,
+                Row(
+                    verticalAlignment = Alignment.Bottom,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = persianDigits(value),
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = DeepPink
+                    )
 
-                color =
-                    DeepPink
-            )
+                    Spacer(
+                        modifier = Modifier.size(3.dp)
+                    )
 
-            Text(
-                text =
-                    persianDigits(
-                        value
-                    ),
+                    Text(
+                        text = "روز",
+                        fontSize = 8.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = SoftText,
+                        modifier = Modifier.padding(
+                            bottom = 3.dp
+                        )
+                    )
+                }
 
-                fontSize =
-                    18.sp,
-
-                fontWeight =
-                    FontWeight.ExtraBold,
-
-                color =
-                    Pink
-            )
-
-            Text(
-                text =
-                    "روز تا تولد",
-
-                fontSize =
-                    7.sp,
-
-                color =
-                    SoftText
-            )
-
-            Text(
-                text =
-                    date,
-
-                fontSize =
-                    7.sp,
-
-                color =
-                    SoftText
-            )
+                Text(
+                    text = "تا تولد • $date",
+                    fontSize = 7.sp,
+                    color = SoftText,
+                    textAlign = TextAlign.Center
+                )
+            }
         }
     }
 }
