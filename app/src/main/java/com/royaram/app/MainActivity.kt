@@ -127,8 +127,8 @@ if (showMemories.value) {
                         showMemories.value = true
                     },
                     onLettersClick = {
-                        toast("نامه‌های عاشقانه 💌")
-                    },
+    showLetters.value = true
+},
                     onMusicClick = {
                         toast("آهنگ ما 🎵")
                     },
