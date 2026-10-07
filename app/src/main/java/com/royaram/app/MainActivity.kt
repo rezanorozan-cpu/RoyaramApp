@@ -96,16 +96,25 @@ class MainActivity : ComponentActivity() {
                 mutableStateOf(false)
             }
            if (showMemories.value) {
+if (showMemories.value) {
 
-                MemoriesScreen(
-                    onBack = {
-                        showMemories.value = false
-                    }
-                )
+    MemoriesScreen(
+        onBack = {
+            showMemories.value = false
+        }
+    )
 
-            } else {
+} else if (showLetters.value) {
 
-                RoyaramApp(
+    LettersScreen(
+        onBack = {
+            showLetters.value = false
+        }
+    )
+
+} else {
+
+    RoyaramApp(
                     onChatClick = {
                         startActivity(
                             Intent(
