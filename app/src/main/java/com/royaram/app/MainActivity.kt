@@ -109,15 +109,23 @@ val showMusic = remember {
                     }
                 )
 
-            } else if (showLetters.value) {
+           } else if (showLetters.value) {
 
-                LettersScreen(
-                    onBack = {
-                        showLetters.value = false
-                    }
-                )
+    LettersScreen(
+        onBack = {
+            showLetters.value = false
+        }
+    )
 
-            } else {
+} else if (showMusic.value) {
+
+    MusicScreen(
+        onBack = {
+            showMusic.value = false
+        }
+    )
+
+} else {
 
                 RoyaramApp(
                     onChatClick = {
