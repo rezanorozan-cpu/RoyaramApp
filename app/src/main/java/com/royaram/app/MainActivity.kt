@@ -92,29 +92,30 @@ class MainActivity : ComponentActivity() {
             val showMemories = remember {
                 mutableStateOf(false)
             }
+
             val showLetters = remember {
                 mutableStateOf(false)
             }
-           if (showMemories.value) {
-if (showMemories.value) {
 
-    MemoriesScreen(
-        onBack = {
-            showMemories.value = false
-        }
-    )
+            if (showMemories.value) {
 
-} else if (showLetters.value) {
+                MemoriesScreen(
+                    onBack = {
+                        showMemories.value = false
+                    }
+                )
 
-    LettersScreen(
-        onBack = {
-            showLetters.value = false
-        }
-    )
+            } else if (showLetters.value) {
 
-} else {
+                LettersScreen(
+                    onBack = {
+                        showLetters.value = false
+                    }
+                )
 
-    RoyaramApp(
+            } else {
+
+                RoyaramApp(
                     onChatClick = {
                         startActivity(
                             Intent(
@@ -123,24 +124,31 @@ if (showMemories.value) {
                             )
                         )
                     },
+
                     onMemoriesClick = {
                         showMemories.value = true
                     },
+
                     onLettersClick = {
-    showLetters.value = true
-},
+                        showLetters.value = true
+                    },
+
                     onMusicClick = {
                         toast("آهنگ ما 🎵")
                     },
+
                     onSadClick = {
                         toast("وقتی دلمون گرفت ❤️")
                     },
+
                     onSpecialClick = {
                         toast("لحظه‌های خاص ✨")
                     },
+
                     onPrivateClick = {
                         toast("بخش خصوصی 🔐")
                     },
+
                     onSettingsClick = {
                         toast("تنظیمات رویارام ⚙️")
                     }
@@ -157,8 +165,6 @@ if (showMemories.value) {
         ).show()
     }
 }
-
-
 @Composable
 fun RoyaramApp(
     onChatClick: () -> Unit,
