@@ -95,7 +95,7 @@ class MainActivity : ComponentActivity() {
             val showLetters = remember {
                 mutableStateOf(false)
             }
-            if (showMemories.value) {
+           if (showMemories.value) {
 
                 MemoriesScreen(
                     onBack = {
