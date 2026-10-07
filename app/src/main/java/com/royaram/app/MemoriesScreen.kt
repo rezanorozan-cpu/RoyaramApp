@@ -1,8 +1,13 @@
 package com.royaram.app
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
+import android.util.Base64
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -48,18 +53,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
-import com.google.firebase.storage.FirebaseStorage
-import java.text.SimpleDateFormat
-import java.util.Date
+import java.io.ByteArrayOutputStream
+import java.util.Calendar
 import java.util.Locale
-import java.util.UUID
 
 private val MemoryPink = Color(0xFFE85D86)
 private val MemoryDeepPink = Color(0xFFB83D63)
@@ -73,6 +78,7 @@ data class LuxuryMemory(
     val description: String = "",
     val date: String = "",
     val imageUrl: String = "",
+    val imageBase64: String = "",
     val createdAt: Long = 0L
 )
 
@@ -80,13 +86,13 @@ data class LuxuryMemory(
 fun MemoriesScreen(
     onBack: () -> Unit
 ) {
+    val context = LocalContext.current
+
     val firestore = remember {
         FirebaseFirestore.getInstance()
     }
 
-    val storage = remember {
-        FirebaseStorage.getInstance()
-    }
+    val contentResolver = context.contentResolver
 
     var memories by remember {
         mutableStateOf<List<LuxuryMemory>>(emptyList())
@@ -121,6 +127,7 @@ fun MemoriesScreen(
     }
 
     LaunchedEffect(Unit) {
+
         firestore.collection("memories")
             .orderBy(
                 "createdAt",
@@ -135,18 +142,38 @@ fun MemoriesScreen(
                 val result = mutableListOf<LuxuryMemory>()
 
                 for (document in snapshot.documents) {
+
                     try {
+
                         result.add(
                             LuxuryMemory(
                                 id = document.id,
-                                title = document.getString("title").orEmpty(),
-                                description = document.getString("description").orEmpty(),
-                                date = document.getString("date").orEmpty(),
-                                imageUrl = document.getString("imageUrl").orEmpty(),
-                                createdAt =
-                                    document.getLong("createdAt") ?: 0L
+                                title = document
+                                    .getString("title")
+                                    .orEmpty(),
+
+                                description = document
+                                    .getString("description")
+                                    .orEmpty(),
+
+                                date = document
+                                    .getString("date")
+                                    .orEmpty(),
+
+                                imageUrl = document
+                                    .getString("imageUrl")
+                                    .orEmpty(),
+
+                                imageBase64 = document
+                                    .getString("imageBase64")
+                                    .orEmpty(),
+
+                                createdAt = document
+                                    .getLong("createdAt")
+                                    ?: 0L
                             )
                         )
+
                     } catch (_: Exception) {
                     }
                 }
@@ -188,6 +215,7 @@ fun MemoriesScreen(
                 IconButton(
                     onClick = onBack
                 ) {
+
                     Icon(
                         imageVector = Icons.Default.ArrowBack,
                         contentDescription = "بازگشت",
@@ -226,6 +254,7 @@ fun MemoriesScreen(
                             )
                         )
                         .clickable {
+
                             selectedImage = null
                             errorMessage = ""
                             editingMemory = null
@@ -253,7 +282,8 @@ fun MemoriesScreen(
                 ) {
 
                     Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
+                        horizontalAlignment =
+                            Alignment.CenterHorizontally
                     ) {
 
                         Box(
@@ -265,7 +295,8 @@ fun MemoriesScreen(
                         ) {
 
                             Icon(
-                                imageVector = Icons.Default.PhotoLibrary,
+                                imageVector =
+                                    Icons.Default.PhotoLibrary,
                                 contentDescription = null,
                                 tint = MemoryPink,
                                 modifier = Modifier.size(44.dp)
@@ -288,7 +319,8 @@ fun MemoriesScreen(
                         )
 
                         Text(
-                            text = "اولین لحظه قشنگتون رو به آلبوم اضافه کنید ❤️",
+                            text =
+                                "اولین لحظه قشنگتون رو به آلبوم اضافه کنید ❤️",
                             color = MemorySoftText,
                             fontSize = 13.sp
                         )
@@ -299,6 +331,7 @@ fun MemoriesScreen(
 
                         Button(
                             onClick = {
+
                                 selectedImage = null
                                 errorMessage = ""
                                 editingMemory = null
@@ -331,8 +364,10 @@ fun MemoriesScreen(
                         top = 10.dp,
                         bottom = 24.dp
                     ),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                    horizontalArrangement =
+                        Arrangement.spacedBy(12.dp),
+                    verticalArrangement =
+                        Arrangement.spacedBy(14.dp)
                 ) {
 
                     items(
@@ -344,12 +379,14 @@ fun MemoriesScreen(
                             memory = memory,
 
                             onEdit = {
+
                                 editingMemory = memory
                                 selectedImage = null
                                 errorMessage = ""
                             },
 
                             onDelete = {
+
                                 deletingMemory = memory
                             }
                         )
@@ -359,6 +396,9 @@ fun MemoriesScreen(
         }
     }
 
+    /*
+     * افزودن
+     */
     if (showAddDialog) {
 
         MemoryEditorDialog(
@@ -370,35 +410,39 @@ fun MemoriesScreen(
             isEdit = false,
 
             onChooseImage = {
+
                 imagePicker.launch(
                     arrayOf("image/*")
                 )
             },
 
             onDismiss = {
-                if (editingMemory == null) {
-                    showAddDialog = false
-                    selectedImage = null
-                    errorMessage = ""
-                }
+
+                showAddDialog = false
+                selectedImage = null
+                errorMessage = ""
             },
 
             onSave = { title, description, date, setSaving ->
 
                 saveMemory(
                     firestore = firestore,
-                    storage = storage,
+                    contentResolver = contentResolver,
                     title = title,
                     description = description,
                     date = date,
                     imageUri = selectedImage,
                     setSaving = setSaving,
+
                     onSuccess = {
+
                         showAddDialog = false
                         selectedImage = null
                         errorMessage = ""
                     },
+
                     onError = {
+
                         errorMessage = it
                     }
                 )
@@ -406,6 +450,9 @@ fun MemoriesScreen(
         )
     }
 
+    /*
+     * ویرایش
+     */
     editingMemory?.let { memory ->
 
         MemoryEditorDialog(
@@ -417,12 +464,14 @@ fun MemoriesScreen(
             isEdit = true,
 
             onChooseImage = {
+
                 imagePicker.launch(
                     arrayOf("image/*")
                 )
             },
 
             onDismiss = {
+
                 editingMemory = null
                 selectedImage = null
                 errorMessage = ""
@@ -432,19 +481,23 @@ fun MemoriesScreen(
 
                 updateMemory(
                     firestore = firestore,
-                    storage = storage,
+                    contentResolver = contentResolver,
                     memory = memory,
                     title = title,
                     description = description,
                     date = date,
                     imageUri = selectedImage,
                     setSaving = setSaving,
+
                     onSuccess = {
+
                         editingMemory = null
                         selectedImage = null
                         errorMessage = ""
                     },
+
                     onError = {
+
                         errorMessage = it
                     }
                 )
@@ -452,14 +505,19 @@ fun MemoriesScreen(
         )
     }
 
+    /*
+     * حذف
+     */
     deletingMemory?.let { memory ->
 
         AlertDialog(
+
             onDismissRequest = {
                 deletingMemory = null
             },
 
             title = {
+
                 Text(
                     text = "حذف خاطره؟",
                     fontWeight = FontWeight.Bold
@@ -467,6 +525,7 @@ fun MemoriesScreen(
             },
 
             text = {
+
                 Text(
                     text =
                         "مطمئنی می‌خوای «${memory.title}» رو حذف کنی؟"
@@ -482,14 +541,28 @@ fun MemoriesScreen(
                             .collection("memories")
                             .document(memory.id)
                             .delete()
+
                             .addOnSuccessListener {
+
                                 deletingMemory = null
+
+                                Toast.makeText(
+                                    context,
+                                    "خاطره حذف شد ❤️",
+                                    Toast.LENGTH_SHORT
+                                ).show()
                             }
+
                             .addOnFailureListener {
+
                                 deletingMemory = null
-                                errorMessage =
+
+                                Toast.makeText(
+                                    context,
                                     it.message
-                                        ?: "حذف خاطره انجام نشد"
+                                        ?: "حذف خاطره انجام نشد",
+                                    Toast.LENGTH_LONG
+                                ).show()
                             }
                     }
                 ) {
@@ -508,26 +581,42 @@ fun MemoriesScreen(
                         deletingMemory = null
                     }
                 ) {
+
                     Text("لغو")
                 }
             }
         )
     }
 
-    if (errorMessage.isNotBlank() &&
+    /*
+     * خطای بیرون از دیالوگ
+     */
+    if (
+        errorMessage.isNotBlank() &&
         !showAddDialog &&
         editingMemory == null
     ) {
 
-        ToastMessage(
-            message = errorMessage
-        )
+        LaunchedEffect(errorMessage) {
+
+            Toast.makeText(
+                context,
+                errorMessage,
+                Toast.LENGTH_LONG
+            ).show()
+
+            errorMessage = ""
+        }
     }
 }
 
+
+/*
+ * ذخیره خاطره
+ */
 private fun saveMemory(
     firestore: FirebaseFirestore,
-    storage: FirebaseStorage,
+    contentResolver: android.content.ContentResolver,
     title: String,
     description: String,
     date: String,
@@ -539,78 +628,91 @@ private fun saveMemory(
 
     setSaving(true)
 
-    fun writeToFirestore(
-        imageUrl: String
-    ) {
+    if (imageUri == null) {
 
         val data = hashMapOf(
             "title" to title,
             "description" to description,
             "date" to date,
-            "imageUrl" to imageUrl,
+            "imageUrl" to "",
+            "imageBase64" to "",
             "createdAt" to System.currentTimeMillis()
         )
 
         firestore
             .collection("memories")
             .add(data)
+
             .addOnSuccessListener {
+
                 setSaving(false)
                 onSuccess()
             }
+
             .addOnFailureListener {
+
                 setSaving(false)
+
                 onError(
                     it.message
                         ?: "ذخیره خاطره انجام نشد"
                 )
             }
-    }
-
-    if (imageUri == null) {
-
-        writeToFirestore("")
 
         return
     }
 
-    val fileName =
-        "memories/${UUID.randomUUID()}.jpg"
+    encodeImageToBase64(
+        contentResolver = contentResolver,
+        uri = imageUri,
 
-    val reference =
-        storage.reference.child(fileName)
+        onSuccess = { base64 ->
 
-    reference
-        .putFile(imageUri)
-        .continueWithTask { task ->
-
-            if (!task.isSuccessful) {
-                throw task.exception
-                    ?: Exception("آپلود عکس ناموفق بود")
-            }
-
-            reference.downloadUrl
-        }
-        .addOnSuccessListener { uri ->
-
-            writeToFirestore(
-                uri.toString()
+            val data = hashMapOf(
+                "title" to title,
+                "description" to description,
+                "date" to date,
+                "imageUrl" to "",
+                "imageBase64" to base64,
+                "createdAt" to System.currentTimeMillis()
             )
-        }
-        .addOnFailureListener {
+
+            firestore
+                .collection("memories")
+                .add(data)
+
+                .addOnSuccessListener {
+
+                    setSaving(false)
+                    onSuccess()
+                }
+
+                .addOnFailureListener {
+
+                    setSaving(false)
+
+                    onError(
+                        it.message
+                            ?: "ذخیره خاطره انجام نشد"
+                    )
+                }
+        },
+
+        onError = {
 
             setSaving(false)
-
-            onError(
-                "آپلود عکس انجام نشد:\n" +
-                    (it.message ?: "خطای نامشخص")
-            )
+            onError(it)
         }
+    )
 }
 
+
+/*
+ * ویرایش خاطره
+ */
 private fun updateMemory(
     firestore: FirebaseFirestore,
-    storage: FirebaseStorage,
+    contentResolver: android.content.ContentResolver,
     memory: LuxuryMemory,
     title: String,
     description: String,
@@ -623,77 +725,238 @@ private fun updateMemory(
 
     setSaving(true)
 
-    fun updateFirestore(
-        imageUrl: String
-    ) {
+    /*
+     * بدون عکس جدید
+     */
+    if (imageUri == null) {
 
         val data = hashMapOf<String, Any>(
             "title" to title,
             "description" to description,
             "date" to date,
-            "imageUrl" to imageUrl
+            "imageUrl" to memory.imageUrl,
+            "imageBase64" to memory.imageBase64
         )
 
         firestore
             .collection("memories")
             .document(memory.id)
             .update(data)
+
             .addOnSuccessListener {
+
                 setSaving(false)
                 onSuccess()
             }
+
             .addOnFailureListener {
+
                 setSaving(false)
+
                 onError(
                     it.message
                         ?: "ویرایش خاطره انجام نشد"
                 )
             }
-    }
-
-    if (imageUri == null) {
-
-        updateFirestore(
-            memory.imageUrl
-        )
 
         return
     }
 
-    val fileName =
-        "memories/${UUID.randomUUID()}.jpg"
+    /*
+     * عکس جدید
+     */
+    encodeImageToBase64(
+        contentResolver = contentResolver,
+        uri = imageUri,
 
-    val reference =
-        storage.reference.child(fileName)
+        onSuccess = { base64 ->
 
-    reference
-        .putFile(imageUri)
-        .continueWithTask { task ->
-
-            if (!task.isSuccessful) {
-                throw task.exception
-                    ?: Exception("آپلود عکس ناموفق بود")
-            }
-
-            reference.downloadUrl
-        }
-        .addOnSuccessListener { uri ->
-
-            updateFirestore(
-                uri.toString()
+            val data = hashMapOf<String, Any>(
+                "title" to title,
+                "description" to description,
+                "date" to date,
+                "imageUrl" to "",
+                "imageBase64" to base64
             )
-        }
-        .addOnFailureListener {
+
+            firestore
+                .collection("memories")
+                .document(memory.id)
+                .update(data)
+
+                .addOnSuccessListener {
+
+                    setSaving(false)
+                    onSuccess()
+                }
+
+                .addOnFailureListener {
+
+                    setSaving(false)
+
+                    onError(
+                        it.message
+                            ?: "ویرایش خاطره انجام نشد"
+                    )
+                }
+        },
+
+        onError = {
 
             setSaving(false)
-
-            onError(
-                "تعویض عکس انجام نشد:\n" +
-                    (it.message ?: "خطای نامشخص")
-            )
+            onError(it)
         }
+    )
 }
 
+
+/*
+ * فشرده‌سازی عکس و تبدیل به Base64
+ */
+private fun encodeImageToBase64(
+    contentResolver: android.content.ContentResolver,
+    uri: Uri,
+    onSuccess: (String) -> Unit,
+    onError: (String) -> Unit
+) {
+
+    try {
+
+        val bounds =
+            BitmapFactory.Options()
+
+        bounds.inJustDecodeBounds = true
+
+        contentResolver
+            .openInputStream(uri)
+            .use { input ->
+
+                if (input == null) {
+                    throw Exception(
+                        "امکان خواندن عکس وجود ندارد"
+                    )
+                }
+
+                BitmapFactory.decodeStream(
+                    input,
+                    null,
+                    bounds
+                )
+            }
+
+        if (
+            bounds.outWidth <= 0 ||
+            bounds.outHeight <= 0
+        ) {
+
+            throw Exception(
+                "فایل انتخاب‌شده عکس معتبر نیست"
+            )
+        }
+
+        var sampleSize = 1
+
+        while (
+            bounds.outWidth / sampleSize > 900 ||
+            bounds.outHeight / sampleSize > 900
+        ) {
+
+            sampleSize *= 2
+        }
+
+        val options =
+            BitmapFactory.Options()
+
+        options.inSampleSize = sampleSize
+        options.inPreferredConfig =
+            Bitmap.Config.RGB_565
+
+        val bitmap =
+            contentResolver
+                .openInputStream(uri)
+                .use { input ->
+
+                    if (input == null) {
+                        throw Exception(
+                            "امکان خواندن عکس وجود ندارد"
+                        )
+                    }
+
+                    BitmapFactory.decodeStream(
+                        input,
+                        null,
+                        options
+                    )
+                }
+                ?: throw Exception(
+                    "خواندن عکس ناموفق بود"
+                )
+
+        var quality = 65
+        var compressedBytes: ByteArray
+
+        do {
+
+            val output =
+                ByteArrayOutputStream()
+
+            bitmap.compress(
+                Bitmap.CompressFormat.JPEG,
+                quality,
+                output
+            )
+
+            compressedBytes =
+                output.toByteArray()
+
+            output.close()
+
+            if (
+                compressedBytes.size > 600_000 &&
+                quality > 30
+            ) {
+
+                quality -= 10
+
+            } else {
+
+                break
+            }
+
+        } while (true)
+
+        bitmap.recycle()
+
+        if (compressedBytes.size > 650_000) {
+
+            onError(
+                "حجم عکس زیاد است. لطفاً یک عکس کوچک‌تر انتخاب کن."
+            )
+
+            return
+        }
+
+        val base64 =
+            Base64.encodeToString(
+                compressedBytes,
+                Base64.NO_WRAP
+            )
+
+        onSuccess(base64)
+
+    } catch (e: Exception) {
+
+        onError(
+            "آماده‌سازی عکس انجام نشد:\n" +
+                (e.message ?: "خطای نامشخص")
+        )
+    }
+}
+
+
+/*
+ * کارت خاطره
+ */
 @Composable
 private fun MemoryCard(
     memory: LuxuryMemory,
@@ -716,7 +979,14 @@ private fun MemoryCard(
                 .aspectRatio(0.92f)
         ) {
 
-            if (memory.imageUrl.isNotBlank()) {
+            if (memory.imageBase64.isNotBlank()) {
+
+                Base64Image(
+                    base64 = memory.imageBase64,
+                    contentDescription = memory.title
+                )
+
+            } else if (memory.imageUrl.isNotBlank()) {
 
                 AsyncImage(
                     model = memory.imageUrl,
@@ -749,7 +1019,8 @@ private fun MemoryCard(
                 ) {
 
                     Icon(
-                        imageVector = Icons.Default.Favorite,
+                        imageVector =
+                            Icons.Default.Favorite,
                         contentDescription = null,
                         tint = MemoryPink,
                         modifier = Modifier.size(48.dp)
@@ -761,6 +1032,7 @@ private fun MemoryCard(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(8.dp),
+
                 horizontalArrangement =
                     Arrangement.spacedBy(5.dp)
             ) {
@@ -781,10 +1053,13 @@ private fun MemoryCard(
                 ) {
 
                     Icon(
-                        imageVector = Icons.Default.Edit,
-                        contentDescription = "ویرایش",
+                        imageVector =
+                            Icons.Default.Edit,
+                        contentDescription =
+                            "ویرایش",
                         tint = MemoryDeepPink,
-                        modifier = Modifier.size(18.dp)
+                        modifier =
+                            Modifier.size(18.dp)
                     )
                 }
 
@@ -804,10 +1079,13 @@ private fun MemoryCard(
                 ) {
 
                     Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = "حذف",
+                        imageVector =
+                            Icons.Default.Delete,
+                        contentDescription =
+                            "حذف",
                         tint = Color(0xFFD32F2F),
-                        modifier = Modifier.size(18.dp)
+                        modifier =
+                            Modifier.size(18.dp)
                     )
                 }
             }
@@ -831,7 +1109,8 @@ private fun MemoryCard(
             if (memory.description.isNotBlank()) {
 
                 Spacer(
-                    modifier = Modifier.height(4.dp)
+                    modifier =
+                        Modifier.height(4.dp)
                 )
 
                 Text(
@@ -843,11 +1122,13 @@ private fun MemoryCard(
             }
 
             Spacer(
-                modifier = Modifier.height(7.dp)
+                modifier =
+                    Modifier.height(7.dp)
             )
 
             Row(
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment =
+                    Alignment.CenterVertically
             ) {
 
                 Icon(
@@ -855,11 +1136,13 @@ private fun MemoryCard(
                         Icons.Default.CalendarMonth,
                     contentDescription = null,
                     tint = MemoryPink,
-                    modifier = Modifier.size(14.dp)
+                    modifier =
+                        Modifier.size(14.dp)
                 )
 
                 Spacer(
-                    modifier = Modifier.size(4.dp)
+                    modifier =
+                        Modifier.size(4.dp)
                 )
 
                 Text(
@@ -872,6 +1155,89 @@ private fun MemoryCard(
     }
 }
 
+
+/*
+ * نمایش عکس Base64
+ */
+@Composable
+private fun Base64Image(
+    base64: String,
+    contentDescription: String
+) {
+
+    val bitmap =
+        remember(base64) {
+
+            try {
+
+                val bytes =
+                    Base64.decode(
+                        base64,
+                        Base64.DEFAULT
+                    )
+
+                BitmapFactory.decodeByteArray(
+                    bytes,
+                    0,
+                    bytes.size
+                )
+
+            } catch (_: Exception) {
+
+                null
+            }
+        }
+
+    if (bitmap != null) {
+
+        Image(
+            bitmap =
+                bitmap.asImageBitmap(),
+
+            contentDescription =
+                contentDescription,
+
+            modifier = Modifier
+                .fillMaxSize()
+                .clip(
+                    RoundedCornerShape(
+                        topStart = 24.dp,
+                        topEnd = 24.dp
+                    )
+                ),
+
+            contentScale =
+                ContentScale.Crop
+        )
+
+    } else {
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Color(0xFFFFF0F4)
+                ),
+            contentAlignment =
+                Alignment.Center
+        ) {
+
+            Icon(
+                imageVector =
+                    Icons.Default.Favorite,
+                contentDescription = null,
+                tint = MemoryPink,
+                modifier =
+                    Modifier.size(48.dp)
+            )
+        }
+    }
+}
+
+
+/*
+ * دیالوگ افزودن / ویرایش
+ */
 @Composable
 private fun MemoryEditorDialog(
     title: String,
@@ -899,6 +1265,7 @@ private fun MemoryEditorDialog(
     }
 
     var dateText by remember(date) {
+
         mutableStateOf(
             if (date.isBlank()) {
                 jalaliToday()
@@ -913,20 +1280,26 @@ private fun MemoryEditorDialog(
     }
 
     AlertDialog(
+
         onDismissRequest = {
+
             if (!isSaving) {
                 onDismiss()
             }
         },
 
         title = {
+
             Text(
-                text = if (isEdit) {
-                    "ویرایش خاطره ❤️"
-                } else {
-                    "خاطره‌ی جدید ❤️"
-                },
-                fontWeight = FontWeight.Bold
+                text =
+                    if (isEdit) {
+                        "ویرایش خاطره ❤️"
+                    } else {
+                        "خاطره‌ی جدید ❤️"
+                    },
+
+                fontWeight =
+                    FontWeight.Bold
             )
         },
 
@@ -945,11 +1318,14 @@ private fun MemoryEditorDialog(
                             Color(0xFFFFF0F4)
                         )
                         .clickable {
+
                             if (!isSaving) {
                                 onChooseImage()
                             }
                         },
-                    contentAlignment = Alignment.Center
+
+                    contentAlignment =
+                        Alignment.Center
                 ) {
 
                     if (selectedImage != null) {
@@ -957,8 +1333,10 @@ private fun MemoryEditorDialog(
                         AsyncImage(
                             model = selectedImage,
                             contentDescription = null,
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop
+                            modifier =
+                                Modifier.fillMaxSize(),
+                            contentScale =
+                                ContentScale.Crop
                         )
 
                     } else {
@@ -971,85 +1349,118 @@ private fun MemoryEditorDialog(
                             Icon(
                                 imageVector =
                                     Icons.Default.PhotoLibrary,
-                                contentDescription = null,
+                                contentDescription =
+                                    null,
                                 tint = MemoryPink,
-                                modifier = Modifier.size(42.dp)
+                                modifier =
+                                    Modifier.size(42.dp)
                             )
 
                             Spacer(
-                                modifier = Modifier.height(8.dp)
+                                modifier =
+                                    Modifier.height(8.dp)
                             )
 
                             Text(
-                                text = if (isEdit) {
-                                    "انتخاب عکس جدید"
-                                } else {
-                                    "انتخاب عکس"
-                                },
-                                color = MemoryDeepPink,
-                                fontWeight = FontWeight.Bold
+                                text =
+                                    if (isEdit) {
+                                        "انتخاب عکس جدید"
+                                    } else {
+                                        "انتخاب عکس"
+                                    },
+
+                                color =
+                                    MemoryDeepPink,
+
+                                fontWeight =
+                                    FontWeight.Bold
                             )
 
                             Spacer(
-                                modifier = Modifier.height(4.dp)
+                                modifier =
+                                    Modifier.height(4.dp)
                             )
 
                             Text(
                                 text = "اختیاری",
-                                color = MemorySoftText,
-                                fontSize = 11.sp
+                                color =
+                                    MemorySoftText,
+                                fontSize =
+                                    11.sp
                             )
                         }
                     }
                 }
 
                 Spacer(
-                    modifier = Modifier.height(14.dp)
+                    modifier =
+                        Modifier.height(14.dp)
                 )
 
                 OutlinedTextField(
                     value = titleText,
+
                     onValueChange = {
                         titleText = it
                     },
-                    modifier = Modifier.fillMaxWidth(),
+
+                    modifier =
+                        Modifier.fillMaxWidth(),
+
                     label = {
                         Text("عنوان خاطره")
                     },
+
                     singleLine = true,
                     enabled = !isSaving
                 )
 
                 Spacer(
-                    modifier = Modifier.height(8.dp)
+                    modifier =
+                        Modifier.height(8.dp)
                 )
 
                 OutlinedTextField(
                     value = dateText,
+
                     onValueChange = {
                         dateText = it
                     },
-                    modifier = Modifier.fillMaxWidth(),
+
+                    modifier =
+                        Modifier.fillMaxWidth(),
+
                     label = {
                         Text("تاریخ شمسی")
                     },
+
+                    placeholder = {
+                        Text("۱۴۰۵/۰۷/۱۵")
+                    },
+
                     singleLine = true,
                     enabled = !isSaving
                 )
 
                 Spacer(
-                    modifier = Modifier.height(8.dp)
+                    modifier =
+                        Modifier.height(8.dp)
                 )
 
                 OutlinedTextField(
                     value = descriptionText,
+
                     onValueChange = {
                         descriptionText = it
                     },
-                    modifier = Modifier.fillMaxWidth(),
+
+                    modifier =
+                        Modifier.fillMaxWidth(),
+
                     label = {
                         Text("توضیح کوتاه")
                     },
+
                     maxLines = 3,
                     enabled = !isSaving
                 )
@@ -1057,28 +1468,35 @@ private fun MemoryEditorDialog(
                 if (errorMessage.isNotBlank()) {
 
                     Spacer(
-                        modifier = Modifier.height(10.dp)
+                        modifier =
+                            Modifier.height(10.dp)
                     )
 
                     Text(
                         text = errorMessage,
-                        color = Color(0xFFD32F2F),
+                        color =
+                            Color(0xFFD32F2F),
                         fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium
+                        fontWeight =
+                            FontWeight.Medium
                     )
                 }
 
                 if (isSaving) {
 
                     Spacer(
-                        modifier = Modifier.height(10.dp)
+                        modifier =
+                            Modifier.height(10.dp)
                     )
 
                     Text(
-                        text = "در حال ذخیره... ❤️",
-                        color = MemoryDeepPink,
+                        text =
+                            "در حال ذخیره... ❤️",
+                        color =
+                            MemoryDeepPink,
                         fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold
+                        fontWeight =
+                            FontWeight.Bold
                     )
                 }
             }
@@ -1087,6 +1505,7 @@ private fun MemoryEditorDialog(
         confirmButton = {
 
             TextButton(
+
                 enabled =
                     !isSaving &&
                         titleText.isNotBlank(),
@@ -1100,22 +1519,24 @@ private fun MemoryEditorDialog(
                         descriptionText.trim(),
                         dateText.trim()
                     ) {
+
                         isSaving = it
                     }
                 }
             ) {
 
                 Text(
-                    text = if (isSaving) {
-                        "در حال ذخیره..."
-                    } else {
-                        if (isEdit) {
+                    text =
+                        if (isSaving) {
+                            "در حال ذخیره..."
+                        } else if (isEdit) {
                             "ذخیره تغییرات"
                         } else {
                             "ذخیره خاطره"
-                        }
-                    },
-                    color = MemoryDeepPink
+                        },
+
+                    color =
+                        MemoryDeepPink
                 )
             }
         },
@@ -1133,34 +1554,23 @@ private fun MemoryEditorDialog(
     )
 }
 
-@Composable
-private fun ToastMessage(
-    message: String
-) {
-    LaunchedEffect(message) {
-        // فقط برای جلوگیری از خطای state
-    }
-}
 
+/*
+ * تاریخ امروز به شمسی
+ */
 private fun jalaliToday(): String {
 
     val calendar =
-        java.util.Calendar.getInstance()
+        Calendar.getInstance()
 
     val gy =
-        calendar.get(
-            java.util.Calendar.YEAR
-        )
+        calendar.get(Calendar.YEAR)
 
     val gm =
-        calendar.get(
-            java.util.Calendar.MONTH
-        ) + 1
+        calendar.get(Calendar.MONTH) + 1
 
     val gd =
-        calendar.get(
-            java.util.Calendar.DAY_OF_MONTH
-        )
+        calendar.get(Calendar.DAY_OF_MONTH)
 
     val result =
         gregorianToJalali(
@@ -1178,6 +1588,10 @@ private fun jalaliToday(): String {
     )
 }
 
+
+/*
+ * تبدیل میلادی به شمسی
+ */
 private fun gregorianToJalali(
     gy: Int,
     gm: Int,
@@ -1190,19 +1604,16 @@ private fun gregorianToJalali(
             31, 31, 30, 31, 30, 31
         )
 
-    val jDaysInMonth =
-        intArrayOf(
-            31, 31, 31, 31, 31, 31,
-            30, 30, 30, 30, 30, 29
-        )
-
     var gyTemp = gy
     var jy: Int
 
     if (gyTemp > 1600) {
+
         jy = 979
         gyTemp -= 1600
+
     } else {
+
         jy = 0
         gyTemp -= 621
     }
@@ -1223,29 +1634,47 @@ private fun gregorianToJalali(
             gd
 
     for (i in 0 until gm - 1) {
+
         days += gDaysInMonth[i]
     }
 
-    jy += 33 * (days / 12053)
+    jy +=
+        33 * (days / 12053)
+
     days %= 12053
 
-    jy += 4 * (days / 1461)
+    jy +=
+        4 * (days / 1461)
+
     days %= 1461
 
     if (days > 365) {
-        jy += (days - 1) / 365
-        days = (days - 1) % 365
+
+        jy +=
+            (days - 1) / 365
+
+        days =
+            (days - 1) % 365
     }
 
     val jm: Int
     val jd: Int
 
     if (days < 186) {
-        jm = 1 + days / 31
-        jd = 1 + days % 31
+
+        jm =
+            1 + days / 31
+
+        jd =
+            1 + days % 31
+
     } else {
-        jm = 7 + (days - 186) / 30
-        jd = 1 + (days - 186) % 30
+
+        jm =
+            7 + (days - 186) / 30
+
+        jd =
+            1 + (days - 186) % 30
     }
 
     return intArrayOf(
