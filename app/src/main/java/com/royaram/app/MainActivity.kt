@@ -94,8 +94,12 @@ class MainActivity : ComponentActivity() {
             }
 
             val showLetters = remember {
-                mutableStateOf(false)
-            }
+    mutableStateOf(false)
+}
+
+val showMusic = remember {
+    mutableStateOf(false)
+}
 
             if (showMemories.value) {
 
