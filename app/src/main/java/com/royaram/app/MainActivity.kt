@@ -146,8 +146,8 @@ val showMusic = remember {
                     },
 
                     onMusicClick = {
-                        toast("آهنگ ما 🎵")
-                    },
+    showMusic.value = true
+},
 
                     onSadClick = {
                         toast("وقتی دلمون گرفت ❤️")
