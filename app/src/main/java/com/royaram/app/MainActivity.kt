@@ -106,6 +106,9 @@ val showMusic = remember {
             val showSpecialMoments = remember {
     mutableStateOf(false)
             }
+            val showPrivate = remember {
+    mutableStateOf(false)
+            }
 
             if (showMemories.value) {
 
@@ -147,7 +150,18 @@ val showMusic = remember {
         }
     )
 
+} else if (showPrivate.value) {
+
+    PrivateScreen(
+        activity = this@MainActivity,
+        onBack = {
+            showPrivate.value = false
+        }
+    )
+
 } else {
+
+    RoyaramApp(
 
                 RoyaramApp(
                     onChatClick = {
