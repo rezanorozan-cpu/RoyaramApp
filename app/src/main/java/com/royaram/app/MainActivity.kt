@@ -103,6 +103,9 @@ val showMusic = remember {
             val showSadMoments = remember {
     mutableStateOf(false)
 }
+            val showSpecialMoments = remember {
+    mutableStateOf(false)
+            }
 
             if (showMemories.value) {
 
@@ -136,6 +139,14 @@ val showMusic = remember {
         }
     )
 
+} else if (showSpecialMoments.value) {
+
+    SpecialMomentsScreen(
+        onBack = {
+            showSpecialMoments.value = false
+        }
+    )
+
 } else {
 
                 RoyaramApp(
@@ -165,8 +176,8 @@ val showMusic = remember {
 },
 
                     onSpecialClick = {
-                        toast("لحظه‌های خاص ✨")
-                    },
+    showSpecialMoments.value = true
+},
 
                     onPrivateClick = {
                         toast("بخش خصوصی 🔐")
