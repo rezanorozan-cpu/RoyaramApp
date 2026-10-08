@@ -596,7 +596,127 @@ fun BirthdayMiniRow() {
                 fontSize = 11.sp,
                 color = TextDark,
                 fontWeight = FontWeight.Bold
-            }
+@Composable
+fun MainDateCard(
+    daysTogether: Int
+) {
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(26.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White.copy(
+                alpha = 0.92f
+            )
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 5.dp
+        )
+    ) {
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(18.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+
+            Text(
+                text = "رامین ❤️ رویا",
+                color = DeepPink,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(
+                modifier = Modifier.height(4.dp)
+            )
+
+            Text(
+                text = "هر روز یک صفحه‌ی تازه از قصه‌ی ما",
+                color = SoftText,
+                fontSize = 13.sp
+            )
+
+            Spacer(
+                modifier = Modifier.height(10.dp)
+            )
+
+            Text(
+                text = "$daysTogether",
+                color = Pink,
+                fontSize = 32.sp,
+                fontWeight = FontWeight.ExtraBold
+            )
+
+            Text(
+                text = "❤️ روز کنار هم",
+                color = TextDark,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+
+            Spacer(
+                modifier = Modifier.height(12.dp)
+            )
+
+            BirthdayMiniRow()
+        }
+    }
+}
+
+@Composable
+fun BirthdayMiniRow() {
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceEvenly
+    ) {
+
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+
+            Text(
+                text = "🎂",
+                fontSize = 20.sp
+            )
+
+            Text(
+                text = "تولد رامین",
+                fontSize = 11.sp,
+                color = SoftText
+            )
+
+            Text(
+                text = "۲۰ شهریور",
+                fontSize = 11.sp,
+                color = TextDark,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+
+            Text(
+                text = "🎂",
+                fontSize = 20.sp
+            )
+
+            Text(
+                text = "تولد رویا",
+                fontSize = 11.sp,
+                color = SoftText
+            )
+
+            Text(
+                text = "۱۵ آذر",
+                fontSize = 11.sp,
+                color = TextDark,
+                fontWeight = FontWeight.Bold
+            )
         }
 
         Column(
