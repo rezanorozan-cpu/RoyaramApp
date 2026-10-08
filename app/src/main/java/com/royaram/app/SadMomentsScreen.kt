@@ -328,11 +328,15 @@ fun SadMomentsScreen(
 
                 } else {
 
-                    val data = hashMapOf(
-                        "title" to title,
-                        "text" to text,
-                        "date" to date
-                    )
+                    val data = hashMapOf<String, Any>(
+    "title" to title,
+    "text" to text,
+    "date" to date
+)
+
+collection
+    .document(editingMoment!!.id)
+    .update(data)
 
                     collection
                         .document(editingMoment!!.id)
