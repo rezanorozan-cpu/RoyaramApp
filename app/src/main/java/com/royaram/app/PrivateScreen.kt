@@ -41,8 +41,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.fragment.app.FragmentActivity
-
+import androidx.activity.ComponentActivity
 private val PrivatePink = Color(0xFFE85D86)
 private val PrivateLightPink = Color(0xFFFFE7EF)
 private val PrivateDeepPink = Color(0xFFB83D63)
