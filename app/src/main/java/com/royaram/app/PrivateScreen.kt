@@ -49,6 +49,7 @@ private val PrivateDeepPink = Color(0xFFB83D63)
 private val PrivateTextDark = Color(0xFF33252B)
 private val PrivateSoftText = Color(0xFF82747A)
 
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun PrivateScreen(
     activity: FragmentActivity,
