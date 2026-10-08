@@ -656,15 +656,6 @@ fun MainDateCard(
                 fontWeight = FontWeight.SemiBold
             )
 
-            Spacer(
-                modifier = Modifier.height(12.dp)
-            )
-
-            BirthdayMiniRow()
-        }
-    }
-}
-
 @Composable
 fun BirthdayMiniRow() {
 
@@ -676,7 +667,6 @@ fun BirthdayMiniRow() {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
             Text(
                 text = "🎂",
                 fontSize = 20.sp
@@ -699,7 +689,6 @@ fun BirthdayMiniRow() {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
             Text(
                 text = "🎂",
                 fontSize = 20.sp
@@ -722,7 +711,6 @@ fun BirthdayMiniRow() {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
             Text(
                 text = "💗",
                 fontSize = 20.sp
@@ -742,6 +730,215 @@ fun BirthdayMiniRow() {
             )
         }
     }
+}
+
+@Composable
+fun HomeCardRow(
+    first: @Composable () -> Unit,
+    second: @Composable () -> Unit,
+    third: @Composable () -> Unit
+) {
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+
+        Box(
+            modifier = Modifier.weight(1f)
+        ) {
+            first()
+        }
+
+        Box(
+            modifier = Modifier.weight(1f)
+        ) {
+            second()
+        }
+
+        Box(
+            modifier = Modifier.weight(1f)
+        ) {
+            third()
+        }
+    }
+}
+
+@Composable
+fun ImageFolderCard(
+    title: String,
+    subtitle: String,
+    icon: String,
+    onClick: () -> Unit
+) {
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(150.dp)
+            .clickable {
+                onClick()
+            },
+        shape = RoundedCornerShape(26.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White.copy(
+                alpha = 0.94f
+            )
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 5.dp
+        )
+    ) {
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+
+            Text(
+                text = icon,
+                fontSize = 30.sp
+            )
+
+            Spacer(
+                modifier = Modifier.height(8.dp)
+            )
+
+            Text(
+                text = title,
+                color = TextDark,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(
+                modifier = Modifier.height(4.dp)
+            )
+
+            Text(
+                text = subtitle,
+                color = SoftText,
+                fontSize = 10.sp,
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+}
+
+@Composable
+fun LoveQuoteCard() {
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(150.dp),
+        shape = RoundedCornerShape(26.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = LightPink
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 5.dp
+        )
+    ) {
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(14.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+
+            Icon(
+                imageVector = Icons.Default.Favorite,
+                contentDescription = null,
+                tint = Pink,
+                modifier = Modifier.size(28.dp)
+            )
+
+            Spacer(
+                modifier = Modifier.height(8.dp)
+            )
+
+            Text(
+                text = "«کنار تو، حتی روزهای معمولی هم قشنگ می‌شن.» ❤️",
+                color = TextDark,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+}
+
+@Composable
+fun PeriodPrivateCard() {
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(26.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White.copy(
+                alpha = 0.94f
+            )
+        )
+    ) {
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(18.dp)
+        ) {
+
+            Text(
+                text = "🌷 یادمون باشه کنار هم باشیم",
+                color = DeepPink,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(
+                modifier = Modifier.height(6.dp)
+            )
+
+            Text(
+                text = "در روزهای سخت، حتی یک پیام کوچیک هم می‌تونه حال همدیگه رو بهتر کنه ❤️",
+                color = SoftText,
+                fontSize = 12.sp
+            )
+        }
+    }
+}
+
+private fun calculateDaysTogether(): Int {
+
+    val calendar = Calendar.getInstance()
+
+    val start = Calendar.getInstance().apply {
+        clear()
+        set(
+            calendar.get(Calendar.YEAR),
+            Calendar.JUNE,
+            10
+        )
+    }
+
+    val today = Calendar.getInstance()
+
+    val difference =
+        today.timeInMillis - start.timeInMillis
+
+    val days =
+        difference / (1000L * 60L * 60L * 24L)
+
+    return max(
+        0,
+        days.toInt()
+    )
 }
 
 @Composable
