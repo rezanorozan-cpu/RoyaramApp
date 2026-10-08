@@ -52,9 +52,9 @@ private val PrivateSoftText = Color(0xFF82747A)
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun PrivateScreen(
-    activity: FragmentActivity,
+    activity: ComponentActivity,
     onBack: () -> Unit
-) {
+)
     var isUnlocked by remember {
         mutableStateOf(false)
     }
