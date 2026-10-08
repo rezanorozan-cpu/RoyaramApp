@@ -66,6 +66,7 @@ data class SpecialMoment(
     val createdAt: Long = 0L
 )
 
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun SpecialMomentsScreen(
     onBack: () -> Unit
