@@ -100,6 +100,9 @@ class MainActivity : ComponentActivity() {
 val showMusic = remember {
     mutableStateOf(false)
 }
+            val showSadMoments = remember {
+    mutableStateOf(false)
+}
 
             if (showMemories.value) {
 
@@ -122,6 +125,14 @@ val showMusic = remember {
     MusicScreen(
         onBack = {
             showMusic.value = false
+        }
+    )
+
+} else if (showSadMoments.value) {
+
+    SadMomentsScreen(
+        onBack = {
+            showSadMoments.value = false
         }
     )
 
@@ -150,8 +161,8 @@ val showMusic = remember {
 },
 
                     onSadClick = {
-                        toast("وقتی دلمون گرفت ❤️")
-                    },
+    showSadMoments.value = true
+},
 
                     onSpecialClick = {
                         toast("لحظه‌های خاص ✨")
