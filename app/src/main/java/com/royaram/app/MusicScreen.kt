@@ -69,7 +69,8 @@ data class LoveSong(
     val artist: String = "",
     val note: String = "",
     val date: String = "",
-    val createdAt: Long = 0L
+    val createdAt: Long = 0L,
+    val isFavorite: Boolean = false
 )
 
 @SuppressLint("SetJavaScriptEnabled")
