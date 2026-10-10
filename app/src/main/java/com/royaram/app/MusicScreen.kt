@@ -245,6 +245,26 @@ fun MusicScreen(
                     )
                 }
             }
+            OutlinedTextField(
+    value = searchQuery,
+    onValueChange = { searchQuery = it },
+    modifier = Modifier
+        .fillMaxWidth()
+        .padding(horizontal = 14.dp, vertical = 6.dp),
+    singleLine = true,
+    shape = RoundedCornerShape(18.dp),
+    label = { Text("جست‌وجو در آهنگ‌های ما") },
+    placeholder = {
+        Text("نام آهنگ یا خواننده را بنویس…")
+    },
+    leadingIcon = {
+        Icon(
+            imageVector = Icons.Default.MusicNote,
+            contentDescription = null,
+            tint = MusicDeepPink
+        )
+    }
+)
 
             when {
                 loading -> {
@@ -317,7 +337,7 @@ fun MusicScreen(
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         items(
-                            items = songs,
+                            items = filteredSongs,
                             key = { it.id }
                         ) { song ->
                             MusicCard(
