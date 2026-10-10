@@ -51,6 +51,11 @@ import androidx.compose.ui.unit.sp
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
+import android.webkit.WebChromeClient
+import android.webkit.WebView
+import android.webkit.WebViewClient
+import androidx.activity.compose.BackHandler
+import androidx.compose.ui.viewinterop.AndroidView
 
 private val MusicPink = Color(0xFFE85D86)
 private val MusicDeepPink = Color(0xFFB83D63)
@@ -99,6 +104,14 @@ fun MusicScreen(
     var loading by remember {
         mutableStateOf(true)
     }
+    
+    var showOnlinePlayer by remember {
+    mutableStateOf(false)
+}
+
+var onlineWebView by remember {
+    mutableStateOf<WebView?>(null)
+}
 
     DisposableEffect(db) {
         val registration: ListenerRegistration =
@@ -118,7 +131,7 @@ fun MusicScreen(
                         return@addSnapshotListener
                     }
 
-                    songs = snapshot?.documents?.map { document ->
+                    songs =snapshot?.documents?.map { document ->
                         LoveSong(
                             id = document.id,
                             title = document.getString("title") ?: "",
@@ -173,7 +186,17 @@ fun MusicScreen(
 
                 Column(
                     modifier = Modifier.weight(1f)
-                ) {
+                ) {TextButton(
+    onClick = {
+        showOnlinePlayer = true
+    }
+) {
+    Text(
+        text = "پخش آنلاین 🎧",
+        color = MusicDeepPink,
+        fontWeight = FontWeight.Bold
+    )
+                }
                     Text(
                         text = "آهنگ ما 🎵",
                         fontSize = 22.sp,
@@ -314,7 +337,87 @@ fun MusicScreen(
                     }
                 }
             }
+        }BackHandler(enabled = showOnlinePlayer) {
+    if (onlineWebView?.canGoBack() == true) {
+        onlineWebView?.goBack()
+    } else {
+        showOnlinePlayer = false
+    }
+}
+
+if (showOnlinePlayer) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.White)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(0xFFFFE5EE))
+                .padding(horizontal = 8.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(
+                onClick = {
+                    if (onlineWebView?.canGoBack() == true) {
+                        onlineWebView?.goBack()
+                    } else {
+                        showOnlinePlayer = false
+                    }
+                }
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ArrowBack,
+                    contentDescription = "بازگشت",
+                    tint = MusicDeepPink
+                )
+            }
+
+            Text(
+                text = "موزیکیفا 🎵",
+                modifier = Modifier.weight(1f),
+                fontSize = 17.sp,
+                fontWeight = FontWeight.Bold,
+                color = MusicDark
+            )
+
+            TextButton(
+                onClick = {
+                    showOnlinePlayer = false
+                }
+            ) {
+                Text(
+                    text = "بستن",
+                    color = MusicDeepPink
+                )
+            }
         }
+
+        AndroidView(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
+            factory = { context ->
+                WebView(context).apply {
+                    settings.javaScriptEnabled = true
+                    settings.domStorageEnabled = true
+                    settings.mediaPlaybackRequiresUserGesture = true
+
+                    webViewClient = WebViewClient()
+                    webChromeClient = WebChromeClient()
+
+                    loadUrl("https://musicifa.com/")
+
+                    onlineWebView = this
+                }
+            },
+            update = { view ->
+                onlineWebView = view
+            }
+        )
+    }
+}
 
         if (showEditor) {
             MusicEditorDialog(
@@ -617,7 +720,7 @@ private fun MusicEditorDialog(
                 )
             }
         },
-        dismissButton = {
+        dismissButton =  
             TextButton(onClick = onDismiss) {
                 Text(
                     text = "انصراف",
