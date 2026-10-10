@@ -334,11 +334,11 @@ fun MusicScreen(
                         return@MusicEditorDialog
                     }
 
-                    val data = hashMapOf(
-                        "title" to cleanTitle,
-                        "artist" to cleanArtist,
-                        "note" to cleanNote
-                    )
+                    val data = hashMapOf<String, Any>(
+    "title" to cleanTitle,
+    "artist" to cleanArtist,
+    "note" to cleanNote
+)
 
                     if (editingSong == null) {
                         data["date"] = jalaliTodayForMusic()
