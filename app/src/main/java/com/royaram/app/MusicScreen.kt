@@ -1,11 +1,16 @@
 package com.royaram.app
 
+import android.annotation.SuppressLint
+import android.webkit.WebChromeClient
+import android.webkit.WebView
+import android.webkit.WebViewClient
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -48,14 +53,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
-import android.webkit.WebChromeClient
-import android.webkit.WebView
-import android.webkit.WebViewClient
-import androidx.activity.compose.BackHandler
-import androidx.compose.ui.viewinterop.AndroidView
 
 private val MusicPink = Color(0xFFE85D86)
 private val MusicDeepPink = Color(0xFFB83D63)
@@ -71,15 +72,13 @@ data class LoveSong(
     val createdAt: Long = 0L
 )
 
+@SuppressLint("SetJavaScriptEnabled")
 @Composable
 fun MusicScreen(
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
-
-    val db = remember {
-        FirebaseFirestore.getInstance()
-    }
+    val db = remember { FirebaseFirestore.getInstance() }
 
     var songs by remember {
         mutableStateOf<List<LoveSong>>(emptyList())
@@ -104,14 +103,14 @@ fun MusicScreen(
     var loading by remember {
         mutableStateOf(true)
     }
-    
-    var showOnlinePlayer by remember {
-    mutableStateOf(false)
-}
 
-var onlineWebView by remember {
-    mutableStateOf<WebView?>(null)
-}
+    var showOnlinePlayer by remember {
+        mutableStateOf(false)
+    }
+
+    var onlineWebView by remember {
+        mutableStateOf<WebView?>(null)
+    }
 
     DisposableEffect(db) {
         val registration: ListenerRegistration =
@@ -127,11 +126,11 @@ var onlineWebView by remember {
                     if (error != null) {
                         errorMessage =
                             "دریافت آهنگ‌ها ناموفق بود:\n" +
-                            (error.message ?: "خطای نامشخص")
+                                (error.message ?: "خطای نامشخص")
                         return@addSnapshotListener
                     }
 
-                    songs =snapshot?.documents?.map { document ->
+                    songs = snapshot?.documents?.map { document ->
                         LoveSong(
                             id = document.id,
                             title = document.getString("title") ?: "",
@@ -145,6 +144,14 @@ var onlineWebView by remember {
 
         onDispose {
             registration.remove()
+        }
+    }
+
+    BackHandler(enabled = showOnlinePlayer) {
+        if (onlineWebView?.canGoBack() == true) {
+            onlineWebView?.goBack()
+        } else {
+            showOnlinePlayer = false
         }
     }
 
@@ -169,8 +176,8 @@ var onlineWebView by remember {
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(
-                        horizontal = 12.dp,
-                        vertical = 10.dp
+                        horizontal = 8.dp,
+                        vertical = 8.dp
                     ),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -186,17 +193,7 @@ var onlineWebView by remember {
 
                 Column(
                     modifier = Modifier.weight(1f)
-                ) {TextButton(
-    onClick = {
-        showOnlinePlayer = true
-    }
-) {
-    Text(
-        text = "پخش آنلاین 🎧",
-        color = MusicDeepPink,
-        fontWeight = FontWeight.Bold
-    )
-                }
+                ) {
                     Text(
                         text = "آهنگ ما 🎵",
                         fontSize = 22.sp,
@@ -208,6 +205,18 @@ var onlineWebView by remember {
                         text = "صداهایی که قصه‌ی ما رو یادآوری می‌کنن",
                         fontSize = 10.sp,
                         color = MusicSoftText
+                    )
+                }
+
+                TextButton(
+                    onClick = {
+                        showOnlinePlayer = true
+                    }
+                ) {
+                    Text(
+                        text = "پخش آنلاین 🎧",
+                        color = MusicDeepPink,
+                        fontWeight = FontWeight.Bold
                     )
                 }
 
@@ -289,7 +298,7 @@ var onlineWebView by remember {
                         modifier = Modifier
                             .fillMaxWidth()
                             .weight(1f),
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                        contentPadding = PaddingValues(
                             horizontal = 12.dp,
                             vertical = 8.dp
                         ),
@@ -303,9 +312,20 @@ var onlineWebView by remember {
                                 song = song,
                                 isPlaying = playingId == song.id,
                                 onPlay = {
+                                    // این دکمه فعلاً فقط وضعیت نمایشی را تغییر می‌دهد.
+                                    // پخش واقعی آهنگ از سایت در دکمه پخش آنلاین است.
                                     playingId =
-                                        if (playingId == song.id) null
-                                        else song.id
+                                        if (playingId == song.id) {
+                                            null
+                                        } else {
+                                            song.id
+                                        }
+
+                                    Toast.makeText(
+                                        context,
+                                        "برای پخش آنلاین، دکمهٔ «پخش آنلاین» را بزن 🎧",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
                                 },
                                 onEdit = {
                                     editingSong = song
@@ -329,7 +349,8 @@ var onlineWebView by remember {
                                         .addOnFailureListener { error ->
                                             errorMessage =
                                                 "حذف آهنگ ناموفق بود:\n" +
-                                                (error.message ?: "خطای نامشخص")
+                                                    (error.message
+                                                        ?: "خطای نامشخص")
                                         }
                                 }
                             )
@@ -337,156 +358,140 @@ var onlineWebView by remember {
                     }
                 }
             }
-        }BackHandler(enabled = showOnlinePlayer) {
-    if (onlineWebView?.canGoBack() == true) {
-        onlineWebView?.goBack()
-    } else {
-        showOnlinePlayer = false
-    }
-}
+        }
 
-if (showOnlinePlayer) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.White)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(Color(0xFFFFE5EE))
-                .padding(horizontal = 8.dp, vertical = 6.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(
-                onClick = {
-                    if (onlineWebView?.canGoBack() == true) {
-                        onlineWebView?.goBack()
-                    } else {
-                        showOnlinePlayer = false
+        if (showOnlinePlayer) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.White)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color(0xFFFFE5EE))
+                        .padding(horizontal = 8.dp, vertical = 6.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(
+                        onClick = {
+                            if (onlineWebView?.canGoBack() == true) {
+                                onlineWebView?.goBack()
+                            } else {
+                                showOnlinePlayer = false
+                            }
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "بازگشت",
+                            tint = MusicDeepPink
+                        )
+                    }
+
+                    Text(
+                        text = "موزیکیفا 🎵",
+                        modifier = Modifier.weight(1f),
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MusicDark
+                    )
+
+                    TextButton(
+                        onClick = {
+                            showOnlinePlayer = false
+                        }
+                    ) {
+                        Text(
+                            text = "بستن",
+                            color = MusicDeepPink
+                        )
                     }
                 }
-            ) {
-                Icon(
-                    imageVector = Icons.Default.ArrowBack,
-                    contentDescription = "بازگشت",
-                    tint = MusicDeepPink
-                )
-            }
 
-            Text(
-                text = "موزیکیفا 🎵",
-                modifier = Modifier.weight(1f),
-                fontSize = 17.sp,
-                fontWeight = FontWeight.Bold,
-                color = MusicDark
-            )
-
-            TextButton(
-                onClick = {
-                    showOnlinePlayer = false
-                }
-            ) {
-                Text(
-                    text = "بستن",
-                    color = MusicDeepPink
+                AndroidView(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    factory = { webContext ->
+                        WebView(webContext).apply {
+                            settings.javaScriptEnabled = true
+                            settings.domStorageEnabled = true
+                            settings.mediaPlaybackRequiresUserGesture = true
+                            webViewClient = WebViewClient()
+                            webChromeClient = WebChromeClient()
+                            loadUrl("https://musicifa.com/")
+                            onlineWebView = this
+                        }
+                    },
+                    update = { view ->
+                        onlineWebView = view
+                    }
                 )
             }
         }
-
-        AndroidView(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f),
-            factory = { context ->
-                WebView(context).apply {
-                    settings.javaScriptEnabled = true
-                    settings.domStorageEnabled = true
-                    settings.mediaPlaybackRequiresUserGesture = true
-
-                    webViewClient = WebViewClient()
-                    webChromeClient = WebChromeClient()
-
-                    loadUrl("https://musicifa.com/")
-
-                    onlineWebView = this
-                }
-            },
-            update = { view ->
-                onlineWebView = view
-            }
-        )
     }
-}
 
-        if (showEditor) {
-            MusicEditorDialog(
-                song = editingSong,
-                onDismiss = {
+    if (showEditor) {
+        MusicEditorDialog(
+            song = editingSong,
+            onDismiss = {
+                showEditor = false
+                editingSong = null
+            },
+            onSave = { title, artist, note ->
+
+                val cleanTitle = title.trim()
+                val cleanArtist = artist.trim()
+                val cleanNote = note.trim()
+
+                if (cleanTitle.isBlank()) {
+                    errorMessage = "لطفاً نام آهنگ رو وارد کن."
+                    return@MusicEditorDialog
+                }
+
+                val songBeingEdited = editingSong
+                val isNewSong = songBeingEdited == null
+
+                val data = hashMapOf<String, Any>(
+                    "title" to cleanTitle,
+                    "artist" to cleanArtist,
+                    "note" to cleanNote
+                )
+
+                val task = if (isNewSong) {
+                    data["date"] = jalaliTodayForMusic()
+                    data["createdAt"] = System.currentTimeMillis()
+
+                    db.collection("loveSongs")
+                        .document()
+                        .set(data)
+                } else {
+                    db.collection("loveSongs")
+                        .document(songBeingEdited!!.id)
+                        .update(data)
+                }
+
+                task.addOnSuccessListener {
                     showEditor = false
                     editingSong = null
-                },
-                onSave = { title, artist, note ->
 
-                    val cleanTitle = title.trim()
-                    val cleanArtist = artist.trim()
-                    val cleanNote = note.trim()
-
-                    if (cleanTitle.isBlank()) {
-                        errorMessage = "لطفاً نام آهنگ رو وارد کن."
-                        return@MusicEditorDialog
-                    }
-
-                    val data = hashMapOf<String, Any>(
-    "title" to cleanTitle,
-    "artist" to cleanArtist,
-    "note" to cleanNote
-)
-
-                    if (editingSong == null) {
-                        data["date"] = jalaliTodayForMusic()
-                        data["createdAt"] =
-                            System.currentTimeMillis().toString()
-                    }
-
-                    val task = if (editingSong == null) {
-                        db.collection("loveSongs")
-                            .document()
-                            .set(
-                                mapOf(
-                                    "title" to cleanTitle,
-                                    "artist" to cleanArtist,
-                                    "note" to cleanNote,
-                                    "date" to jalaliTodayForMusic(),
-                                    "createdAt" to System.currentTimeMillis()
-                                )
-                            )
-                    } else {
-                        db.collection("loveSongs")
-                            .document(editingSong!!.id)
-                            .update(data)
-                    }
-
-                    task.addOnSuccessListener {
-                        showEditor = false
-                        editingSong = null
-
-                        Toast.makeText(
-                            context,
-                            if (editingSong == null)
-                                "آهنگ با موفقیت ذخیره شد ❤️"
-                            else
-                                "آهنگ ویرایش شد ❤️",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }.addOnFailureListener { error ->
-                        errorMessage =
-                            "ذخیره‌سازی انجام نشد:\n" +
+                    Toast.makeText(
+                        context,
+                        if (isNewSong) {
+                            "آهنگ با موفقیت ذخیره شد ❤️"
+                        } else {
+                            "آهنگ ویرایش شد ❤️"
+                        },
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }.addOnFailureListener { error ->
+                    errorMessage =
+                        "ذخیره‌سازی انجام نشد:\n" +
                             (error.message ?: "خطای نامشخص")
-                    }
                 }
-            )
-        }
+            }
+        )
     }
 
     errorMessage?.let { message ->
@@ -720,7 +725,7 @@ private fun MusicEditorDialog(
                 )
             }
         },
-        dismissButton =  
+        dismissButton = {
             TextButton(onClick = onDismiss) {
                 Text(
                     text = "انصراف",
