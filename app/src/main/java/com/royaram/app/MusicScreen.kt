@@ -663,6 +663,21 @@ private fun MusicCard(
                         tint = MusicPink
                     )
                 }
+                IconButton(onClick = onFavorite) {
+    Icon(
+        imageVector = if (song.isFavorite) {
+            Icons.Default.Favorite
+        } else {
+            Icons.Default.FavoriteBorder
+        },
+        contentDescription = if (song.isFavorite) {
+            "حذف از محبوب‌ها"
+        } else {
+            "افزودن به محبوب‌ها"
+        },
+        tint = MusicDeepPink
+    )
+}
 
                 IconButton(onClick = onEdit) {
                     Icon(
