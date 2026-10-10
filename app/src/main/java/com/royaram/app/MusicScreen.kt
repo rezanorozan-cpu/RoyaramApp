@@ -91,6 +91,18 @@ fun MusicScreen(
     var editingSong by remember {
         mutableStateOf<LoveSong?>(null)
     }
+    var searchQuery by remember {
+    mutableStateOf("")
+    }
+
+    val filteredSongs = songs.filter { song ->
+    val query = searchQuery.trim()
+
+    query.isBlank() ||
+        song.title.contains(query, ignoreCase = true) ||
+        song.artist.contains(query, ignoreCase = true) ||
+        song.note.contains(query, ignoreCase = true)
+    }
 
     var playingId by remember {
         mutableStateOf<String?>(null)
