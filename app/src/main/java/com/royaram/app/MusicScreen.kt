@@ -564,6 +564,7 @@ private fun MusicCard(
     song: LoveSong,
     isPlaying: Boolean,
     onPlay: () -> Unit,
+    onFavorite: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
