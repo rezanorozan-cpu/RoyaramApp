@@ -152,8 +152,8 @@ fun MusicScreen(
                             artist = document.getString("artist") ?: "",
                             note = document.getString("note") ?: "",
                             date = document.getString("date") ?: "",
-                            createdAt = document.getLong("createdAt") ?: 0L
-                        )
+                            createdAt = document.getLong("createdAt") ?: 0L,
+isFavorite = document.getBoolean("isFavorite") ?: false
                     } ?: emptyList()
                 }
 
