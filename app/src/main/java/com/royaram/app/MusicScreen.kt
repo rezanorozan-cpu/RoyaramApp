@@ -128,39 +128,40 @@ fun MusicScreen(
     }
 
     DisposableEffect(db) {
-        val registration: ListenerRegistration =
-            db.collection("loveSongs")
-                .orderBy(
-                    "createdAt",
-                    Query.Direction.DESCENDING
-                )
-                .addSnapshotListener { snapshot, error ->
+    val registration: ListenerRegistration =
+        db.collection("loveSongs")
+            .orderBy(
+                "createdAt",
+                Query.Direction.DESCENDING
+            )
+            .addSnapshotListener { snapshot, error ->
 
-                    loading = false
+                loading = false
 
-                    if (error != null) {
-                        errorMessage =
-                            "دریافت آهنگ‌ها ناموفق بود:\n" +
-                                (error.message ?: "خطای نامشخص")
-                        return@addSnapshotListener
-                    }
-
-                    songs = snapshot?.documents?.map { document ->
-                        LoveSong(
-                            id = document.id,
-                            title = document.getString("title") ?: "",
-                            artist = document.getString("artist") ?: "",
-                            note = document.getString("note") ?: "",
-                            date = document.getString("date") ?: "",
-                            createdAt = document.getLong("createdAt") ?: 0L,
-isFavorite = document.getBoolean("isFavorite") ?: false
-                    } ?: emptyList()
+                if (error != null) {
+                    errorMessage =
+                        "دریافت آهنگ‌ها ناموفق بود:\n" +
+                            (error.message ?: "خطای نامشخص")
+                    return@addSnapshotListener
                 }
 
-        onDispose {
-            registration.remove()
-        }
+                songs = snapshot?.documents?.map { document ->
+                    LoveSong(
+                        id = document.id,
+                        title = document.getString("title") ?: "",
+                        artist = document.getString("artist") ?: "",
+                        note = document.getString("note") ?: "",
+                        date = document.getString("date") ?: "",
+                        createdAt = document.getLong("createdAt") ?: 0L,
+                        isFavorite = document.getBoolean("isFavorite") ?: false
+                    )
+                } ?: emptyList()
+            }
+
+    onDispose {
+        registration.remove()
     }
+}
 
     BackHandler(enabled = showOnlinePlayer) {
         if (onlineWebView?.canGoBack() == true) {
@@ -362,6 +363,16 @@ isFavorite = document.getBoolean("isFavorite") ?: false
                                         Toast.LENGTH_SHORT
                                     ).show()
                                 },
+                                onFavorite = {
+    db.collection("loveSongs")
+        .document(song.id)
+        .update("isFavorite", !song.isFavorite)
+        .addOnFailureListener { error ->
+            errorMessage =
+                "ذخیره علاقه‌مندی ناموفق بود:\n" +
+                (error.message ?: "خطای نامشخص")
+        }
+},
                                 onEdit = {
                                     editingSong = song
                                     showEditor = true
