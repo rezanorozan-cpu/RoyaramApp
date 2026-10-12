@@ -178,12 +178,12 @@ fun LettersScreen(
             if (letters.isEmpty()) {
 
                 Column(
-    modifier = Modifier
-        .weight(1f)
-        .fillMaxWidth()
-        .padding(28.dp),
-    horizontalAlignment = Alignment.CenterHorizontally,
-    verticalArrangement = Arrangement.Center
+                  modifier = Modifier
+                   .weight(1f)
+                   .fillMaxWidth()
+                   .padding(28.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
 )
 
                     Text(
