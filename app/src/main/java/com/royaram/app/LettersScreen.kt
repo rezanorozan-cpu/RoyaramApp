@@ -177,40 +177,40 @@ fun LettersScreen(
 
             if (letters.isEmpty()) {
 
-                Column(
-    modifier = Modifier
-        .weight(1f)
-        .fillMaxWidth()
-        .padding(28.dp),
-    horizontalAlignment = Alignment.CenterHorizontally,
-    verticalArrangement = Arrangement.Center
-)
-                    Text(
-                        text = "💌",
-                        fontSize = 54.sp
-                    )
+    Column(
+        modifier = Modifier
+            .weight(1f)
+            .fillMaxWidth()
+            .padding(28.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
 
-                    Spacer(
-                        modifier = Modifier.height(10.dp)
-                    )
+        Text(
+            text = "💌",
+            fontSize = 54.sp
+        )
 
-                    Text(
-                        text = "هنوز نامه‌ای نوشته نشده",
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = LetterDark
-                    )
+        Spacer(
+            modifier = Modifier.height(10.dp)
+        )
 
-                    Text(
-                        text = "اولین نامه‌ی عاشقانه‌تون رو بنویس ❤️",
-                        fontSize = 11.sp,
-                        color = LetterSoftText,
-                        textAlign = TextAlign.Center
-                    )
-                }
+        Text(
+            text = "هنوز نامه‌ای نوشته نشده",
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold,
+            color = LetterDark
+        )
 
-            } else {
+        Text(
+            text = "اولین نامه‌ی عاشقانه‌تون رو بنویس ❤️",
+            fontSize = 11.sp,
+            color = LetterSoftText,
+            textAlign = TextAlign.Center
+        )
+    }
 
+} else {
                 LazyColumn(
                     modifier = Modifier
                         .weight(1f)
