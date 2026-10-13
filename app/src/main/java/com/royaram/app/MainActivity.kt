@@ -42,6 +42,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.fragment.app.FragmentActivity
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
@@ -575,6 +577,7 @@ fun HomeCardRow(
 }
 
 @Composable
+@Composable
 fun ImageFolderCard(
     title: String,
     subtitle: String,
@@ -600,10 +603,11 @@ fun ImageFolderCard(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(12.dp),
+                .padding(10.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
+
             if (imageRes != null) {
                 Image(
                     painter = painterResource(id = imageRes),
@@ -611,7 +615,8 @@ fun ImageFolderCard(
                     contentScale = ContentScale.Fit,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(65.dp)
+                        .height(68.dp)
+                        .clip(RoundedCornerShape(14.dp))
                 )
             } else {
                 Text(
@@ -620,7 +625,7 @@ fun ImageFolderCard(
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
             Text(
                 text = title,
