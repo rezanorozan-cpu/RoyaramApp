@@ -572,7 +572,8 @@ fun ImageFolderCard(
     title: String,
     subtitle: String,
     icon: String,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    imageRes: Int? = null
 ) {
     Card(
         modifier = Modifier
@@ -596,10 +597,21 @@ fun ImageFolderCard(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text(
-                text = icon,
-                fontSize = 30.sp
-            )
+            if (imageRes != null) {
+                Image(
+                    painter = painterResource(id = imageRes),
+                    contentDescription = title,
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(65.dp)
+                )
+            } else {
+                Text(
+                    text = icon,
+                    fontSize = 30.sp
+                )
+            }
 
             Spacer(modifier = Modifier.height(8.dp))
 
