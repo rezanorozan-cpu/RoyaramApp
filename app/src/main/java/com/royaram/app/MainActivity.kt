@@ -292,6 +292,7 @@ fun HomeScreen(
                         subtitle = "لحظه‌های قشنگمون",
                         icon = "📸",
                         onClick = onMemoriesClick
+                        imageRes = R.drawable.royaram_photo_1
                     )
                 },
                 second = {
@@ -300,6 +301,7 @@ fun HomeScreen(
                         subtitle = "حرف‌های قلبمون",
                         icon = "💌",
                         onClick = onLettersClick
+                        imageRes = R.drawable.royaram_photo_2
                     )
                 },
                 third = {
@@ -308,6 +310,7 @@ fun HomeScreen(
                         subtitle = "صدای قصه‌ی ما",
                         icon = "🎵",
                         onClick = onMusicClick
+                        imageRes = R.drawable.royaram_photo_3
                     )
                 }
             )
@@ -321,6 +324,7 @@ fun HomeScreen(
                         subtitle = "اینجا همیشه کنار همیم",
                         icon = "🌷",
                         onClick = onSadClick
+                        imageRes = R.drawable.royaram_photo_4
                     )
                 },
                 second = {
@@ -329,6 +333,7 @@ fun HomeScreen(
                         subtitle = "تاریخ‌های مهم ما ✨",
                         icon = "✨",
                         onClick = onSpecialClick
+                        imageRes = R.drawable.royaram_photo_5
                     )
                 },
                 third = {
@@ -337,6 +342,7 @@ fun HomeScreen(
                         subtitle = "فقط برای من و تو 🔐",
                         icon = "🔐",
                         onClick = onPrivateClick
+                        imageRes = R.drawable.royaram_photo_6
                     )
                 }
             )
@@ -355,6 +361,7 @@ fun HomeScreen(
                         subtitle = "شخصی‌سازی رویارام",
                         icon = "⚙️",
                         onClick = onSettingsClick
+                        imageRes = R.drawable.royaram_photo_7
                     )
                 }
 
