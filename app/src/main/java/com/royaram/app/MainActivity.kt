@@ -357,12 +357,12 @@ fun HomeScreen(
                     modifier = Modifier.weight(1f)
                 ) {
                     ImageFolderCard(
-                        title = "تنظیمات",
-                        subtitle = "شخصی‌سازی رویارام",
-                        icon = "⚙️",
-                        onClick = onSettingsClick
-                        imageRes = R.drawable.royaram_photo_7
-                    )
+    title = "تنظیمات",
+    subtitle = "شخصی‌سازی رویارام",
+    icon = "⚙️",
+    onClick = onSettingsClick,
+    imageRes = R.drawable.royaram_photo_7
+)
                 }
 
                 Box(
