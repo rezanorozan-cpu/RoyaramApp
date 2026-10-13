@@ -43,7 +43,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.draw.clip
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.fragment.app.FragmentActivity
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
@@ -576,7 +575,6 @@ fun HomeCardRow(
     }
 }
 
-@Composable
 @Composable
 fun ImageFolderCard(
     title: String,
