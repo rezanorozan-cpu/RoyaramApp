@@ -285,68 +285,68 @@ fun HomeScreen(
         }
 
         item {
-            HomeCardRow(
-                first = {
-                    ImageFolderCard(
-                        title = "خاطرات ما",
-                        subtitle = "لحظه‌های قشنگمون",
-                        icon = "📸",
-                        onClick = onMemoriesClick
-                        imageRes = R.drawable.royaram_photo_1
-                    )
-                },
-                second = {
-                    ImageFolderCard(
-                        title = "نامه‌های عاشقانه",
-                        subtitle = "حرف‌های قلبمون",
-                        icon = "💌",
-                        onClick = onLettersClick
-                        imageRes = R.drawable.royaram_photo_2
-                    )
-                },
-                third = {
-                    ImageFolderCard(
-                        title = "آهنگ ما",
-                        subtitle = "صدای قصه‌ی ما",
-                        icon = "🎵",
-                        onClick = onMusicClick
-                        imageRes = R.drawable.royaram_photo_3
-                    )
-                }
+    HomeCardRow(
+        first = {
+            ImageFolderCard(
+                title = "خاطرات ما",
+                subtitle = "لحظه‌های قشنگمون",
+                icon = "📸",
+                onClick = onMemoriesClick,
+                imageRes = R.drawable.royaram_photo_1
+            )
+        },
+        second = {
+            ImageFolderCard(
+                title = "نامه‌های عاشقانه",
+                subtitle = "حرف‌های قلبمون",
+                icon = "💌",
+                onClick = onLettersClick,
+                imageRes = R.drawable.royaram_photo_2
+            )
+        },
+        third = {
+            ImageFolderCard(
+                title = "آهنگ ما",
+                subtitle = "صدای قصه‌ی ما",
+                icon = "🎵",
+                onClick = onMusicClick,
+                imageRes = R.drawable.royaram_photo_3
             )
         }
+    )
+}
 
-        item {
-            HomeCardRow(
-                first = {
-                    ImageFolderCard(
-                        title = "وقتی دلمون گرفت",
-                        subtitle = "اینجا همیشه کنار همیم",
-                        icon = "🌷",
-                        onClick = onSadClick
-                        imageRes = R.drawable.royaram_photo_4
-                    )
-                },
-                second = {
-                    ImageFolderCard(
-                        title = "لحظه‌های خاص",
-                        subtitle = "تاریخ‌های مهم ما ✨",
-                        icon = "✨",
-                        onClick = onSpecialClick
-                        imageRes = R.drawable.royaram_photo_5
-                    )
-                },
-                third = {
-                    ImageFolderCard(
-                        title = "بخش خصوصی",
-                        subtitle = "فقط برای من و تو 🔐",
-                        icon = "🔐",
-                        onClick = onPrivateClick
-                        imageRes = R.drawable.royaram_photo_6
-                    )
-                }
+item {
+    HomeCardRow(
+        first = {
+            ImageFolderCard(
+                title = "وقتی دلمون گرفت",
+                subtitle = "اینجا همیشه کنار همیم",
+                icon = "🌷",
+                onClick = onSadClick,
+                imageRes = R.drawable.royaram_photo_4
+            )
+        },
+        second = {
+            ImageFolderCard(
+                title = "لحظه‌های خاص",
+                subtitle = "تاریخ‌های مهم ما ✨",
+                icon = "✨",
+                onClick = onSpecialClick,
+                imageRes = R.drawable.royaram_photo_5
+            )
+        },
+        third = {
+            ImageFolderCard(
+                title = "بخش خصوصی",
+                subtitle = "فقط برای من و تو 🔐",
+                icon = "🔐",
+                onClick = onPrivateClick,
+                imageRes = R.drawable.royaram_photo_6
             )
         }
+    )
+}
 
         item {
             Row(
