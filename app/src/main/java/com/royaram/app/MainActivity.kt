@@ -587,9 +587,7 @@ fun ImageFolderCard(
         modifier = Modifier
             .fillMaxWidth()
             .height(150.dp)
-            .clickable {
-                onClick()
-            },
+            .clickable { onClick() },
         shape = RoundedCornerShape(26.dp),
         colors = CardDefaults.cardColors(
             containerColor = Color.White.copy(alpha = 0.94f)
@@ -605,7 +603,6 @@ fun ImageFolderCard(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-
             if (imageRes != null) {
                 Image(
                     painter = painterResource(id = imageRes),
@@ -613,8 +610,8 @@ fun ImageFolderCard(
                     contentScale = ContentScale.Fit,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(68.dp)
-                        .clip(RoundedCornerShape(14.dp))
+                        .height(82.dp)
+                        .clip(RoundedCornerShape(16.dp))
                 )
             } else {
                 Text(
@@ -623,7 +620,7 @@ fun ImageFolderCard(
                 )
             }
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(5.dp))
 
             Text(
                 text = title,
@@ -633,7 +630,7 @@ fun ImageFolderCard(
                 textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(3.dp))
 
             Text(
                 text = subtitle,
