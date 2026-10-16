@@ -396,17 +396,18 @@ fun LuxuryBanner() {
         )
 
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            Color.Transparent,
-                            Color.Black.copy(alpha = 0.45f)
-                        )
-                    )
+    modifier = Modifier
+        .fillMaxSize()
+        .background(
+            Brush.verticalGradient(
+                colorStops = arrayOf(
+                    0.0f to Color.Transparent,
+                    0.45f to Color.Transparent,
+                    1.0f to Color.Black.copy(alpha = 0.68f)
                 )
+            )
         )
+)
 
         Column(
             modifier = Modifier
