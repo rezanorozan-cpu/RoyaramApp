@@ -590,60 +590,76 @@ fun ImageFolderCard(
             .clickable { onClick() },
         shape = RoundedCornerShape(26.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White.copy(alpha = 0.94f)
+            containerColor = Color.White
         ),
         elevation = CardDefaults.cardElevation(
             defaultElevation = 5.dp
         )
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(10.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+        Box(
+            modifier = Modifier.fillMaxSize()
         ) {
             if (imageRes != null) {
+                Image(
+                    painter = painterResource(id = imageRes),
+                    contentDescription = title,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(RoundedCornerShape(26.dp))
+                )
+            } else {
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .height(82.dp),
+                        .fillMaxSize()
+                        .background(LightPink),
                     contentAlignment = Alignment.Center
                 ) {
-                    Image(
-                        painter = painterResource(id = imageRes),
-                        contentDescription = title,
-                        contentScale = ContentScale.Fit,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .clip(RoundedCornerShape(14.dp))
+                    Text(
+                        text = icon,
+                        fontSize = 36.sp
                     )
                 }
-            } else {
-                Text(
-                    text = icon,
-                    fontSize = 30.sp
-                )
             }
 
-            Spacer(modifier = Modifier.height(5.dp))
-
-            Text(
-                text = title,
-                color = TextDark,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                Color.Black.copy(alpha = 0.15f),
+                                Color.Black.copy(alpha = 0.80f)
+                            )
+                        )
+                    )
             )
 
-            Spacer(modifier = Modifier.height(3.dp))
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .padding(horizontal = 6.dp, vertical = 10.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = title,
+                    color = Color.White,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
 
-            Text(
-                text = subtitle,
-                color = SoftText,
-                fontSize = 10.sp,
-                textAlign = TextAlign.Center
-            )
+                Spacer(modifier = Modifier.height(3.dp))
+
+                Text(
+                    text = subtitle,
+                    color = Color.White.copy(alpha = 0.95f),
+                    fontSize = 10.sp,
+                    textAlign = TextAlign.Center
+                )
+            }
         }
     }
 }
