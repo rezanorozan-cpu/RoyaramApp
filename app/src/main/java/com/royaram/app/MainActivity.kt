@@ -604,26 +604,27 @@ fun ImageFolderCard(
             verticalArrangement = Arrangement.Center
         ) {
             if (imageRes != null) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(82.dp)
-            .clip(RoundedCornerShape(16.dp)),
-        contentAlignment = Alignment.Center
-    ) {
-        Image(
-            painter = painterResource(id = imageRes),
-            contentDescription = title,
-            contentScale = ContentScale.Fit,
-            modifier = Modifier.fillMaxSize()
-        )
-    }
-} else {
-    Text(
-        text = icon,
-        fontSize = 30.sp
-    )
-}
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(82.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = painterResource(id = imageRes),
+                        contentDescription = title,
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(14.dp))
+                    )
+                }
+            } else {
+                Text(
+                    text = icon,
+                    fontSize = 30.sp
+                )
+            }
 
             Spacer(modifier = Modifier.height(5.dp))
 
