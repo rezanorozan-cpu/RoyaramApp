@@ -423,13 +423,12 @@ fun LuxuryBanner() {
 )
 
             Text(
-                text = "قصه‌ی من و تو، برای همیشه",
-                color = Color.White.copy(alpha = 0.92f),
-                fontSize = 14.sp
-            )
-        }
-    }
-}
+    text = "قصه‌ی من و تو، برای همیشه",
+    color = Color.White,
+    fontSize = 14.sp,
+    fontWeight = FontWeight.Medium,
+    letterSpacing = 0.2.sp
+)
 
 @Composable
 fun MainDateCard(
