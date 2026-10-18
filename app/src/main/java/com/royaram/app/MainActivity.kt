@@ -385,6 +385,7 @@ fun LuxuryBanner() {
                 color = LightPink,
                 shape = RoundedCornerShape(28.dp)
             )
+            .clip(RoundedCornerShape(28.dp))
     ) {
         Image(
             painter = painterResource(
@@ -396,18 +397,18 @@ fun LuxuryBanner() {
         )
 
         Box(
-    modifier = Modifier
-        .fillMaxSize()
-        .background(
-            Brush.verticalGradient(
-                colorStops = arrayOf(
-                    0.0f to Color.Transparent,
-                    0.45f to Color.Transparent,
-                    1.0f to Color.Black.copy(alpha = 0.68f)
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colorStops = arrayOf(
+                            0.0f to Color.Transparent,
+                            0.45f to Color.Transparent,
+                            1.0f to Color.Black.copy(alpha = 0.68f)
+                        )
+                    )
                 )
-            )
         )
-)
 
         Column(
             modifier = Modifier
@@ -415,19 +416,23 @@ fun LuxuryBanner() {
                 .padding(20.dp)
         ) {
             Text(
-    text = "رویارام",
-    color = Color.White,
-    fontSize = 29.sp,
-    fontWeight = FontWeight.ExtraBold,
-    letterSpacing = 0.5.sp
-(
+                text = "رویارام",
+                color = Color.White,
+                fontSize = 29.sp,
+                fontWeight = FontWeight.ExtraBold,
+                letterSpacing = 0.5.sp
+            )
+
             Text(
-    text = "قصه‌ی من و تو، برای همیشه",
-    color = Color.White,
-    fontSize = 14.sp,
-    fontWeight = FontWeight.Medium,
-    letterSpacing = 0.2.sp
-)
+                text = "قصه‌ی من و تو، برای همیشه",
+                color = Color.White,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                letterSpacing = 0.2.sp
+            )
+        }
+    }
+}
 
 @Composable
 fun MainDateCard(
