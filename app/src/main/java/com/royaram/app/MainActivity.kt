@@ -415,11 +415,12 @@ fun LuxuryBanner() {
                 .padding(20.dp)
         ) {
             Text(
-                text = "رویارام",
-                color = Color.White,
-                fontSize = 26.sp,
-                fontWeight = FontWeight.Bold
-            )
+    text = "رویارام",
+    color = Color.White,
+    fontSize = 29.sp,
+    fontWeight = FontWeight.ExtraBold,
+    letterSpacing = 0.5.sp
+)
 
             Text(
                 text = "قصه‌ی من و تو، برای همیشه",
