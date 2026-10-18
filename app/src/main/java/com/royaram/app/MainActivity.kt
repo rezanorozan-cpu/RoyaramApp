@@ -420,8 +420,7 @@ fun LuxuryBanner() {
     fontSize = 29.sp,
     fontWeight = FontWeight.ExtraBold,
     letterSpacing = 0.5.sp
-)
-
+(
             Text(
     text = "قصه‌ی من و تو، برای همیشه",
     color = Color.White,
