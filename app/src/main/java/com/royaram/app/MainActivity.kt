@@ -440,53 +440,77 @@ fun MainDateCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(26.dp),
+        shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White.copy(alpha = 0.92f)
+            containerColor = Color(0xFFFFEAF1)
         ),
         elevation = CardDefaults.cardElevation(
-            defaultElevation = 5.dp
+            defaultElevation = 6.dp
         )
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(18.dp),
+                .padding(horizontal = 18.dp, vertical = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
                 text = "رامین ❤️ رویا",
-                color = DeepPink,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold
+                color = Color(0xFFB83D63),
+                fontSize = 22.sp,
+                fontWeight = FontWeight.ExtraBold
             )
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
             Text(
-                text = "هر روز یک صفحه‌ی تازه از قصه‌ی ما",
-                color = SoftText,
+                text = "هر روز، یک صفحه‌ی تازه از قصه‌ی ما ✨",
+                color = Color(0xFF82747A),
                 fontSize = 13.sp,
                 textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
-            Text(
-                text = daysTogether.toString(),
-                color = Pink,
-                fontSize = 32.sp,
-                fontWeight = FontWeight.ExtraBold
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        color = Color(0xFFFFF7FA),
+                        shape = RoundedCornerShape(22.dp)
+                    )
+                    .padding(vertical = 12.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = daysTogether.toString(),
+                        color = Color(0xFFCF5279),
+                        fontSize = 42.sp,
+                        fontWeight = FontWeight.ExtraBold
+                    )
+
+                    Text(
+                        text = "❤️ روز کنار هم",
+                        color = Color(0xFF5C3946),
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(Color(0xFFD8B878).copy(alpha = 0.65f))
             )
 
-            Text(
-                text = "❤️ روز کنار هم",
-                color = TextDark,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             BirthdayMiniRow()
         }
